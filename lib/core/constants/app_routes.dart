@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/features/Home/views/HomePageWidget.dart';
+import 'package:saloony/features/Dashboard/views/DashboardView.dart';
 import 'package:saloony/features/auth/views/VerifyEmailWidget.dart';
 import 'package:saloony/features/auth/views/VerifyResetCodeWidget.dart';
+import 'package:saloony/features/profile/views/ProfileEditView.dart';
+import 'package:saloony/features/profile/views/SalonProfileView.dart';
 import 'package:saloony/features/splash/splash_page.dart';
 
 import '../../data/models/user_model.dart';
@@ -11,7 +13,6 @@ import '../../features/auth/views/ResetPasswordWidget.dart';
 import '../../features/auth/views/SignInWidget.dart';
 import '../../features/auth/views/SignUpWidget.dart';
 import '../../features/auth/views/SuccessResetWidget.dart';
-import '../../features/profile/views/profile_widget.dart';
 
 class AppRoutes {
   static const String signIn = '/signIn';
@@ -35,11 +36,11 @@ static const String verifyResetCode = '/verifyResetCode';
   linkSent: (_) => const LinkSentWidget(),
   resetPassword: (_) => ResetPasswordWidget(),
   successReset: (_) => const SuccessResetWidget(),
-  profile: (_) => const ProfileWidget(),
+  profile: (_) => const ProfileEditView(),
   verifyEmail: (_) => const VerifyEmailWidget(),
   verifyResetCode: (_) => const VerifyResetCodeWidget(),
 
-  home: (_) => const HomePage(), 
+  home: (_) => DashboardView(), 
 };
 
 }
