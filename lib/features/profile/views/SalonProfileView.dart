@@ -1,8 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:saloony/core/constants/app_routes.dart';
+import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
+import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/features/profile/views/LogoutButton.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
+
+  void _showSideMenu(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => const SideMenuDialog(),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    // Afficher une boîte de dialogue de confirmation
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          'Déconnexion',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1B2B3E),
+          ),
+        ),
+        content: Text(
+          'Êtes-vous sûr de vouloir vous déconnecter ?',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF1B2B3E),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Annuler',
+              style: GoogleFonts.poppins(
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Déconnexion',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      // Déconnexion
+      await AuthService().signOut();
+      
+      // Navigation vers la page de connexion
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/login', // Remplacez par votre route de connexion
+          (route) => false,
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +90,7 @@ class ProfileView extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded, color: Color(0xFF1B2B3E)),
-          onPressed: () {},
+          onPressed: () => _showSideMenu(context),
         ),
         title: Text(
           'Profile',
@@ -69,13 +146,29 @@ class ProfileView extends StatelessWidget {
               items: [
                 _MenuItem(
                   icon: Icons.settings_outlined,
-                  title: 'Modifier le profil',
+                  title: 'Paramètres du salon',
                   onTap: () {},
                 ),
                 _MenuItem(
                   icon: Icons.person_outline_rounded,
                   title: 'Modifier le profil',
-                  onTap: () {},
+                   onTap: () {
+          Navigator.pushNamed(context, AppRoutes.editProfile);
+        },
+                ),
+                   _MenuItem(
+                  icon: Icons.person_outline_rounded,
+                  title: 'changer le mots de passe',
+                   onTap: () {
+          Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
+        },
+                ),
+                   _MenuItem(
+                  icon: Icons.person_outline_rounded,
+                  title: 'changer email',
+                   onTap: () {
+          Navigator.pushNamed(context, AppRoutes.ChangeEmail);
+        },
                 ),
                 _MenuItem(
                   icon: Icons.calendar_today_outlined,
@@ -153,7 +246,7 @@ class ProfileView extends StatelessWidget {
             const SizedBox(height: 24),
             
             // Logout Button
-            _buildLogoutButton(),
+            LogoutButtonWidget(),
             const SizedBox(height: 40),
           ],
         ),
@@ -480,61 +573,6 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.logout_rounded,
-                  size: 20,
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'Déconnexion',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.red,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _MenuItem {

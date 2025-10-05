@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:saloony/features/Dashboard/views/DashboardView.dart';
 import 'package:saloony/features/auth/views/VerifyEmailWidget.dart';
 import 'package:saloony/features/auth/views/VerifyResetCodeWidget.dart';
+import 'package:saloony/features/profile/views/ChangeEmailView.dart';
 import 'package:saloony/features/profile/views/ProfileEditView.dart';
+import 'package:saloony/features/profile/views/ResetPasswordView.dart';
 import 'package:saloony/features/profile/views/SalonProfileView.dart';
 import 'package:saloony/features/splash/splash_page.dart';
 
@@ -25,6 +27,11 @@ class AppRoutes {
   static const String successReset = '/successReset';
   static const String home = '/home';
   static const String profile = '/profile';
+    static const String editProfile = '/editProfile';
+     static const String ResetPasswordP = '/ResetPasswordP';
+          static const String ChangeEmail = '/ChangeEmail';
+
+
 static const String verifyEmail = '/verifyEmail';
 static const String verifyResetCode = '/verifyResetCode';
 
@@ -36,10 +43,14 @@ static const String verifyResetCode = '/verifyResetCode';
   linkSent: (_) => const LinkSentWidget(),
   resetPassword: (_) => ResetPasswordWidget(),
   successReset: (_) => const SuccessResetWidget(),
-  profile: (_) => const ProfileEditView(),
+  profile: (_) => const ProfileView(),
   verifyEmail: (_) => const VerifyEmailWidget(),
-  verifyResetCode: (_) => const VerifyResetCodeWidget(),
+    ResetPasswordP: (_) => const ResetPasswordView(),
+        ChangeEmail: (_) => const ChangeEmailView(),
 
+
+  verifyResetCode: (_) => const VerifyResetCodeWidget(),
+editProfile : (_) => const ProfileEditView(),
   home: (_) => DashboardView(), 
 };
 

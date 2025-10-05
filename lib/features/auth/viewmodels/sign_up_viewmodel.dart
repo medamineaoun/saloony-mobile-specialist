@@ -132,7 +132,7 @@ class SignUpViewModel extends ChangeNotifier {
         password: password,
         phoneNumber: phone.isEmpty ? "00000000" : phone,
         gender: _selectedGender,  // MAN ou WOMAN
-        role: "CUSTOMER",         // Par défaut CUSTOMER
+        role: "SPECIALIST",         // Par défaut CUSTOMER
       );
 
       _isLoading = false;

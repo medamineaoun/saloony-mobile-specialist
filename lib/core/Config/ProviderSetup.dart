@@ -29,6 +29,7 @@ class Config {
 
   // Endpoints d'authentification
   static const String authBaseUrl = '$baseUrl/api/v1/auth';
+  static const String userBaseUrl = '$baseUrl/api/v1/auth/user';
 
   // Timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
