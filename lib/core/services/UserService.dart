@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:saloony/core/Config/ProviderSetup.dart';
 import 'package:saloony/core/services/AuthService.dart';
@@ -7,7 +8,9 @@ import 'package:saloony/core/models/User.dart';
 import 'package:http_parser/http_parser.dart';
 
 class UserService {
-  static String get baseUrl => Config.userBaseUrl; // Ajoutez cette config
+  static String get baseUrl => Config.userBaseUrl;
+    static String get baseUrlauth => Config.authBaseUrl;
+
   final AuthService _authService = AuthService();
 
   Future<Map<String, String>> _getAuthHeaders() async {
@@ -38,28 +41,80 @@ class UserService {
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
+// ==================== UPDATE EMAIL ====================
 
-  // ==================== UPDATE USER ====================
+/// Demander le code de vérification pour changer l'email
+/// Cette méthode envoie un code au nouvel email
+Future<Map<String, dynamic>> requestEmailUpdate({
+  required String currentEmail,
+  required String newEmail,
+}) async {
+  try {
+    // Utiliser l'endpoint d'AuthService pour envoyer le code au nouvel email
+    final response = await http.post(
+      Uri.parse('${Config.authBaseUrl}/send-verification-email?email=$newEmail'),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-  /// Modifier les informations de l'utilisateur
+    if (response.statusCode == 200) {
+      return {
+        'success': true,
+        'message': 'Code de vérification envoyé à votre nouvelle adresse email'
+      };
+    } else {
+      String errorMessage = 'Erreur lors de l\'envoi du code';
+      try {
+        final error = jsonDecode(response.body);
+        errorMessage = error['message'] ?? errorMessage;
+      } catch (_) {}
+      return {'success': false, 'message': errorMessage};
+    }
+  } catch (e) {
+    return {'success': false, 'message': 'Erreur de connexion: $e'};
+  }
+}
+
+/// Mettre à jour l'email avec le code de vérification
+/// Le backend utilise le token JWT pour identifier l'utilisateur actuel
+Future<Map<String, dynamic>> updateEmail({
+  required String code,
+  required String newEmail,
+}) async {
+  try {
+    final response = await http.post(
+      Uri.parse('${Config.userBaseUrl}/update-email?code=$code&newEmail=$newEmail'),
+      headers: await _getAuthHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return {
+        'success': true,
+        'message': 'Email mis à jour avec succès'
+      };
+    } else {
+      String errorMessage = 'Code invalide ou expiré';
+      try {
+        final error = jsonDecode(response.body);
+        errorMessage = error['message'] ?? errorMessage;
+      } catch (_) {}
+      return {'success': false, 'message': errorMessage};
+    }
+  } catch (e) {
+    return {'success': false, 'message': 'Erreur de connexion: $e'};
+  }
+}
   Future<Map<String, dynamic>> updateUser({
     required String userId,
     String? firstName,
     String? lastName,
-    String? email,
-    String? phoneNumber,
     String? gender,
-    String? status,
   }) async {
     try {
       final body = {
         'userId': userId,
         if (firstName != null) 'userFirstName': firstName,
         if (lastName != null) 'userLastName': lastName,
-        if (email != null) 'userEmail': email,
-        if (phoneNumber != null) 'userPhoneNumber': phoneNumber,
         if (gender != null) 'userGender': gender,
-        if (status != null) 'userStatus': status,
       };
 
       final response = await http.put(
@@ -69,7 +124,6 @@ class UserService {
       );
 
       if (response.statusCode == 200) {
-        // Le backend retourne UpdateUserDTO, on doit recharger l'utilisateur complet
         final result = await _authService.getCurrentUser();
         
         if (result['success'] == true && result['user'] != null) {
@@ -79,7 +133,6 @@ class UserService {
             'message': 'Profil mis à jour avec succès'
           };
         } else {
-          // Fallback: essayer de parser la réponse directement
           try {
             final userData = jsonDecode(response.body);
             return {
@@ -139,30 +192,50 @@ class UserService {
 
   // ==================== PROFILE PHOTO ====================
 
+  /// Créer un MultipartFile compatible Web & Mobile
+  Future<http.MultipartFile> _createMultipartFile(File imageFile, String fieldName) async {
+    if (kIsWeb) {
+      // Pour le Web: utiliser fromBytes
+      final bytes = await imageFile.readAsBytes();
+      return http.MultipartFile.fromBytes(
+        fieldName,
+        bytes,
+        filename: 'profile_image.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      );
+    } else {
+      // Pour Mobile: utiliser fromPath
+      return await http.MultipartFile.fromPath(
+        fieldName,
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      );
+    }
+  }
+
   /// Ajouter une photo de profil
   Future<Map<String, dynamic>> addProfilePhoto({
     required String userId,
     required File imageFile,
   }) async {
     try {
+      final url = '$baseUrl/$userId/profile-photo';
+      debugPrint('📤 POST Request URL: $url');
+      
       final token = await _authService.getAccessToken();
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/$userId/profile-photo'),
-      );
+      var request = http.MultipartRequest('POST', Uri.parse(url));
 
       request.headers['Authorization'] = 'Bearer ${token ?? ''}';
       
-      var multipartFile = await http.MultipartFile.fromPath(
-        'file',
-        imageFile.path,
-        contentType: MediaType('image', 'jpeg'),
-      );
-      
+      // Créer le fichier multipart (compatible web & mobile)
+      var multipartFile = await _createMultipartFile(imageFile, 'file');
       request.files.add(multipartFile);
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      debugPrint('📤 Response Status: ${response.statusCode}');
+      debugPrint('📤 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final userData = jsonDecode(response.body);
@@ -178,6 +251,7 @@ class UserService {
         };
       }
     } catch (e) {
+      debugPrint('❌ Error adding profile photo: $e');
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
@@ -188,24 +262,23 @@ class UserService {
     required File imageFile,
   }) async {
     try {
+      final url = '$baseUrl/$userId/profile-photo';
+      debugPrint('📤 PUT Request URL: $url');
+      
       final token = await _authService.getAccessToken();
-      var request = http.MultipartRequest(
-        'PUT',
-        Uri.parse('$baseUrl/$userId/profile-photo'),
-      );
+      var request = http.MultipartRequest('PUT', Uri.parse(url));
 
       request.headers['Authorization'] = 'Bearer ${token ?? ''}';
       
-      var multipartFile = await http.MultipartFile.fromPath(
-        'file',
-        imageFile.path,
-        contentType: MediaType('image', 'jpeg'),
-      );
-      
+      // Créer le fichier multipart (compatible web & mobile)
+      var multipartFile = await _createMultipartFile(imageFile, 'file');
       request.files.add(multipartFile);
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      debugPrint('📤 PUT Response Status: ${response.statusCode}');
+      debugPrint('📤 PUT Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final userData = jsonDecode(response.body);
@@ -221,11 +294,13 @@ class UserService {
         };
       }
     } catch (e) {
+      debugPrint('❌ Error updating profile photo: $e');
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
+// ==================== UPDATE EMAIL ====================
 
-  /// Supprimer la photo de profil
+ /// Supprimer la photo de profil
   Future<Map<String, dynamic>> deleteProfilePhoto(String userId) async {
     try {
       final response = await http.delete(
@@ -270,4 +345,9 @@ class UserService {
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
+}
+
+// Import nécessaire pour kIsWeb (ajoutez ceci en haut du fichier)
+void debugPrint(String message) {
+  print(message);
 }

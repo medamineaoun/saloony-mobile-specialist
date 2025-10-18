@@ -71,7 +71,7 @@ class VerifyEmailWidget extends StatelessWidget {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(20),
                                   child: Image.asset(
-                                    'images/code.png',
+                                    'assets/images/code.png',
                                     fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(

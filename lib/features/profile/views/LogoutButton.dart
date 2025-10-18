@@ -91,7 +91,7 @@ class LogoutButtonWidget extends StatelessWidget {
                         ),
                       ),
                       child: const Text(
-                        'Oui, déconnexion',
+                        'Oui',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -164,7 +164,7 @@ class LogoutButtonWidget extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () => _showLogoutDialog(context),
         style: ElevatedButton.styleFrom(
-          backgroundColor: SaloonyColors.error,
+          backgroundColor: const Color(0xFFEDC087),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -272,7 +272,7 @@ class LogoutListTile extends StatelessWidget {
                         ),
                       ),
                       child: const Text(
-                        'Oui, déconnexion',
+                        'Oui',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

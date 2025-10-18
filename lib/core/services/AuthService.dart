@@ -193,7 +193,7 @@ class AuthService {
   Future<Map<String, dynamic>> requestPasswordReset(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/request-reset?email=$email'),
+        Uri.parse('$baseUrl/send-verification-email?email=$email'),
         headers: {'Content-Type': 'application/json'},
       );
 

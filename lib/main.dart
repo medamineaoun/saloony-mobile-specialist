@@ -27,8 +27,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple,
       ),
-      initialRoute: AppRoutes.splash, // écran initial
-      routes: AppRoutes.routes,       // toutes les routes
+      initialRoute: AppRoutes.splash, 
+      routes: AppRoutes.routes,       
     );
   }
 }

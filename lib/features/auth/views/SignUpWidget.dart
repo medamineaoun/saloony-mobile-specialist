@@ -61,10 +61,9 @@ class SignUpWidget extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.asset(
-                              'images/bbb.png',
+                              'assets/images/bbb.png',
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
-                                // Fallback si l'image n'existe pas
                                 return Container(
                                   width: 180,
                                   height: 180,
@@ -120,14 +119,31 @@ class SignUpWidget extends StatelessWidget {
 
                       const SizedBox(height: 36),
 
-                      // Full name avec validation
-                      _buildValidatedTextField(
-                        controller: vm.fullNameController,
-                        enabled: !vm.isLoading,
-                        label: "Full Name",
-                        hint: "Enter your full name",
-                        icon: Icons.person_outline_rounded,
-                        validator: vm.validateFullName,
+                      // First Name et Last Name sur la même ligne
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildValidatedTextField(
+                              controller: vm.firstNameController,
+                              enabled: !vm.isLoading,
+                              label: "First Name",
+                              hint: "Enter first name",
+                              icon: Icons.person_outline_rounded,
+                              validator: vm.validateFirstName,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildValidatedTextField(
+                              controller: vm.lastNameController,
+                              enabled: !vm.isLoading,
+                              label: "Last Name",
+                              hint: "Enter last name",
+                              icon: Icons.person_outline_rounded,
+                              validator: vm.validateLastName,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
 
@@ -147,7 +163,7 @@ class SignUpWidget extends StatelessWidget {
                       _buildValidatedTextField(
                         controller: vm.phoneController,
                         enabled: !vm.isLoading,
-                        label: "Phone Number ",
+                        label: "Phone Number",
                         hint: "Enter your phone number",
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
@@ -155,57 +171,57 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Gender Selection avec validation
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Gender",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1B2B3E),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GenderOption(
-                                  label: "Man",
-                                  value: "MAN",
-                                  selectedValue: vm.selectedGender,
-                                  onTap: () => vm.setGender("MAN"),
-                                  isEnabled: !vm.isLoading,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: GenderOption(
-                                  label: "Woman",
-                                  value: "WOMAN",
-                                  selectedValue: vm.selectedGender,
-                                  onTap: () => vm.setGender("WOMAN"),
-                                  isEnabled: !vm.isLoading,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (vm.genderError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8, left: 12),
-                              child: Text(
-                                vm.genderError!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.red,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
+                    // --- GENRE ---
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text(
+      "Gender",
+      style: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF1B2B3E),
+      ),
+    ),
+    const SizedBox(height: 8),
+    Row(
+      children: [
+        Expanded(
+          child: GenderOption(
+            label: "Man",
+            value: "MEN", // ✅ correspond à ton backend
+            selectedValue: vm.selectedGender,
+            onTap: () => vm.setGender("MEN"), // ✅ correction ici
+            isEnabled: !vm.isLoading,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GenderOption(
+            label: "Woman",
+            value: "WOMEN", // ✅ correspond à ton backend
+            selectedValue: vm.selectedGender,
+            onTap: () => vm.setGender("WOMEN"), // ✅ correction ici
+            isEnabled: !vm.isLoading,
+          ),
+        ),
+      ],
+    ),
+    if (vm.genderError != null)
+      Padding(
+        padding: const EdgeInsets.only(top: 8, left: 12),
+        child: Text(
+          vm.genderError!,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.red,
+            height: 1.5,
+          ),
+        ),
+      ),
+  ],
+),
+ const SizedBox(height: 20),
 
                       // Password avec validation
                       Column(

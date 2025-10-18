@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "📱 Flutter - Development",
             "request": "launch",
@@ -65,6 +66,16 @@
             "program": "test/",
             "args": [
                 "--coverage"
+            ]
+        },
+        {
+            "name": "📲 Flutter - Run on Physical Device",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "112236441H007996"
             ]
         }
     ],

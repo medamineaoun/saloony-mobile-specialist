@@ -278,8 +278,11 @@ class _SaloonySplashPageState extends State<SaloonySplashPage>
                 : _mainController,
               builder: (context, child) {
                 double animValue = _letterAnimations.length > index 
-                  ? _letterAnimations[index].value 
-                  : _fadeAnimation.value;
+  ? _letterAnimations[index].value 
+  : _fadeAnimation.value;
+
+animValue = animValue.clamp(0.0, 1.0);
+
                 
                 return Transform.translate(
                   offset: Offset(0, (1 - animValue) * 30),

@@ -4,8 +4,10 @@ import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
+bool notificationsEnabled = true; 
 
 class ProfileView extends StatelessWidget {
+  
   const ProfileView({super.key});
 
   void _showSideMenu(BuildContext context) {
@@ -136,10 +138,7 @@ class ProfileView extends StatelessWidget {
             _buildSalonCard(),
             const SizedBox(height: 24),
             
-            // Trial Banner
-            _buildTrialBanner(),
-            const SizedBox(height: 24),
-            
+          
             // Application Section
             _buildSection(
               title: 'Application',
@@ -173,18 +172,11 @@ class ProfileView extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.calendar_today_outlined,
                   title: 'Disponibilité',
-                  onTap: () {},
+                  onTap: () {
+          Navigator.pushNamed(context, AppRoutes.Disponibilite);
+        },
                 ),
-                _MenuItem(
-                  icon: Icons.workspace_premium_outlined,
-                  title: 'Mon abonnement',
-                  onTap: () {},
-                ),
-                _MenuItem(
-                  icon: Icons.notifications_outlined,
-                  title: 'Paramètres de notification',
-                  onTap: () {},
-                ),
+               
               ],
             ),
             const SizedBox(height: 24),
@@ -196,17 +188,22 @@ class ProfileView extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.description_outlined,
                   title: 'Conditions d\'utilisation',
-                  onTap: () {},
+                   onTap: () {
+          Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
+        },
                 ),
                 _MenuItem(
                   icon: Icons.privacy_tip_outlined,
                   title: 'Politique de confidentialité',
-                  onTap: () {},
+                        onTap: () {
+Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
+        },
+          
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            
+            /*
             // Aide et support Section
             _buildSection(
               title: 'Aide et support',
@@ -222,7 +219,7 @@ class ProfileView extends StatelessWidget {
                   onTap: () {},
                 ),
               ],
-            ),
+            ),*/
             const SizedBox(height: 24),
             
             // Autre Section
@@ -238,7 +235,7 @@ class ProfileView extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.language_outlined,
                   title: 'Langue de l\'application',
-                  trailing: 'Anglais',
+                  trailing: 'Français',
                   onTap: () {},
                 ),
               ],
@@ -384,85 +381,7 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildTrialBanner() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1B2B3E), Color(0xFF243441)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B2B3E).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0CD97).withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.workspace_premium_rounded,
-              color: Color(0xFFF0CD97),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '14 jours restants',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  'Essai gratuit en équipe',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0CD97),
-              foregroundColor: const Color(0xFF1B2B3E),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            ),
-            icon: const Icon(Icons.shopping_cart_outlined, size: 16),
-            label: Text(
-              'Mise à niveau',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildSection({
     required String title,

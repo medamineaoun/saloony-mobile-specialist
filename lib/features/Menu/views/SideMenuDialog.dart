@@ -128,14 +128,15 @@ class SideMenuDialog extends StatelessWidget {
             title: Text(
               'Dashboard',
               style: GoogleFonts.poppins(
-                color: Color(0xFFF0CD97),
+                color: const Color(0xFFF0CD97),
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
               ),
             ),
             onTap: () {
-              viewModel.selectMenuItem('/dashboard');
+              viewModel.selectMenuItem('/home');
               Navigator.pop(context);
+              Navigator.pushNamed(context, '/home');
             },
           ),
         ),
@@ -149,6 +150,9 @@ class SideMenuDialog extends StatelessWidget {
             onTap: () {
               viewModel.selectMenuItem(item.route!);
               Navigator.pop(context);
+              if (item.route != null) {
+                Navigator.pushNamed(context, item.route!);
+              }
             },
           ),
       ],

@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/UserService.dart';
+import 'package:saloony/core/services/UserService.dart' hide debugPrint;
 import 'package:saloony/core/models/User.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart';
 
 class ProfileEditViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -17,12 +18,14 @@ class ProfileEditViewModel extends ChangeNotifier {
   File? _imageFile;
   String? _profileImagePath;
 
-  // Champs du formulaire
+  // Champs du formulaire (seulement les modifiables)
   String _firstName = '';
   String _lastName = '';
+  String _gender = 'MAN';
+
+  // Champs non-modifiables (pour affichage uniquement)
   String _email = '';
   String _phoneNumber = '';
-  String _gender = 'MAN';
   String _role = 'CUSTOMER';
 
   // Getters
@@ -30,18 +33,43 @@ class ProfileEditViewModel extends ChangeNotifier {
   bool get isLoadingData => _isLoadingData;
   User? get currentUser => _currentUser;
   File? get imageFile => _imageFile;
-  String? get profileImagePath => _profileImagePath;
+  
+  // Getter pour l'URL complète de l'image
+  String? get profileImageUrl {
+    if (_profileImagePath == null || _profileImagePath!.isEmpty) {
+      return null;
+    }
+    
+    // Si c'est déjà une URL complète, la retourner
+    if (_profileImagePath!.startsWith('http://') || 
+        _profileImagePath!.startsWith('https://')) {
+      return _profileImagePath;
+    }
+    
+    // Sinon, construire l'URL complète
+    final baseUrl = Config.userBaseUrl;
+    final cleanPath = _profileImagePath!.startsWith('/') 
+        ? _profileImagePath!.substring(1) 
+        : _profileImagePath!;
+    
+    // Extraire le domaine de base sans /api/v1/auth/user
+    final uri = Uri.parse(baseUrl);
+    final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+    
+    return '$baseUrlWithoutPath/$cleanPath';
+  }
   
   String get firstName => _firstName;
   String get lastName => _lastName;
   String get fullName => '$_firstName $_lastName'.trim();
+  String get gender => _gender;
+  
+  // Champs en lecture seule
   String get email => _email;
   String get phoneNumber => _phoneNumber;
-  String get gender => _gender;
   String get platformRole => _role;
   String get speciality => _formatRole(_role);
 
-  List<String> get availableRoles => ['Client', 'Spécialiste', 'Administrateur'];
   List<String> get availableGenders => ['Homme', 'Femme'];
 
   ProfileEditViewModel() {
@@ -71,17 +99,22 @@ class ProfileEditViewModel extends ChangeNotifier {
 
   void _populateFields() {
     if (_currentUser != null) {
-      _firstName = _currentUser!.userFirstName;
-      _lastName = _currentUser!.userLastName;
-      _email = _currentUser!.userEmail;
-      _phoneNumber = _currentUser!.userPhoneNumber ?? '';
+      _firstName = _currentUser!.userFirstName ?? '';
+      _lastName = _currentUser!.userLastName ?? '';
       _gender = _currentUser!.userGender ?? 'MAN';
-      _role = _currentUser!.appRole;
       _profileImagePath = _currentUser!.profilePhotoPath;
+      
+      // Champs non-modifiables
+      _email = _currentUser!.userEmail ?? '';
+      _phoneNumber = _currentUser!.userPhoneNumber ?? '';
+      _role = _currentUser!.appRole ?? 'CUSTOMER';
+      
+      debugPrint('📸 Profile image path: $_profileImagePath');
+      debugPrint('📸 Profile image URL: $profileImageUrl');
     }
   }
 
-  // ==================== SETTERS ====================
+  // ==================== SETTERS (seulement pour les champs modifiables) ====================
 
   void setFirstName(String value) {
     _firstName = value;
@@ -102,16 +135,6 @@ class ProfileEditViewModel extends ChangeNotifier {
     }
   }
 
-  void setEmail(String value) {
-    _email = value;
-    notifyListeners();
-  }
-
-  void setPhoneNumber(String value) {
-    _phoneNumber = value;
-    notifyListeners();
-  }
-
   void setGender(String value) {
     // Convertir de l'affichage vers l'API
     switch (value) {
@@ -127,28 +150,6 @@ class ProfileEditViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setPlatformRole(String value) {
-    // Convertir de l'affichage vers l'API
-    switch (value) {
-      case 'Client':
-        _role = 'CUSTOMER';
-        break;
-      case 'Spécialiste':
-        _role = 'SPECIALIST';
-        break;
-      case 'Administrateur':
-        _role = 'ADMIN';
-        break;
-      default:
-        _role = value;
-    }
-    notifyListeners();
-  }
-
-  void setSpeciality(String value) {
-    setPlatformRole(value);
-  }
-
   // ==================== IMAGE ====================
 
   Future<void> pickImage() async {
@@ -158,14 +159,12 @@ class ProfileEditViewModel extends ChangeNotifier {
         maxWidth: 1000,
         maxHeight: 1000,
         imageQuality: 85,
-        requestFullMetadata: false, // Important pour éviter les problèmes
+        requestFullMetadata: false,
       );
 
       if (pickedFile != null) {
         _imageFile = File(pickedFile.path);
         notifyListeners();
-        
-        // Upload automatique
         await _uploadImage();
       }
     } catch (e) {
@@ -185,8 +184,6 @@ class ProfileEditViewModel extends ChangeNotifier {
       if (pickedFile != null) {
         _imageFile = File(pickedFile.path);
         notifyListeners();
-        
-        // Upload automatique
         await _uploadImage();
       }
     } catch (e) {
@@ -203,30 +200,45 @@ class ProfileEditViewModel extends ChangeNotifier {
     try {
       Map<String, dynamic> result;
       
-      // Si l'utilisateur a déjà une photo, on fait un UPDATE, sinon un ADD
-      if (_currentUser!.profilePhotoPath != null && 
-          _currentUser!.profilePhotoPath!.isNotEmpty) {
+      // Vérifier si l'utilisateur a déjà une photo
+      final hasExistingPhoto = _currentUser?.profilePhotoPath != null && 
+                              _currentUser!.profilePhotoPath!.isNotEmpty;
+      
+      debugPrint('📸 Upload image - User ID: ${_currentUser!.userId}');
+      debugPrint('📸 Has existing photo: $hasExistingPhoto');
+      
+      if (hasExistingPhoto) {
+        debugPrint('📸 Calling UPDATE profile photo API...');
         result = await _userService.updateProfilePhoto(
           userId: _currentUser!.userId,
           imageFile: _imageFile!,
         );
       } else {
+        debugPrint('📸 Calling ADD profile photo API...');
         result = await _userService.addProfilePhoto(
           userId: _currentUser!.userId,
           imageFile: _imageFile!,
         );
       }
+      
+      debugPrint('📸 API Response: ${result['success']} - ${result['message']}');
 
-      if (result['success'] == true) {
-        _currentUser = result['user'];
+      if (result['success'] == true && result['user'] != null) {
+        _currentUser = result['user'] is User 
+            ? result['user'] 
+            : User.fromJson(result['user']);
         _profileImagePath = _currentUser!.profilePhotoPath;
         _imageFile = null;
+        
+        debugPrint('📸 Updated profile image path: $_profileImagePath');
+        debugPrint('📸 Updated profile image URL: $profileImageUrl');
+        
         return true;
       }
       
       return false;
     } catch (e) {
-      debugPrint('Erreur lors de l\'upload de l\'image: $e');
+      debugPrint('❌ Erreur lors de l\'upload de l\'image: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -247,8 +259,7 @@ class ProfileEditViewModel extends ChangeNotifier {
         _profileImagePath = null;
         _imageFile = null;
         if (_currentUser != null) {
-          // Mettre à jour l'utilisateur local
-          await _loadCurrentUser();
+          _currentUser!.profilePhotoPath = null;
         }
       }
     } catch (e) {
@@ -277,29 +288,26 @@ class ProfileEditViewModel extends ChangeNotifier {
       };
     }
 
-    if (!_isValidEmail(_email)) {
-      return {
-        'success': false,
-        'message': 'Email invalide'
-      };
-    }
-
     _isLoading = true;
     notifyListeners();
 
     try {
+      // N'envoyer QUE les champs modifiables
       final result = await _userService.updateUser(
         userId: _currentUser!.userId,
         firstName: _firstName.trim(),
         lastName: _lastName.trim(),
-        email: _email.trim(),
-        phoneNumber: _phoneNumber.trim(),
         gender: _gender,
       );
 
       if (result['success'] == true) {
-        // Recharger l'utilisateur complet
-        await _loadCurrentUser();
+        // Mettre à jour l'utilisateur local
+        if (result['user'] != null) {
+          _currentUser = result['user'] is User 
+              ? result['user'] 
+              : User.fromJson(result['user']);
+          _populateFields();
+        }
         
         return {
           'success': true,
@@ -336,10 +344,6 @@ class ProfileEditViewModel extends ChangeNotifier {
       default:
         return role;
     }
-  }
-
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   Future<void> refreshData() async {
