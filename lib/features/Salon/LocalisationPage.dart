@@ -1,42 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:saloony/core/constants/SaloonyColors.dart';
+import 'package:saloony/features/Salon/location_result.dart';
+import 'package:saloony/features/Salon/MapPickerPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Classe pour retourner les résultats de localisation
-// IMPORTANT: Cette classe doit être dans un fichier séparé ou accessible globalement
-class LocationResult {
-  final double latitude;
-  final double longitude;
-  final String? address;
-
-  LocationResult({
-    required this.latitude,
-    required this.longitude,
-    this.address,
-  });
-
-  // Méthode pour convertir en Map (utile pour la sauvegarde)
-  Map<String, dynamic> toMap() {
-    return {
-      'latitude': latitude,
-      'longitude': longitude,
-      'address': address,
-    };
-  }
-
-  // Méthode pour créer depuis Map
-  factory LocationResult.fromMap(Map<String, dynamic> map) {
-    return LocationResult(
-      latitude: map['latitude'] ?? 0.0,
-      longitude: map['longitude'] ?? 0.0,
-      address: map['address'],
-    );
-  }
-}
-
 class LocalisationPage extends StatefulWidget {
-  const LocalisationPage({Key? key}) : super(key: key);
+  final LocationResult? initialLocation;
+  const LocalisationPage({
+    Key? key,
+    this.initialLocation,
+  }) : super(key: key);
 
   @override
   _LocalisationPageState createState() => _LocalisationPageState();
@@ -45,6 +21,35 @@ class LocalisationPage extends StatefulWidget {
 class _LocalisationPageState extends State<LocalisationPage> {
   final TextEditingController _addressController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialLocation?.address != null &&
+        widget.initialLocation!.address!.isNotEmpty) {
+      _addressController.text = widget.initialLocation!.address!;
+    }
+    
+    // Vérifier les permissions au démarrage
+    _checkInitialPermissions();
+  }
+
+  // ✅ NOUVEAU : Vérifier les permissions dès le départ
+  Future<void> _checkInitialPermissions() async {
+    try {
+      final status = await Permission.location.status;
+      debugPrint('📍 État permission localisation: $status');
+      
+      if (status.isPermanentlyDenied) {
+        setState(() {
+          _errorMessage = "Location permission permanently denied. Please enable in settings.";
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur vérification permissions: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -54,410 +59,567 @@ class _LocalisationPageState extends State<LocalisationPage> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-
-    double width = screenWidth;
-    double height = screenHeight;
-
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      backgroundColor: SaloonyColors.background,
+      appBar: AppBar(
+        backgroundColor: SaloonyColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: SaloonyColors.tertiary.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: SaloonyColors.primary,
+            ),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Select Location',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: SaloonyColors.textPrimary,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF7A400)),
+                valueColor: AlwaysStoppedAnimation<Color>(SaloonyColors.secondary),
               ),
             )
-          : Center(
-              child: Column(
-                children: [
-                  Container(
-                    child: Center(
-                      child: Container(
-                        height: height * 0.6,
-                        width: width,
-                        decoration: const BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('images/localisation.png'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final isSmallScreen = constraints.maxWidth < 600;
+                final contentPadding = isSmallScreen ? 20.0 : 40.0;
+
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                  ),
-                  SizedBox(height: height * 0.01),
-                  Container(
-                    width: width * 0.8,
-                    height: height * 0.1,
-                    child: Column(
-                      children: [
-                        Row(
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: EdgeInsets.all(contentPadding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            // ✅ Afficher les erreurs de permission
+                            if (_errorMessage != null)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.orange),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.warning, color: Colors.orange),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        _errorMessage!,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 13,
+                                          color: Colors.orange[900],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            
+                            // Image d'illustration
+                            Container(
+                              constraints: BoxConstraints(
+                                maxHeight: constraints.maxHeight * 0.35,
+                                maxWidth: isSmallScreen ? double.infinity : 500,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: SaloonyColors.primary.withOpacity(0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.asset(
+                                  'images/localisation.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: SaloonyColors.tertiary,
+                                      child: const Icon(
+                                        Icons.location_on,
+                                        size: 80,
+                                        color: SaloonyColors.secondary,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            
+                            SizedBox(height: contentPadding),
+                            
                             Text(
-                              "Bonjour partenaire",
-                              style: TextStyle(
+                              widget.initialLocation != null
+                                  ? "Update Location"
+                                  : "Welcome Partner",
+                              style: GoogleFonts.poppins(
+                                fontSize: isSmallScreen ? 24 : 28,
                                 fontWeight: FontWeight.bold,
-                                fontSize: width * 0.07,
+                                color: SaloonyColors.textPrimary,
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                          ],
-                        ),
-                        Row(
-                          children: [
+                            const SizedBox(height: 8),
                             Text(
-                              "Entrez votre position",
-                              style: TextStyle(
-                                fontSize: width * 0.04,
+                              widget.initialLocation != null
+                                  ? "Choose a new position for your salon"
+                                  : "Set your business location",
+                              style: GoogleFonts.poppins(
+                                fontSize: isSmallScreen ? 14 : 16,
+                                color: SaloonyColors.textSecondary,
                               ),
+                              textAlign: TextAlign.center,
                             ),
+                            
+                            const SizedBox(height: 24),
+                            
+                            if (widget.initialLocation != null)
+                              _buildCurrentLocationCard(isSmallScreen),
+                            
+                            SizedBox(height: contentPadding),
+                            
+                            _buildActionButton(
+                              onPressed: _getLocationPermission,
+                              icon: Icons.my_location,
+                              label: 'Use Current Location',
+                              isPrimary: true,
+                              isSmallScreen: isSmallScreen,
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            
+                            _buildActionButton(
+                              onPressed: _showManualEntryDialog,
+                              icon: Icons.edit_location_alt,
+                              label: 'Enter Manually',
+                              isPrimary: false,
+                              isSmallScreen: isSmallScreen,
+                            ),
+                            
+                            const SizedBox(height: 20),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: height * 0.07),
-                  Container(
-                    height: height * 0.06,
-                    width: width * 0.85,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        backgroundColor: const Color(0xFFF7A400),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                      onPressed: () async {
-                        await _getLocationPermission();
-                      },
-                      child: Text(
-                        'Utiliser location actuelle',
-                        style: TextStyle(
-                          fontSize: width * 0.05,
-                          color: Colors.white,
-                        ),
                       ),
                     ),
                   ),
-                  SizedBox(height: height * 0.03),
-                  Container(
-                    height: height * 0.06,
-                    width: width * 0.85,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        side: const BorderSide(
-                          color: Color(0xFFF7A400),
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                      onPressed: () {
-                        _showManualEntryDialog();
-                      },
-                      child: Text(
-                        'Entrer manuellement',
-                        style: TextStyle(
-                          fontSize: width * 0.05,
-                          color: const Color(0xFFF7A400),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
     );
   }
 
-  Future<void> _getLocationPermission() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    var status = await Permission.locationWhenInUse.status;
-    
-    if (status.isGranted) {
-      await _getLocation();
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-    
-    if (status.isDenied) {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      var result = await showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: Row(
+  Widget _buildCurrentLocationCard(bool isSmallScreen) {
+    return Container(
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            SaloonyColors.secondary.withOpacity(0.1),
+            SaloonyColors.gold.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: SaloonyColors.secondary.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              const Icon(Icons.location_on, color: Colors.orange),
-              const SizedBox(width: 10),
-              const Text(
-                "Autorisation requise",
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: SaloonyColors.secondary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.location_on,
+                  color: SaloonyColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Current Location",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: isSmallScreen ? 15 : 16,
+                    color: SaloonyColors.textPrimary,
+                  ),
+                ),
               ),
             ],
           ),
-          content: const Text(
-            "Nous avons besoin de votre localisation pour vous offrir une meilleure expérience. Veuillez accorder l'autorisation d'accéder à votre localisation.",
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: <Widget>[
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.grey.shade200,
+          const SizedBox(height: 12),
+          if (widget.initialLocation!.address != null &&
+              widget.initialLocation!.address!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                widget.initialLocation!.address!,
+                style: GoogleFonts.poppins(
+                  fontSize: isSmallScreen ? 13 : 14,
+                  color: SaloonyColors.textPrimary,
+                  height: 1.5,
+                ),
               ),
-              child: const Text(
-                "Annuler",
-                style: TextStyle(color: Colors.black),
-              ),
-              onPressed: () => Navigator.pop(context, false),
             ),
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.orange,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: SaloonyColors.primary.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Lat: ${widget.initialLocation!.latitude.toStringAsFixed(6)}, '
+              'Lng: ${widget.initialLocation!.longitude.toStringAsFixed(6)}',
+              style: GoogleFonts.poppins(
+                fontSize: isSmallScreen ? 11 : 12,
+                color: SaloonyColors.textSecondary,
               ),
-              child: const Text(
-                "Autoriser",
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () => Navigator.pop(context, true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required bool isPrimary,
+    required bool isSmallScreen,
+  }) {
+    if (isPrimary) {
+      return Container(
+        height: isSmallScreen ? 56 : 60,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [SaloonyColors.primary, SaloonyColors.navy],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: SaloonyColors.primary.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+        ),
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          icon: Icon(icon, size: 20, color: SaloonyColors.secondary),
+          label: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: isSmallScreen ? 15 : 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
         ),
       );
-      
-      if (result != null && result) {
-        setState(() {
-          _isLoading = true;
-        });
-        
-        status = await Permission.locationWhenInUse.request();
-        
-        if (status.isGranted) {
-          await _getLocation();
-        }
-        
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    } else {
+      return OutlinedButton.icon(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          minimumSize: Size(double.infinity, isSmallScreen ? 56 : 60),
+          side: const BorderSide(
+            color: SaloonyColors.primary,
+            width: 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        icon: Icon(icon, size: 20, color: SaloonyColors.secondary),
+        label: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: isSmallScreen ? 15 : 16,
+            fontWeight: FontWeight.w600,
+            color: SaloonyColors.primary,
+          ),
+        ),
+      );
     }
   }
 
-  Future<void> _getLocation() async {
+  // ✅ AMÉLIORATION : Meilleure gestion des permissions
+  Future<void> _getLocationPermission() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
-      LocationPermission permission = await Geolocator.requestPermission();
-      
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        _showErrorDialog("Permission de localisation refusée");
+      // Vérifier le statut actuel
+      PermissionStatus status = await Permission.location.status;
+      debugPrint('📍 Permission status: $status');
+
+      if (status.isGranted) {
+        await _getLocation();
+        setState(() => _isLoading = false);
         return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      
-      double latitude = position.latitude;
-      double longitude = position.longitude;
-
-      // Sauvegarder dans SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('latitude', latitude);
-      await prefs.setDouble('longitude', longitude);
-
-      print('Latitude: $latitude');
-      print('Longitude: $longitude');
-
-      // Retourner le résultat
-      if (mounted) {
-        Navigator.pop(
-          context,
-          LocationResult(
-            latitude: latitude,
-            longitude: longitude,
-          ),
-        );
-      }
-    } catch (e) {
-      print('Erreur lors de la récupération de la localisation: $e');
-      _showErrorDialog("Erreur lors de la récupération de votre position");
-    }
-  }
-
-  void _showManualEntryDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final latController = TextEditingController();
-        final lonController = TextEditingController();
+      // Si refusé définitivement, rediriger vers les paramètres
+      if (status.isPermanentlyDenied) {
+        setState(() => _isLoading = false);
         
-        return AlertDialog(
-          title: const Text(
-            "Entrer les coordonnées",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: latController,
-                decoration: const InputDecoration(
-                  labelText: "Latitude",
-                  hintText: "Ex: 36.8065",
-                  border: OutlineInputBorder(),
+        final result = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                const Icon(Icons.settings, color: SaloonyColors.secondary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "Permission Required",
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  ),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
+              ],
+            ),
+            content: Text(
+              "Location permission is permanently denied. Please enable it in app settings.",
+              style: GoogleFonts.poppins(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text("Cancel", style: GoogleFonts.poppins()),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: lonController,
-                decoration: const InputDecoration(
-                  labelText: "Longitude",
-                  hintText: "Ex: 10.1815",
-                  border: OutlineInputBorder(),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SaloonyColors.primary,
                 ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Ou entrez une adresse:",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: "Adresse",
-                  hintText: "Ex: Avenue Habib Bourguiba, Tunis",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
+                onPressed: () {
+                  Navigator.pop(context, true);
+                  openAppSettings();
+                },
+                child: Text("Open Settings", style: GoogleFonts.poppins(color: Colors.white)),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                "Annuler",
-                style: TextStyle(color: Colors.grey),
+        );
+        return;
+      }
+
+      // Si simplement refusé, demander à nouveau
+      if (status.isDenied) {
+        final result = await _showPermissionDialog();
+        
+        if (result == true) {
+          setState(() => _isLoading = true);
+          status = await Permission.location.request();
+          
+          if (status.isGranted) {
+            await _getLocation();
+          } else if (status.isPermanentlyDenied) {
+            setState(() {
+              _errorMessage = "Permission denied. Please enable in settings.";
+            });
+          } else {
+            setState(() {
+              _errorMessage = "Location permission is required.";
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur permission: $e');
+      setState(() {
+        _errorMessage = "Error requesting permission: $e";
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<bool?> _showPermissionDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: SaloonyColors.secondary.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.location_on,
+                color: SaloonyColors.secondary,
+                size: 24,
               ),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF7A400),
-              ),
-              onPressed: () {
-                final lat = double.tryParse(latController.text);
-                final lon = double.tryParse(lonController.text);
-                
-                if (lat != null && lon != null) {
-                  Navigator.pop(context);
-                  _returnManualLocation(lat, lon, _addressController.text);
-                } else if (_addressController.text.isNotEmpty) {
-                  // Pour l'instant, utiliser une position par défaut pour l'adresse
-                  // Dans une vraie app, vous utiliseriez un service de géocodage
-                  Navigator.pop(context);
-                  _showErrorDialog(
-                    "Veuillez entrer les coordonnées GPS ou utiliser la localisation automatique",
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Veuillez entrer des coordonnées valides"),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              child: const Text(
-                "Confirmer",
-                style: TextStyle(color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Permission Required",
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
               ),
             ),
           ],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+        ),
+        content: Text(
+          "We need your location to provide a better experience. Please grant location access permission.",
+          style: GoogleFonts.poppins(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text("Cancel", style: GoogleFonts.poppins()),
           ),
-        );
-      },
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SaloonyColors.primary,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text("Allow", style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
-  Future<void> _returnManualLocation(
-    double latitude,
-    double longitude,
-    String? address,
-  ) async {
+  // ✅ AMÉLIORATION : Meilleure gestion des erreurs
+  Future<void> _getLocation() async {
     try {
-      // Sauvegarder dans SharedPreferences
+      debugPrint('📍 Demande de localisation...');
+      
+      // Vérifier si le service de localisation est activé
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showErrorDialog("Location services are disabled. Please enable them in your device settings.");
+        return;
+      }
+
+      // Obtenir la position
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception("Location request timed out");
+        },
+      );
+
+      debugPrint('✅ Position obtenue: ${position.latitude}, ${position.longitude}');
+
+      // Sauvegarder
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('latitude', latitude);
-      await prefs.setDouble('longitude', longitude);
+      await prefs.setDouble('latitude', position.latitude);
+      await prefs.setDouble('longitude', position.longitude);
 
-      print('Latitude manuelle: $latitude');
-      print('Longitude manuelle: $longitude');
-
-      // Retourner le résultat
       if (mounted) {
         Navigator.pop(
           context,
           LocationResult(
-            latitude: latitude,
-            longitude: longitude,
-            address: address?.isNotEmpty == true ? address : null,
+            latitude: position.latitude,
+            longitude: position.longitude,
+            address: null,
           ),
         );
       }
     } catch (e) {
-      print('Erreur: $e');
-      _showErrorDialog("Erreur lors de l'enregistrement de la position");
+      debugPrint('❌ Erreur localisation: $e');
+      _showErrorDialog("Error retrieving your location: ${e.toString()}");
+    }
+  }
+
+  // ✅ NOUVEAU : Ouvrir la carte pour sélection manuelle
+  Future<void> _showManualEntryDialog() async {
+    try {
+      final result = await Navigator.push<LocationResult?>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MapPickerPage(
+            initialLocation: widget.initialLocation,
+          ),
+        ),
+      );
+
+      if (result != null && mounted) {
+        Navigator.pop(context, result);
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur ouverture carte: $e');
+      _showErrorDialog('Error opening map: $e');
     }
   }
 
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Row(
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
           children: [
-            Icon(Icons.error_outline, color: Colors.red),
-            SizedBox(width: 10),
-            Text("Erreur"),
+            const Icon(Icons.error_outline, color: SaloonyColors.error),
+            const SizedBox(width: 10),
+            Text("Error", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
           ],
         ),
-        content: Text(message),
+        content: Text(message, style: GoogleFonts.poppins()),
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SaloonyColors.primary,
+            ),
             onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
+            child: Text("OK", style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
       ),
     );
   }

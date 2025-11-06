@@ -1,15 +1,191 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart';
 import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class SalonService {
-  static String get baseUrl => Config.salonBaseUrl;
+  final String baseUrl = 'http://YOUR_API_URL/api'; // Remplacez par votre URL
   final AuthService _authService = AuthService();
 
-  /// 🏢 Créer un nouveau salon
-  Future<Map<String, dynamic>> createSalon({
+Future<String?> _getAuthToken() async {
+  final token = await _authService.getAccessToken();
+  return token;
+}
+
+
+  /// Vérifier si un spécialiste existe par email
+  Future<Map<String, dynamic>> verifySpecialistEmail(String email) async {
+    try {
+      final token = await _getAuthToken();
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/v1/auth/user/verify-specialist-email?email=$email'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('📧 Vérification email: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur serveur: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur vérification email: $e');
+      return {
+        'success': false,
+        'message': 'Erreur de connexion: $e',
+      };
+    }
+  }
+
+  /// Obtenir tous les traitements disponibles
+  Future<Map<String, dynamic>> getAllTreatments() async {
+    try {
+      final token = await _getAuthToken();
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/treatment/retrieve-all-treatments'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('💆 Récupération traitements: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> treatments = jsonDecode(response.body);
+        return {
+          'success': true,
+          'treatments': treatments,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de la récupération des traitements',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur récupération traitements: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Créer un nouveau traitement
+  Future<Map<String, dynamic>> addTreatment({
+    required String name,
+    required String description,
+    required double price,
+    required double duration,
+    required String category,
+    String? photoPath,
+  }) async {
+    try {
+      final token = await _getAuthToken();
+      
+      final treatmentData = {
+        'treatmentName': name,
+        'treatmentDescription': description,
+        'treatmentPrice': price,
+        'treatmentTime': duration,
+        'treatmentCategory': category,
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/treatment/add-treatment'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(treatmentData),
+      );
+
+      debugPrint('➕ Ajout traitement: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        
+        // Upload photo si disponible
+        if (photoPath != null && data['treatmentId'] != null) {
+          await uploadTreatmentPhoto(data['treatmentId'], photoPath);
+        }
+        
+        return {
+          'success': true,
+          'treatment': data,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de l\'ajout du traitement',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur ajout traitement: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Upload photo de traitement
+  Future<Map<String, dynamic>> uploadTreatmentPhoto(String treatmentId, String imagePath) async {
+    try {
+      final token = await _getAuthToken();
+      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/treatment/$treatmentId/photo'),
+      );
+
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      request.files.add(await http.MultipartFile.fromPath('file', imagePath));
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      debugPrint('📷 Upload photo traitement: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Photo uploadée avec succès',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur upload photo',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur upload photo traitement: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Créer un salon
+   Future<Map<String, dynamic>> createSalon({
+    required BuildContext context,
     required String salonName,
     required String salonDescription,
     required String salonCategory,
@@ -19,286 +195,214 @@ class SalonService {
     required double longitude,
     required List<String> treatmentIds,
     required List<String> specialistIds,
+    List<CustomService>? customServices,
+    Map<String, DayAvailabilityWithSlots>? availability,
   }) async {
     try {
-      final token = await _authService.getAccessToken();
-      
-      if (token == null) {
-        return {
-          'success': false,
-          'message': 'Authentication required'
-        };
-      }
+      final token = await _getAuthToken();
+
+      final salonData = {
+         "salonName": salonName,
+        "salonDescription": salonDescription,
+        "salonCategory": salonCategory,
+        "additionalServices": additionalServices,
+        "genderType": genderType,
+        "latitude": latitude,
+        "longitude": longitude,
+        "treatmentIds": treatmentIds,
+        "specialistIds": specialistIds,
+      };
+
+      debugPrint('📤 Données salon: ${jsonEncode(salonData)}');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/salon/add-salon'),
+        Uri.parse('$baseUrl/salon/create-salon'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          if (token != null) 'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'salonName': salonName,
-          'salonDescription': salonDescription,
-          'salonCategory': salonCategory,
-          'additionalService': additionalServices,
-          'type': genderType,
-          'salonLatitude': latitude,
-          'salonLongitude': longitude,
-          'salonTreatmentsIds': treatmentIds,
-          'salonSpecialistsIds': specialistIds,
-        }),
+        body: jsonEncode(salonData),
       );
 
-      if (response.statusCode == 200) {
+      debugPrint('🏢 Création salon: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         return {
           'success': true,
           'salon': data,
-          'message': 'Salon created successfully'
         };
       } else {
         final error = jsonDecode(response.body);
         return {
           'success': false,
-          'message': error['message'] ?? 'Failed to create salon'
+          'message': error['message'] ?? 'Erreur lors de la création du salon',
         };
       }
     } catch (e) {
-      debugPrint('❌ Error creating salon: $e');
+      debugPrint('❌ Erreur création salon: $e');
       return {
         'success': false,
-        'message': 'Network error: $e'
+        'message': 'Erreur: $e',
       };
     }
   }
 
-  /// 📸 Ajouter une photo au salon
+  /// Ajouter des services personnalisés après la création du salon
+  Future<Map<String, dynamic>> addCustomServices({
+    required String salonId,
+    required List<CustomService> customServices,
+  }) async {
+    try {
+      final token = await _getAuthToken();
+
+      final customServicesData = customServices.map((service) => {
+        'serviceName': service.name,
+        'serviceDescription': service.description,
+        'servicePrice': service.price,
+        'specificGender': service.specificGender,
+        'serviceCategory': service.category,
+      }).toList();
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/salon/$salonId/custom-services'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'services': customServicesData}),
+      );
+
+      debugPrint('➕ Ajout services personnalisés: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': 'Services ajoutés avec succès',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de l\'ajout des services',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur ajout services: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Ajouter la disponibilité après la création du salon
+  Future<Map<String, dynamic>> addSalonAvailability({
+    required String salonId,
+    required Map<String, DayAvailabilityWithSlots> availability,
+  }) async {
+    try {
+      final token = await _getAuthToken();
+
+      final availabilityData = availability.map((key, value) {
+        return MapEntry(key, {
+          'day': key,
+          'isAvailable': value.isAvailable,
+          'startTime': value.timeRange != null 
+              ? '${value.timeRange!.startTime.hour.toString().padLeft(2, '0')}:${value.timeRange!.startTime.minute.toString().padLeft(2, '0')}'
+              : null,
+          'endTime': value.timeRange != null
+              ? '${value.timeRange!.endTime.hour.toString().padLeft(2, '0')}:${value.timeRange!.endTime.minute.toString().padLeft(2, '0')}'
+              : null,
+        });
+      });
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/salon/$salonId/availability'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'availability': availabilityData}),
+      );
+
+      debugPrint('📅 Ajout disponibilité: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': 'Disponibilité ajoutée avec succès',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de l\'ajout de la disponibilité',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur ajout disponibilité: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Ajouter une photo au salon
   Future<Map<String, dynamic>> addSalonPhoto({
     required String salonId,
     required String imagePath,
   }) async {
     try {
-      final token = await _authService.getAccessToken();
+      final token = await _getAuthToken();
       
-      if (token == null) {
-        return {
-          'success': false,
-          'message': 'Authentication required'
-        };
-      }
-
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/api/salon/$salonId/photos'),
+        Uri.parse('$baseUrl/salon/$salonId/photo'),
       );
 
-      request.headers['Authorization'] = 'Bearer $token';
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
       request.files.add(await http.MultipartFile.fromPath('file', imagePath));
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'salon': data,
-          'message': 'Photo added successfully'
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Failed to add photo'
-        };
-      }
-    } catch (e) {
-      debugPrint('❌ Error adding photo: $e');
-      return {
-        'success': false,
-        'message': 'Network error: $e'
-      };
-    }
-  }
-
-  /// 📍 Mettre à jour la localisation du salon
-  Future<Map<String, dynamic>> updateSalonLocation({
-    required String salonId,
-    required double latitude,
-    required double longitude,
-  }) async {
-    try {
-      final token = await _authService.getAccessToken();
-      
-      if (token == null) {
-        return {
-          'success': false,
-          'message': 'Authentication required'
-        };
-      }
-
-      final response = await http.put(
-        Uri.parse('$baseUrl/api/salon/$salonId/update-location?salonLatitude=$latitude&salonLongitude=$longitude'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
+      debugPrint('📷 Upload photo salon: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'message': response.body
+          'message': 'Photo uploadée avec succès',
+          'data': jsonDecode(responseBody),
         };
       } else {
         return {
           'success': false,
-          'message': 'Failed to update location'
+          'message': 'Erreur lors de l\'upload de la photo',
         };
       }
     } catch (e) {
-      debugPrint('❌ Error updating location: $e');
+      debugPrint('❌ Erreur upload photo salon: $e');
       return {
         'success': false,
-        'message': 'Network error: $e'
+        'message': 'Erreur: $e',
       };
     }
   }
 
-  /// 📋 Récupérer tous les traitements disponibles
-  Future<Map<String, dynamic>> getAllTreatments() async {
+  /// Obtenir les détails d'un salon
+  Future<Map<String, dynamic>> getSalonDetails(String salonId) async {
     try {
-      final token = await _authService.getAccessToken();
+      final token = await _getAuthToken();
       
       final response = await http.get(
-        Uri.parse('$baseUrl/api/treatment/retrieve-all-treatments'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'treatments': data
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Failed to fetch treatments'
-        };
-      }
-    } catch (e) {
-      debugPrint('❌ Error fetching treatments: $e');
-      return {
-        'success': false,
-        'message': 'Network error: $e'
-      };
-    }
-  }
-
-  /// 👥 Récupérer tous les spécialistes disponibles
-  Future<Map<String, dynamic>> getAvailableSpecialists() async {
-    try {
-      final token = await _authService.getAccessToken();
-      
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/user/specialists/available'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'specialists': data
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Failed to fetch specialists'
-        };
-      }
-    } catch (e) {
-      debugPrint('❌ Error fetching specialists: $e');
-      return {
-        'success': false,
-        'message': 'Network error: $e'
-      };
-    }
-  }
-
-  /// 🔍 Récupérer un salon par ID
-  Future<Map<String, dynamic>> getSalonById(String salonId) async {
-    try {
-      final token = await _authService.getAccessToken();
-      
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/salon/retrieve-salon/$salonId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'salon': data
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Salon not found'
-        };
-      }
-    } catch (e) {
-      debugPrint('❌ Error fetching salon: $e');
-      return {
-        'success': false,
-        'message': 'Network error: $e'
-      };
-    }
-  }
-
-  /// ✏️ Modifier un salon existant
-  Future<Map<String, dynamic>> updateSalon({
-    required String salonId,
-    required String salonName,
-    required String salonDescription,
-    required String salonCategory,
-    required List<String> additionalServices,
-    required String genderType,
-    required List<String> treatmentIds,
-    required List<String> specialistIds,
-  }) async {
-    try {
-      final token = await _authService.getAccessToken();
-      
-      if (token == null) {
-        return {
-          'success': false,
-          'message': 'Authentication required'
-        };
-      }
-
-      final response = await http.put(
-        Uri.parse('$baseUrl/api/salon/modify-salon'),
+        Uri.parse('$baseUrl/salon/$salonId'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          if (token != null) 'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'salonId': salonId,
-          'salonName': salonName,
-          'salonDescription': salonDescription,
-          'salonCategory': salonCategory,
-          'additionalService': additionalServices,
-          'type': genderType,
-          'salonTreatmentsIds': treatmentIds,
-          'salonSpecialistsIds': specialistIds,
-        }),
       );
 
       if (response.statusCode == 200) {
@@ -306,62 +410,56 @@ class SalonService {
         return {
           'success': true,
           'salon': data,
-          'message': 'Salon updated successfully'
         };
       } else {
-        final error = jsonDecode(response.body);
         return {
           'success': false,
-          'message': error['message'] ?? 'Failed to update salon'
+          'message': 'Salon non trouvé',
         };
       }
     } catch (e) {
-      debugPrint('❌ Error updating salon: $e');
+      debugPrint('❌ Erreur récupération salon: $e');
       return {
         'success': false,
-        'message': 'Network error: $e'
+        'message': 'Erreur: $e',
       };
     }
   }
 
-  /// 🗑️ Supprimer une photo du salon
-  Future<Map<String, dynamic>> deleteSalonPhoto({
+  /// Mettre à jour un salon
+  Future<Map<String, dynamic>> updateSalon({
     required String salonId,
-    required int photoIndex,
+    Map<String, dynamic>? updateData,
   }) async {
     try {
-      final token = await _authService.getAccessToken();
+      final token = await _getAuthToken();
       
-      if (token == null) {
-        return {
-          'success': false,
-          'message': 'Authentication required'
-        };
-      }
-
-      final response = await http.delete(
-        Uri.parse('$baseUrl/api/salon/$salonId/photos/$photoIndex'),
+      final response = await http.put(
+        Uri.parse('$baseUrl/salon/$salonId'),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
         },
+        body: jsonEncode(updateData),
       );
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         return {
           'success': true,
-          'message': 'Photo deleted successfully'
+          'salon': data,
         };
       } else {
         return {
           'success': false,
-          'message': 'Failed to delete photo'
+          'message': 'Erreur lors de la mise à jour',
         };
       }
     } catch (e) {
-      debugPrint('❌ Error deleting photo: $e');
+      debugPrint('❌ Erreur mise à jour salon: $e');
       return {
         'success': false,
-        'message': 'Network error: $e'
+        'message': 'Erreur: $e',
       };
     }
   }

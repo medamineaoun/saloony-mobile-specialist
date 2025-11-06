@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+         
         
         {
             "name": "📱 Flutter - Development",
@@ -67,7 +68,7 @@
             "args": [
                 "--coverage"
             ]
-        },
+        }, 
         {
             "name": "📲 Flutter - Run on Physical Device",
             "request": "launch",

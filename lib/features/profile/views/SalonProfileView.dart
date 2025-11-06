@@ -4,10 +4,10 @@ import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
-bool notificationsEnabled = true; 
+
+bool notificationsEnabled = true;
 
 class ProfileView extends StatelessWidget {
-  
   const ProfileView({super.key});
 
   void _showSideMenu(BuildContext context) {
@@ -19,7 +19,7 @@ class ProfileView extends StatelessWidget {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    // Afficher une boîte de dialogue de confirmation
+    // Show confirmation dialog
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -27,14 +27,14 @@ class ProfileView extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         title: Text(
-          'Déconnexion',
+          'Logout',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: const Color(0xFF1B2B3E),
           ),
         ),
         content: Text(
-          'Êtes-vous sûr de vouloir vous déconnecter ?',
+          'Are you sure you want to log out?',
           style: GoogleFonts.poppins(
             color: const Color(0xFF1B2B3E),
           ),
@@ -43,7 +43,7 @@ class ProfileView extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Annuler',
+              'Cancel',
               style: GoogleFonts.poppins(
                 color: Colors.grey,
                 fontWeight: FontWeight.w600,
@@ -59,7 +59,7 @@ class ProfileView extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Déconnexion',
+              'Logout',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
               ),
@@ -70,17 +70,227 @@ class ProfileView extends StatelessWidget {
     );
 
     if (shouldLogout == true) {
-      // Déconnexion
+      // Logout
       await AuthService().signOut();
       
-      // Navigation vers la page de connexion
+      // Navigate to login page
       if (context.mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/login', // Remplacez par votre route de connexion
+          '/login',
           (route) => false,
         );
       }
     }
+  }
+
+  void _showSalonSettingsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.settings_outlined,
+                      color: const Color(0xFF1B2B3E),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Salon Settings',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1B2B3E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Menu Items
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _buildSalonSettingsMenuItem(
+                      context,
+                      icon: Icons.calendar_today_outlined,
+                      title: 'Appointments',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to appointments page
+                      },
+                    ),
+                    _buildSalonSettingsMenuItem(
+                      context,
+                      icon: Icons.edit_outlined,
+                      title: 'Edit Salon',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to edit salon page
+                      },
+                    ),
+                    _buildSalonSettingsMenuItem(
+                      context,
+                      icon: Icons.room_service_outlined,
+                      title: 'Services',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to services page
+                      },
+                    ),
+                    _buildSalonSettingsMenuItem(
+                      context,
+                      icon: Icons.people_outlined,
+                      title: 'Clients',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to clients page
+                      },
+                    ),
+                    _buildSalonSettingsMenuItem(
+                      context,
+                      icon: Icons.group_outlined,
+                      title: 'Team',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to team page
+                      },
+                    ),
+                    _buildSalonSettingsMenuItem(
+                      context,
+                      icon: Icons.attach_money_outlined,
+                      title: 'Commodity',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to commodity page
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              // Close Button
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B2B3E),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSalonSettingsMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[200]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B2B3E).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: const Color(0xFF1B2B3E),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1B2B3E),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -129,123 +339,112 @@ class ProfileView extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            
-            // Salon Card
-            _buildSalonCard(),
-            const SizedBox(height: 24),
-            
-          
-            // Application Section
-            _buildSection(
-              title: 'Application',
-              items: [
-                _MenuItem(
-                  icon: Icons.settings_outlined,
-                  title: 'Paramètres du salon',
-                  onTap: () {},
-                ),
-                _MenuItem(
-                  icon: Icons.person_outline_rounded,
-                  title: 'Modifier le profil',
-                   onTap: () {
-          Navigator.pushNamed(context, AppRoutes.editProfile);
-        },
-                ),
-                   _MenuItem(
-                  icon: Icons.person_outline_rounded,
-                  title: 'changer le mots de passe',
-                   onTap: () {
-          Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
-        },
-                ),
-                   _MenuItem(
-                  icon: Icons.person_outline_rounded,
-                  title: 'changer email',
-                   onTap: () {
-          Navigator.pushNamed(context, AppRoutes.ChangeEmail);
-        },
-                ),
-                _MenuItem(
-                  icon: Icons.calendar_today_outlined,
-                  title: 'Disponibilité',
-                  onTap: () {
-          Navigator.pushNamed(context, AppRoutes.Disponibilite);
-        },
-                ),
-               
-              ],
-            ),
-            const SizedBox(height: 24),
-            
-            // À propos Section
-            _buildSection(
-              title: 'À propos',
-              items: [
-                _MenuItem(
-                  icon: Icons.description_outlined,
-                  title: 'Conditions d\'utilisation',
-                   onTap: () {
-          Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
-        },
-                ),
-                _MenuItem(
-                  icon: Icons.privacy_tip_outlined,
-                  title: 'Politique de confidentialité',
-                        onTap: () {
-Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
-        },
-          
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            /*
-            // Aide et support Section
-            _buildSection(
-              title: 'Aide et support',
-              items: [
-                _MenuItem(
-                  icon: Icons.help_outline_rounded,
-                  title: 'Centre d\'aide',
-                  onTap: () {},
-                ),
-                _MenuItem(
-                  icon: Icons.headset_mic_outlined,
-                  title: 'Service client',
-                  onTap: () {},
-                ),
-              ],
-            ),*/
-            const SizedBox(height: 24),
-            
-            // Autre Section
-            _buildSection(
-              title: 'Autre',
-              items: [
-                _MenuItem(
-                  icon: Icons.dark_mode_outlined,
-                  title: 'Thème de l\'application',
-                  trailing: 'Light',
-                  onTap: () {},
-                ),
-                _MenuItem(
-                  icon: Icons.language_outlined,
-                  title: 'Langue de l\'application',
-                  trailing: 'Français',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            
-            // Logout Button
-            LogoutButtonWidget(),
-            const SizedBox(height: 40),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              
+              // Salon Card
+              _buildSalonCard(),
+              const SizedBox(height: 24),
+              
+              // Application Section
+              _buildSection(
+                title: 'Application',
+                items: [
+                  _MenuItem(
+                    icon: Icons.settings_outlined,
+                    title: 'Salon Settings',
+                    onTap: () {
+                      _showSalonSettingsMenu(context);
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.person_outline_rounded,
+                    title: 'Edit Profile',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.editProfile);
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.person_outline_rounded,
+                    title: 'Change Password',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.person_outline_rounded,
+                    title: 'Change Email',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.ChangeEmail);
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.calendar_today_outlined,
+                    title: 'Availability',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.Disponibilite);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // About Section
+              _buildSection(
+                title: 'About',
+                items: [
+                  _MenuItem(
+                    icon: Icons.description_outlined,
+                    title: 'Terms of Use',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Privacy Policy',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Other Section
+              _buildSection(
+                title: 'Other',
+                items: [
+                  _MenuItem(
+                    icon: Icons.dark_mode_outlined,
+                    title: 'App Theme',
+                    trailing: 'Light',
+                    onTap: () {},
+                  ),
+                  _MenuItem(
+                    icon: Icons.language_outlined,
+                    title: 'App Language',
+                    trailing: 'English',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Logout Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: LogoutButtonWidget(),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
@@ -266,8 +465,9 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Image du salon
+          // Salon image
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Stack(
@@ -311,17 +511,18 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
             ),
           ),
 
-          // Informations du salon
+          // Salon information
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'Salon de coiffure du capitaine',
+                        'Captain\'s Barber Shop',
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -348,7 +549,7 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
                 const SizedBox(height: 12),
                 _buildInfoRow(Icons.phone_outlined, '+1 234 567 890 000'),
                 const SizedBox(height: 12),
-                _buildInfoRow(Icons.email_outlined, 'exemple@mybarbershop.com'),
+                _buildInfoRow(Icons.email_outlined, 'example@mybarbershop.com'),
                 const SizedBox(height: 12),
                 _buildInfoRow(Icons.location_on_outlined, 'KK 15 AVE, Kigali, RW'),
               ],
@@ -381,8 +582,6 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
     );
   }
 
-
-
   Widget _buildSection({
     required String title,
     required List<_MenuItem> items,
@@ -401,6 +600,7 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -419,6 +619,7 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
             final item = items[index];
             final isLast = index == items.length - 1;
             return Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 InkWell(
                   onTap: item.onTap,
@@ -491,7 +692,6 @@ Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
       ),
     );
   }
-
 }
 
 class _MenuItem {

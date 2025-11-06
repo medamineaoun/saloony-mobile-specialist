@@ -11,48 +11,40 @@ class ProfileEditViewModel extends ChangeNotifier {
   final UserService _userService = UserService();
   final ImagePicker _picker = ImagePicker();
 
-  // État
   bool _isLoading = false;
   bool _isLoadingData = true;
   User? _currentUser;
   File? _imageFile;
   String? _profileImagePath;
 
-  // Champs du formulaire (seulement les modifiables)
   String _firstName = '';
   String _lastName = '';
   String _gender = 'MAN';
 
-  // Champs non-modifiables (pour affichage uniquement)
   String _email = '';
   String _phoneNumber = '';
   String _role = 'CUSTOMER';
 
-  // Getters
   bool get isLoading => _isLoading;
   bool get isLoadingData => _isLoadingData;
   User? get currentUser => _currentUser;
   File? get imageFile => _imageFile;
   
-  // Getter pour l'URL complète de l'image
   String? get profileImageUrl {
     if (_profileImagePath == null || _profileImagePath!.isEmpty) {
       return null;
     }
     
-    // Si c'est déjà une URL complète, la retourner
     if (_profileImagePath!.startsWith('http://') || 
         _profileImagePath!.startsWith('https://')) {
       return _profileImagePath;
     }
     
-    // Sinon, construire l'URL complète
     final baseUrl = Config.userBaseUrl;
     final cleanPath = _profileImagePath!.startsWith('/') 
         ? _profileImagePath!.substring(1) 
         : _profileImagePath!;
     
-    // Extraire le domaine de base sans /api/v1/auth/user
     final uri = Uri.parse(baseUrl);
     final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
     
@@ -64,7 +56,6 @@ class ProfileEditViewModel extends ChangeNotifier {
   String get fullName => '$_firstName $_lastName'.trim();
   String get gender => _gender;
   
-  // Champs en lecture seule
   String get email => _email;
   String get phoneNumber => _phoneNumber;
   String get platformRole => _role;
@@ -76,7 +67,6 @@ class ProfileEditViewModel extends ChangeNotifier {
     _loadCurrentUser();
   }
 
-  // ==================== CHARGEMENT UTILISATEUR ====================
 
   Future<void> _loadCurrentUser() async {
     _isLoadingData = true;
@@ -104,7 +94,6 @@ class ProfileEditViewModel extends ChangeNotifier {
       _gender = _currentUser!.userGender ?? 'MAN';
       _profileImagePath = _currentUser!.profilePhotoPath;
       
-      // Champs non-modifiables
       _email = _currentUser!.userEmail ?? '';
       _phoneNumber = _currentUser!.userPhoneNumber ?? '';
       _role = _currentUser!.appRole ?? 'CUSTOMER';
@@ -114,7 +103,6 @@ class ProfileEditViewModel extends ChangeNotifier {
     }
   }
 
-  // ==================== SETTERS (seulement pour les champs modifiables) ====================
 
   void setFirstName(String value) {
     _firstName = value;
@@ -136,7 +124,6 @@ class ProfileEditViewModel extends ChangeNotifier {
   }
 
   void setGender(String value) {
-    // Convertir de l'affichage vers l'API
     switch (value) {
       case 'Homme':
         _gender = 'MAN';
@@ -150,8 +137,7 @@ class ProfileEditViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================== IMAGE ====================
-
+ 
   Future<void> pickImage() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -200,7 +186,6 @@ class ProfileEditViewModel extends ChangeNotifier {
     try {
       Map<String, dynamic> result;
       
-      // Vérifier si l'utilisateur a déjà une photo
       final hasExistingPhoto = _currentUser?.profilePhotoPath != null && 
                               _currentUser!.profilePhotoPath!.isNotEmpty;
       
@@ -331,7 +316,6 @@ class ProfileEditViewModel extends ChangeNotifier {
     }
   }
 
-  // ==================== HELPERS ====================
 
   String _formatRole(String role) {
     switch (role.toUpperCase()) {

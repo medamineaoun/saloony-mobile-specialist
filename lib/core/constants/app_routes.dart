@@ -12,7 +12,6 @@ import 'package:saloony/features/profile/views/ResetPasswordView.dart';
 import 'package:saloony/features/profile/views/SalonProfileView.dart';
 import 'package:saloony/features/splash/splash_page.dart';
 import 'package:saloony/features/Salon/salon_creation_pages.dart';
-
 import '../../data/models/user_model.dart';
 import '../../features/auth/views/ForgotPasswordWidget.dart';
 import '../../features/auth/views/LinkSentWidget.dart';
@@ -36,17 +35,14 @@ class AppRoutes {
   static const String ResetPasswordP = '/ResetPasswordP';
   static const String ChangeEmail = '/ChangeEmail';
   static const String HelpCenterScreen = '/faq';
-static const String PrivacyPolicy = '/PrivacyPolicy';
-
-static const String salonCreation = '/salon/create';
-static const String verifyEmail = '/verifyEmail';
-static const String verifyResetCode = '/verifyResetCode';
-static const String createsalon = '/createsalon';
-static const String teamMembers = '/teamMembers';
+  static const String PrivacyPolicy = '/PrivacyPolicy';
+  static const String salonCreation = '/salon/create';
+  static const String verifyEmail = '/verifyEmail';
+  static const String verifyResetCode = '/verifyResetCode';
+  static const String createsalon = '/createsalon';
+  static const String teamMembers = '/teamMembers';
   static const String Disponibilite = '/Disponibilite';
-  // Ajouter d'autres routes ici
-
- static Map<String, WidgetBuilder> routes = {
+  static Map<String, WidgetBuilder> routes = {
   signIn: (_) => const SignInWidget(),
   splash: (_) => const SaloonySplashPage(),
   signUp: (_) => const SignUpWidget(),
@@ -65,8 +61,6 @@ static const String teamMembers = '/teamMembers';
  editProfile : (_) => const ProfileEditView(),
   home: (_) => DashboardView(), 
   createsalon: (_) => const SalonCreationFlow(),
-   teamMembers: (_) =>  TeamMembersListView(),
-    Disponibilite: (_) => const DisponibiliteView(), 
    PrivacyPolicy: (_) => const PrivacyPolicyScreen(),
 
 };

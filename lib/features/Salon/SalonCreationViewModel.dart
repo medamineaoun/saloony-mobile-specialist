@@ -1,55 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:saloony/core/enum/SalonCategory.dart';
+import 'package:saloony/core/enum/SalonGenderType.dart';
+import 'package:saloony/core/enum/additional_service.dart';
+import 'package:saloony/core/models/DayAvailability.dart';
+import 'package:saloony/core/models/TeamMember.dart';
+import 'package:saloony/core/models/Treatment.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/core/models/User.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:saloony/core/services/SalonService.dart';
+import 'package:saloony/features/Salon/location_result.dart';
 
 enum AccountType { solo, team }
+
+// Modèle pour les créneaux horaires
+class TimeSlot {
+  final String time;
+  bool isAvailable;
+  
+  TimeSlot({required this.time, this.isAvailable = true});
+}
+
+// Modèle pour l'availability par jour
+class DayAvailabilityWithSlots {
+  final String day;
+  bool isAvailable;
+  TimeRange? timeRange;
+  
+  DayAvailabilityWithSlots({
+    required this.day,
+    this.isAvailable = true,
+    this.timeRange,
+  });
+}
+
+class TimeRange {
+  TimeOfDay startTime;
+  TimeOfDay endTime;
+  
+  TimeRange({required this.startTime, required this.endTime});
+}
+
+// Modèle pour un service personnalisé
+class CustomService {
+  String id;
+  String name;
+  String description;
+  double price;
+  String? photoPath;
+  String? specificGender; // 'Man', 'Woman', ou null pour mixte
+  String category;
+  
+  CustomService({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    this.photoPath,
+    this.specificGender,
+    required this.category,
+  });
+}
 
 class SalonCreationViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController businessNameController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController additionalAddressController = TextEditingController();
   
-  // Données utilisateur
   User? _currentUser;
   bool _isLoadingUser = true;
   bool _isCreatingSalon = false;
-  
-  // Controllers
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController businessNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-
-  // État
   int _currentStep = 0;
-  AccountType? _accountType;
+  SalonCategory? selectedCategory;
   String? _businessImagePath;
   LocationResult? _location;
+  SalonGenderType? _selectedGenderType;
+  List<AdditionalService> _selectedAdditionalServices = [];
   
-  // Nouveaux champs pour les traitements et services
+  // Traitements et services
   List<Treatment> _availableTreatments = [];
   List<String> _selectedTreatmentIds = [];
-  String? _selectedSalonCategory;
-  List<String> _selectedAdditionalServices = [];
-  String? _selectedGenderType;
+  List<CustomService> _customServices = [];
   
-  List<DayAvailability> _availability = [
-    DayAvailability(day: 'Monday', isAvailable: true),
-    DayAvailability(day: 'Tuesday', isAvailable: true),
-    DayAvailability(day: 'Wednesday', isAvailable: true),
-    DayAvailability(day: 'Thursday', isAvailable: true),
-    DayAvailability(day: 'Friday', isAvailable: true),
-    DayAvailability(day: 'Saturday', isAvailable: false),
-    DayAvailability(day: 'Sunday', isAvailable: false),
-  ];
-
-  List<Service> _services = [];
+  // Nouvelle structure d'availability avec time slots
+  Map<String, DayAvailabilityWithSlots> _weeklyAvailability = {
+    'Lundi': DayAvailabilityWithSlots(
+      day: 'Lundi',
+      isAvailable: true,
+      timeRange: TimeRange(
+        startTime: const TimeOfDay(hour: 8, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+      ),
+    ),
+    'Mardi': DayAvailabilityWithSlots(
+      day: 'Mardi',
+      isAvailable: true,
+      timeRange: TimeRange(
+        startTime: const TimeOfDay(hour: 8, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+      ),
+    ),
+    'Mercredi': DayAvailabilityWithSlots(
+      day: 'Mercredi',
+      isAvailable: true,
+      timeRange: TimeRange(
+        startTime: const TimeOfDay(hour: 8, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+      ),
+    ),
+    'Jeudi': DayAvailabilityWithSlots(
+      day: 'Jeudi',
+      isAvailable: true,
+      timeRange: TimeRange(
+        startTime: const TimeOfDay(hour: 8, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+      ),
+    ),
+    'Vendredi': DayAvailabilityWithSlots(
+      day: 'Vendredi',
+      isAvailable: true,
+      timeRange: TimeRange(
+        startTime: const TimeOfDay(hour: 8, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+      ),
+    ),
+    'Samedi': DayAvailabilityWithSlots(
+      day: 'Samedi',
+      isAvailable: false,
+    ),
+    'Dimanche': DayAvailabilityWithSlots(
+      day: 'Dimanche',
+      isAvailable: false,
+    ),
+  };
+  
+  // Équipe
   List<TeamMember> _teamMembers = [];
+  AccountType? _accountType;
 
   // Getters
   User? get currentUser => _currentUser;
@@ -59,49 +150,76 @@ class SalonCreationViewModel extends ChangeNotifier {
   AccountType? get accountType => _accountType;
   String? get businessImagePath => _businessImagePath;
   LocationResult? get location => _location;
-  List<DayAvailability> get availability => _availability;
-  List<Service> get services => _services;
+  Map<String, DayAvailabilityWithSlots> get weeklyAvailability => _weeklyAvailability;
   List<TeamMember> get teamMembers => _teamMembers;
   List<Treatment> get availableTreatments => _availableTreatments;
   List<String> get selectedTreatmentIds => _selectedTreatmentIds;
-  String? get selectedSalonCategory => _selectedSalonCategory;
-  List<String> get selectedAdditionalServices => _selectedAdditionalServices;
-  String? get selectedGenderType => _selectedGenderType;
+  List<CustomService> get customServices => _customServices;
+  SalonGenderType? get selectedGenderType => _selectedGenderType;
+  List<AdditionalService> get selectedAdditionalServices => _selectedAdditionalServices;
+
+  List<AdditionalService> get availableAdditionalServices => AdditionalService.values;
+  List<SalonGenderType> get availableGenderTypes => SalonGenderType.values;
 
   double get progress => (_currentStep + 1) / 7;
 
+  String? get selectedGenderTypeForUI {
+    if (_selectedGenderType == null) return null;
+    switch (_selectedGenderType!) {
+      case SalonGenderType.man:
+        return 'Man';
+      case SalonGenderType.woman:
+        return 'Woman';
+      case SalonGenderType.mixed:
+        return 'Mixed';
+    }
+  }
+
+  List<Map<String, dynamic>> get availableGenderTypesForUI {
+    return [
+      {'value': SalonGenderType.man, 'label': 'Man'},
+      {'value': SalonGenderType.woman, 'label': 'Woman'},
+      {'value': SalonGenderType.mixed, 'label': 'Mixed'},
+    ];
+  }
+
+  String? get selectedGenderTypeString => _selectedGenderType?.name;
+  List<String> get availableGenderTypesStrings => 
+      SalonGenderType.values.map((e) => e.name).toList();
+
+  void setGenderTypeFromString(String typeString) {
+    try {
+      _selectedGenderType = SalonGenderType.fromString(typeString);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Erreur conversion gender type: $e');
+    }
+  }
+
   bool get canContinue {
     switch (_currentStep) {
-      case 0:
-        // Account Type
-        return _accountType != null;
-      case 1:
-        // Account Information
-        return firstNameController.text.trim().isNotEmpty &&
-               lastNameController.text.trim().isNotEmpty &&
-               businessNameController.text.trim().isNotEmpty &&
-               emailController.text.trim().isNotEmpty &&
-               phoneController.text.trim().isNotEmpty &&
-               _isValidEmail(emailController.text.trim());
-      case 2:
-        // Business Details
-        return addressController.text.trim().isNotEmpty &&
-               descriptionController.text.trim().isNotEmpty &&
+      case 0: // Account Information
+        return businessNameController.text.trim().isNotEmpty &&
+               selectedCategory != null;
+               
+      case 1: // Business Details
+        return descriptionController.text.trim().isNotEmpty &&
                _location != null &&
-               _selectedSalonCategory != null &&
+               _businessImagePath != null &&
                _selectedGenderType != null;
-      case 3:
-        // Availability
-        return _availability.any((day) => day.isAvailable);
-      case 4:
-        // Treatments
-        return _selectedTreatmentIds.isNotEmpty;
-      case 5:
-        // Team
-        return _accountType == AccountType.solo || _teamMembers.isNotEmpty;
-      case 6:
-        // Confirmation
+               
+      case 2: // Availability
+        return _weeklyAvailability.values.any((day) => day.isAvailable);
+        
+      case 3: // Treatments
+        return _selectedTreatmentIds.isNotEmpty || _customServices.isNotEmpty;
+        
+      case 4: // Team
+        return true; // Optionnel
+        
+      case 5: // Confirmation
         return true;
+        
       default:
         return false;
     }
@@ -113,24 +231,12 @@ class SalonCreationViewModel extends ChangeNotifier {
     _setupControllerListeners();
   }
 
-  /// 🔔 Configurer les listeners des controllers
   void _setupControllerListeners() {
-    firstNameController.addListener(notifyListeners);
-    lastNameController.addListener(notifyListeners);
     businessNameController.addListener(notifyListeners);
-    emailController.addListener(notifyListeners);
-    phoneController.addListener(notifyListeners);
-    addressController.addListener(notifyListeners);
     descriptionController.addListener(notifyListeners);
+    additionalAddressController.addListener(notifyListeners);
   }
 
-  /// ✉️ Valider le format email
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    return emailRegex.hasMatch(email);
-  }
-
-  /// 📥 Charger les informations de l'utilisateur connecté
   Future<void> _loadCurrentUser() async {
     _isLoadingUser = true;
     notifyListeners();
@@ -140,17 +246,16 @@ class SalonCreationViewModel extends ChangeNotifier {
 
       if (result['success'] == true && result['user'] != null) {
         _currentUser = User.fromJson(result['user']);
-        _prefillUserData();
+        debugPrint('✅ Utilisateur chargé: ${_currentUser?.userFirstName}');
       }
     } catch (e) {
-      debugPrint('❌ Erreur lors du chargement de l\'utilisateur: $e');
+      debugPrint('❌ Erreur chargement utilisateur: $e');
     } finally {
       _isLoadingUser = false;
       notifyListeners();
     }
   }
 
-  /// 📋 Charger les traitements disponibles
   Future<void> _loadAvailableTreatments() async {
     try {
       final result = await _salonService.getAllTreatments();
@@ -159,24 +264,12 @@ class SalonCreationViewModel extends ChangeNotifier {
         _availableTreatments = (result['treatments'] as List)
             .map((json) => Treatment.fromJson(json))
             .toList();
+        debugPrint('✅ ${_availableTreatments.length} traitements chargés');
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('❌ Erreur lors du chargement des traitements: $e');
+      debugPrint('❌ Erreur chargement traitements: $e');
     }
-  }
-
-  /// ✏️ Pré-remplir les champs avec les données utilisateur
-  void _prefillUserData() {
-    if (_currentUser == null) return;
-
-    firstNameController.text = _currentUser!.userFirstName ?? '';
-    lastNameController.text = _currentUser!.userLastName ?? '';
-    emailController.text = _currentUser!.userEmail ?? '';
-    phoneController.text = _currentUser!.userPhoneNumber ?? '';
-
-    debugPrint('✅ Données utilisateur pré-remplies');
-    notifyListeners();
   }
 
   // Setters
@@ -185,22 +278,17 @@ class SalonCreationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSalonCategory(String category) {
-    _selectedSalonCategory = category;
+  void setGenderType(SalonGenderType type) {
+    _selectedGenderType = type;
     notifyListeners();
   }
 
-  void toggleAdditionalService(String service) {
+  void toggleAdditionalService(AdditionalService service) {
     if (_selectedAdditionalServices.contains(service)) {
       _selectedAdditionalServices.remove(service);
     } else {
       _selectedAdditionalServices.add(service);
     }
-    notifyListeners();
-  }
-
-  void setGenderType(String type) {
-    _selectedGenderType = type;
     notifyListeners();
   }
 
@@ -215,7 +303,6 @@ class SalonCreationViewModel extends ChangeNotifier {
 
   void setLocation(LocationResult location) {
     _location = location;
-    addressController.text = location.address;
     notifyListeners();
   }
 
@@ -228,28 +315,43 @@ class SalonCreationViewModel extends ChangeNotifier {
       
       if (image != null) {
         _businessImagePath = image.path;
+        debugPrint('✅ Image sélectionnée: $_businessImagePath');
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('❌ Erreur lors de la sélection d\'image: $e');
+      debugPrint('❌ Erreur sélection image: $e');
     }
   }
 
-  void toggleDayAvailability(int index) {
-    _availability[index].isAvailable = !_availability[index].isAvailable;
+ 
+
+  void setDayTimeRange(String day, TimeOfDay start, TimeOfDay end) {
+    if (_weeklyAvailability.containsKey(day)) {
+      _weeklyAvailability[day]!.timeRange = TimeRange(startTime: start, endTime: end);
+      notifyListeners();
+    }
+  }
+
+  // Gestion des services personnalisés
+  void addCustomService(CustomService service) {
+    _customServices.add(service);
     notifyListeners();
   }
 
-  void addService(Service service) {
-    _services.add(service);
+  void removeCustomService(String serviceId) {
+    _customServices.removeWhere((s) => s.id == serviceId);
     notifyListeners();
   }
 
-  void removeService(String serviceId) {
-    _services.removeWhere((s) => s.id == serviceId);
-    notifyListeners();
+  void updateCustomService(CustomService service) {
+    final index = _customServices.indexWhere((s) => s.id == service.id);
+    if (index != -1) {
+      _customServices[index] = service;
+      notifyListeners();
+    }
   }
 
+  // Gestion de l'équipe
   void addTeamMember(TeamMember member) {
     _teamMembers.add(member);
     notifyListeners();
@@ -260,8 +362,19 @@ class SalonCreationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Vérifier si un spécialiste existe par email
+  Future<Map<String, dynamic>> verifySpecialistByEmail(String email) async {
+    try {
+      final result = await _salonService.verifySpecialistEmail(email);
+      return result;
+    } catch (e) {
+      debugPrint('❌ Erreur vérification email: $e');
+      return {'success': false, 'message': 'Erreur de vérification'};
+    }
+  }
+
   void nextStep(BuildContext context) {
-    if (_currentStep < 6) {
+    if (_currentStep < 5) {
       _currentStep++;
       notifyListeners();
     } else {
@@ -276,6 +389,11 @@ class SalonCreationViewModel extends ChangeNotifier {
     }
   }
 
+  void setCategory(SalonCategory category) {
+    selectedCategory = category;
+    notifyListeners();
+  }
+
   Future<void> _finishCreation(BuildContext context) async {
     if (_isCreatingSalon) return;
 
@@ -283,59 +401,93 @@ class SalonCreationViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Validation finale
       if (_location == null) {
-        _showError(context, 'Please select a location on the map');
+        _showError(context, 'Veuillez sélectionner un emplacement');
         return;
       }
 
-      if (_selectedTreatmentIds.isEmpty) {
-        _showError(context, 'Please select at least one treatment');
+      if (_selectedTreatmentIds.isEmpty && _customServices.isEmpty) {
+        _showError(context, 'Veuillez sélectionner au moins un traitement');
         return;
       }
 
-      // Obtenir les IDs des spécialistes
+      if (selectedCategory == null) {
+        _showError(context, 'Veuillez sélectionner une catégorie');
+        return;
+      }
+
+      if (_selectedGenderType == null) {
+        _showError(context, 'Veuillez sélectionner le type de clientèle');
+        return;
+      }
+
       List<String> specialistIds = [];
-      if (_accountType == AccountType.solo && _currentUser != null) {
+      if (_currentUser != null) {
         specialistIds = [_currentUser!.userId!];
-      } else {
-        specialistIds = _teamMembers.map((m) => m.id).toList();
       }
+      
+      specialistIds.addAll(_teamMembers.map((m) => m.id));
 
       if (specialistIds.isEmpty) {
-        _showError(context, 'Please add at least one team member');
+        _showError(context, 'Erreur: utilisateur non identifié');
         return;
       }
 
-      // Étape 1: Créer le salon
+      final List<String> additionalServicesStrings = _selectedAdditionalServices
+          .map((service) => service.toJson())
+          .toList();
+
+      debugPrint('📤 Création du salon...');
+      debugPrint('Nom: ${businessNameController.text}');
+      debugPrint('Catégorie: ${selectedCategory!.name}');
+      debugPrint('Gender Type: ${_selectedGenderType!.name}');
+      debugPrint('Services additionnels: $additionalServicesStrings');
+      debugPrint('Traitements: ${_selectedTreatmentIds.length}');
+      debugPrint('Services personnalisés: ${_customServices.length}');
+      debugPrint('Spécialistes: ${specialistIds.length}');
+
       final createResult = await _salonService.createSalon(
-        salonName: businessNameController.text,
-        salonDescription: descriptionController.text,
-        salonCategory: _selectedSalonCategory!,
-        additionalServices: _selectedAdditionalServices,
-        genderType: _selectedGenderType!,
+          context: context, 
+        salonName: businessNameController.text.trim(),
+        salonDescription: descriptionController.text.trim(),
+        salonCategory: selectedCategory!.name,
+        additionalServices: additionalServicesStrings,
+        genderType: _selectedGenderType!.toJson(),
         latitude: _location!.latitude,
         longitude: _location!.longitude,
         treatmentIds: _selectedTreatmentIds,
         specialistIds: specialistIds,
+        customServices: _customServices,
+        availability: _weeklyAvailability,
       );
 
       if (!createResult['success']) {
-        _showError(context, createResult['message']);
+        _showError(context, createResult['message'] ?? 'Erreur lors de la création');
         return;
       }
 
-      final salonId = createResult['salon']['salonId'];
+      final salonId = createResult['salon']?['salonId'];
+      if (salonId == null) {
+        _showError(context, 'Erreur: ID du salon non reçu');
+        return;
+      }
 
-      // Étape 2: Ajouter la photo si disponible
+      debugPrint('✅ Salon créé: $salonId');
+
       if (_businessImagePath != null) {
-        await _salonService.addSalonPhoto(
+        debugPrint('📷 Upload de la photo...');
+        final photoResult = await _salonService.addSalonPhoto(
           salonId: salonId,
           imagePath: _businessImagePath!,
         );
+        
+        if (photoResult['success']) {
+          debugPrint('✅ Photo uploadée');
+        } else {
+          debugPrint('⚠️ Photo non uploadée: ${photoResult['message']}');
+        }
       }
 
-      // Succès
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -345,12 +497,12 @@ class SalonCreationViewModel extends ChangeNotifier {
           ),
         );
 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
-      debugPrint('❌ Erreur lors de la création du salon: $e');
+      debugPrint('❌ Erreur création salon: $e');
       if (context.mounted) {
-        _showError(context, 'Une erreur est survenue: $e');
+        _showError(context, 'Erreur: ${e.toString()}');
       }
     } finally {
       _isCreatingSalon = false;
@@ -368,164 +520,247 @@ class SalonCreationViewModel extends ChangeNotifier {
     );
   }
 
-  void showAddServiceDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final descController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Service'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Service Name'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Description (optional)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                addService(Service(
-                  id: DateTime.now().toString(),
-                  name: nameController.text,
-                  description: descController.text,
-                ));
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void showAddTeamMemberDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final specialtyController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Team Member'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Full Name'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: specialtyController,
-              decoration: const InputDecoration(labelText: 'Specialty'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                addTeamMember(TeamMember(
-                  id: DateTime.now().toString(),
-                  fullName: nameController.text,
-                  specialty: specialtyController.text,
-                ));
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   void dispose() {
-    firstNameController.dispose();
-    lastNameController.dispose();
     businessNameController.dispose();
-    emailController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
     descriptionController.dispose();
+    additionalAddressController.dispose();
     super.dispose();
   }
+List<DayAvailabilityWithSlots> get availability {
+  return _weeklyAvailability.values.toList();
 }
-
-// Models
-class DayAvailability {
-  final String day;
-  bool isAvailable;
-
-  DayAvailability({required this.day, required this.isAvailable});
-}
-
-class Service {
-  final String id;
-  final String name;
-  final String description;
-
-  Service({required this.id, required this.name, required this.description});
-}
-
-class TeamMember {
-  final String id;
-  final String fullName;
-  final String specialty;
-
-  TeamMember({required this.id, required this.fullName, required this.specialty});
-}
-
-class LocationResult {
-  final double latitude;
-  final double longitude;
-  final String address;
-
-  LocationResult({
-    required this.latitude,
-    required this.longitude,
-    required this.address,
-  });
-}
-
-class Treatment {
-  final String treatmentId;
-  final String treatmentName;
-  final String treatmentDescription;
-  final String treatmentCategory;
-
-  Treatment({
-    required this.treatmentId,
-    required this.treatmentName,
-    required this.treatmentDescription,
-    required this.treatmentCategory,
-  });
-
-  factory Treatment.fromJson(Map<String, dynamic> json) {
-    return Treatment(
-      treatmentId: json['treatmentId'],
-      treatmentName: json['treatmentName'],
-      treatmentDescription: json['treatmentDescription'] ?? '',
-      treatmentCategory: json['treatmentCategory'],
-    );
+void toggleDayAvailability(int index) {
+  if (index >= 0 && index < _weeklyAvailability.values.length) {
+    final day = _weeklyAvailability.values.toList()[index];
+    day.isAvailable = !day.isAvailable;
+    notifyListeners();
   }
+}
+void showAddTeamMemberDialog(BuildContext context) {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final specialtyController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF1B2B3E).withOpacity(0.1),
+                  const Color(0xFFF0CD97).withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.person_add_alt_1_outlined,
+              color: Color(0xFF1B2B3E),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Add Team Member',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1B2B3E),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            _buildTeamMemberTextField(
+              controller: nameController,
+              label: 'Full Name',
+              hint: 'Enter full name',
+              icon: Icons.person_outline,
+            ),
+            const SizedBox(height: 16),
+            _buildTeamMemberTextField(
+              controller: emailController,
+              label: 'Email',
+              hint: 'Enter email address',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            _buildTeamMemberTextField(
+              controller: specialtyController,
+              label: 'Specialty',
+              hint: 'e.g., Hair Stylist, Barber, Nail Technician',
+              icon: Icons.work_outline,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.grey[600],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          child: Text(
+            'Cancel',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1B2B3E), Color(0xFF2A3F54)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              final email = emailController.text.trim();
+              final specialty = specialtyController.text.trim();
+
+              if (name.isEmpty || email.isEmpty || specialty.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Please fill all fields',
+                      style: GoogleFonts.inter(),
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              // Verify if the email belongs to a registered specialist
+              final verificationResult = await verifySpecialistByEmail(email);
+              
+              if (verificationResult['success'] == true && 
+                  verificationResult['user'] != null) {
+                final userData = verificationResult['user'];
+                
+                final teamMember = TeamMember(
+                  id: userData['userId'],
+                  fullName: name,
+                  email: email,
+                  specialty: specialty,
+                 
+                );
+
+                addTeamMember(teamMember);
+                Navigator.pop(context);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Team member added successfully!',
+                      style: GoogleFonts.inter(),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      verificationResult['message'] ?? 'User not found. Please make sure the specialist is registered in the app.',
+                      style: GoogleFonts.inter(),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: Text(
+              'Add Member',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Helper method for text fields in the dialog
+Widget _buildTeamMemberTextField({
+  required TextEditingController controller,
+  required String label,
+  required String hint,
+  required IconData icon,
+  TextInputType keyboardType = TextInputType.text,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF1B2B3E),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F7FA),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!, width: 1),
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1B2B3E),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.inter(
+              color: Colors.grey[500],
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: const Color(0xFFF0CD97),
+              size: 20,
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ),
+    ],
+  );
+}
 }

@@ -66,7 +66,6 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
     setState(() => _isLoading = true);
 
     try {
-      // Envoyer le code à l'email actuel
       final result = await _authService.requestPasswordReset(_currentEmail);
 
       if (mounted) {

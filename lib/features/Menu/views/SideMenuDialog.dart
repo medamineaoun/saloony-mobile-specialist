@@ -97,67 +97,72 @@ class SideMenuDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      children: [
-        // Dashboard (highlighted)
-        Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1B2B3E), Color(0xFF243441)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1B2B3E).withOpacity(0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
+  return ListView(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    children: [
+      // Dashboard
+      Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1B2B3E), Color(0xFF243441)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
           ),
-          child: ListTile(
-            leading: const Icon(
-              Icons.dashboard_rounded,
-              color: Color(0xFFF0CD97),
-              size: 22,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B2B3E).withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            title: Text(
-              'Dashboard',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFFF0CD97),
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
-            ),
-            onTap: () {
-              viewModel.selectMenuItem('/home');
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/home');
-            },
-          ),
+          ],
         ),
-
-        // Other menu items
-        for (var item in viewModel.menuItems.skip(1))
-          _MenuItemTile(
-            icon: item.icon,
-            title: item.title,
-            isSelected: viewModel.selectedRoute == item.route,
-            onTap: () {
-              viewModel.selectMenuItem(item.route!);
-              Navigator.pop(context);
-              if (item.route != null) {
-                Navigator.pushNamed(context, item.route!);
-              }
-            },
+        child: ListTile(
+          leading: const Icon(
+            Icons.dashboard_rounded,
+            color: Color(0xFFF0CD97),
+            size: 22,
           ),
-      ],
-    );
-  }
+          title: Text(
+            'Dashboard',
+            style: GoogleFonts.poppins(
+              color: const Color(0xFFF0CD97),
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
+          ),
+          onTap: () {
+            viewModel.selectMenuItem('/home');
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/home');
+          },
+        ),
+      ),
+
+      // autres items
+      for (var item in viewModel.menuItems.where((item) {
+        if (item.title == 'Create Salon') {
+          return !viewModel.hasSalon; // cacher si user a déjà un salon
+        }
+        return true;
+      }))
+        _MenuItemTile(
+          icon: item.icon,
+          title: item.title,
+          isSelected: viewModel.selectedRoute == item.route,
+          onTap: () {
+            viewModel.selectMenuItem(item.route!);
+            Navigator.pop(context);
+            if (item.route != null) {
+              Navigator.pushNamed(context, item.route!);
+            }
+          },
+        ),
+    ],
+  );
+}
 
   Widget _buildUserProfile(MenuViewModel viewModel, BuildContext context) {
     // Afficher un loader pendant le chargement

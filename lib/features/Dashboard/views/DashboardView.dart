@@ -26,17 +26,11 @@ class DashboardView extends StatelessWidget {
                   const SizedBox(height: 24),
                   _buildUpcomingSection(viewModel),
                   const SizedBox(height: 24),
-                  BenefitsSummaryWidget(benefits: viewModel.benefits),
                   const SizedBox(height: 24),
                   _buildTrialBanner(viewModel),
                   const SizedBox(height: 24),
-                  UnreadMessagesWidget(messages: viewModel.unreadMessages),
                   const SizedBox(height: 24),
-                  PendingRequestsWidget(
-                    requests: viewModel.pendingRequests,
-                    onAccept: viewModel.acceptRequest,
-                    onReject: viewModel.rejectRequest,
-                  ),
+               
                   const SizedBox(height: 40),
                 ],
               ),
@@ -232,9 +226,7 @@ class DashboardView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...viewModel.upcomingAppointments.map(
-          (appointment) => AppointmentCardWidget(appointment: appointment),
-        ),
+       
       ],
     );
   }
