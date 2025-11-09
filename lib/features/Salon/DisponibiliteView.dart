@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class AvailabilityPage extends StatefulWidget {
-  const AvailabilityPage({super.key});
+ final SalonCreationViewModel vm;
 
+  const AvailabilityPage({super.key, required this.vm});
   @override
   State<AvailabilityPage> createState() => _AvailabilityPageState();
 }

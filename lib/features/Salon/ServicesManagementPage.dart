@@ -7,8 +7,9 @@ import 'package:saloony/core/enum/TreatmentCategory.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class ServicesManagementPage extends StatefulWidget {
-  const ServicesManagementPage({super.key});
+final SalonCreationViewModel vm;
 
+  const ServicesManagementPage({super.key, required this.vm});
   @override
   State<ServicesManagementPage> createState() => _ServicesManagementPageState();
 }

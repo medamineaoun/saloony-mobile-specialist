@@ -5,7 +5,10 @@ import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 import 'package:saloony/core/models/TeamMember.dart';
 
 class TeamManagementPage extends StatefulWidget {
-  const TeamManagementPage({super.key});
+ 
+  final SalonCreationViewModel vm;
+
+  const TeamManagementPage({super.key, required this.vm});
 
   @override
   State<TeamManagementPage> createState() => _TeamManagementPageState();

@@ -221,90 +221,110 @@ class SalonService {
     }
   }
 
-  /// Créer un salon
-  Future<Map<String, dynamic>> createSalon({
-    required BuildContext context,
-    required String salonName,
-    required String salonDescription,
-    required String salonCategory,
-    required List<String> additionalServices,
-    required String genderType,
-    required double latitude,
-    required double longitude,
-    required List<String> treatmentIds,
-    required List<String> specialistIds,
-    List<CustomService>? customServices,
-    Map<String, DayAvailabilityWithSlots>? availability,
-  }) async {
-    try {
-      final token = await _getAuthToken();
 
-      final salonData = {
-        "salonName": salonName,
-        "salonDescription": salonDescription,
-        "salonCategory": salonCategory,
-        "additionalServices": additionalServices,
-        "genderType": genderType,
-        "latitude": latitude,
-        "longitude": longitude,
-        "treatmentIds": treatmentIds,
-        "specialistIds": specialistIds,
+// Dans SalonService - méthode createSalon
+Future<Map<String, dynamic>> createSalon({
+  required String salonName,
+  required String salonDescription,
+  required String salonCategory,
+  required List<String> additionalServices,
+  required String genderType,
+  required double latitude,
+  required double longitude,
+  required List<String> treatmentIds,
+  required List<String> specialistIds,
+  List<CustomService>? customServices,
+  Map<String, dynamic>? availability,
+}) async {
+  try {
+    final token = await _getAuthToken();
+
+    final salonData = {
+      "salonName": salonName,
+      "salonDescription": salonDescription,
+      "salonCategory": salonCategory,
+      "additionalService": additionalServices,
+      "salonGenderType": genderType, // CORRECTION: salonGenderType au lieu de genderType
+      "salonLatitude": latitude,     // CORRECTION: salonLatitude au lieu de latitude
+      "salonLongitude": longitude,   // CORRECTION: salonLongitude au lieu de longitude
+      "salonTreatmentsIds": treatmentIds, // CORRECTION: salonTreatmentsIds au lieu de treatmentIds
+      "salonSpecialistsIds": specialistIds, // CORRECTION: salonSpecialistsIds au lieu de specialistIds
+      "salonAvailabilities": _formatAvailabilitiesForApi(availability),
+    };
+
+    debugPrint('📤 Données salon (format API): ${jsonEncode(salonData)}');
+
+    final response = await http.post(
+      Uri.parse('${Config.salonBaseUrl}/add-salon'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(salonData),
+    );
+
+    debugPrint('🏢 Création salon: ${response.statusCode}');
+    debugPrint('🏢 Réponse: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return {
+        'success': true,
+        'salon': data,
       };
-
-      debugPrint('📤 Données salon: ${jsonEncode(salonData)}');
-
-      final response = await http.post(
-        Uri.parse('${Config.salonBaseUrl}/add-salon'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(salonData),
-      );
-
-      debugPrint('🏢 Création salon: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        
-        // Ajouter les services personnalisés si fournis
-        if (customServices != null && customServices.isNotEmpty) {
-          await addCustomServices(
-            salonId: data['salonId'] ?? data['id'],
-            customServices: customServices,
-          );
-        }
-        
-        // Ajouter la disponibilité si fournie
-        if (availability != null) {
-          await addSalonAvailability(
-            salonId: data['salonId'] ?? data['id'],
-            availability: availability,
-          );
-        }
-        
-        return {
-          'success': true,
-          'salon': data,
-        };
-      } else {
-        final error = jsonDecode(response.body);
-        return {
-          'success': false,
-          'message': error['message'] ?? 'Erreur lors de la création du salon',
-        };
-      }
-    } catch (e) {
-      debugPrint('❌ Erreur création salon: $e');
+    } else {
+      final error = jsonDecode(response.body);
       return {
         'success': false,
-        'message': 'Erreur: $e',
+        'message': error['message'] ?? 'Erreur lors de la création du salon',
       };
     }
+  } catch (e) {
+    debugPrint('❌ Erreur création salon: $e');
+    return {
+      'success': false,
+      'message': 'Erreur: $e',
+    };
   }
-
-  /// Ajouter des services personnalisés après la création du salon
-  Future<Map<String, dynamic>> addCustomServices({
+}
+// Dans SalonService - méthode _formatAvailabilitiesForApi
+List<Map<String, dynamic>> _formatAvailabilitiesForApi(Map<String, dynamic>? availability) {
+  if (availability == null) return [];
+  
+  final List<Map<String, dynamic>> availabilities = [];
+  final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  
+  for (final day in days) {
+    final dayKey = day;
+    final dayData = availability[dayKey];
+    
+    if (dayData != null && dayData is Map<String, dynamic>) {
+      final availabilityEntry = {
+        'dayOfWeek': dayData['dayOfWeek'],
+        'available': dayData['available'],
+      };
+      
+      // Ajouter fromHour et toHour seulement si available est true
+      if (dayData['available'] == true) {
+        availabilityEntry['fromHour'] = dayData['fromHour'];
+        availabilityEntry['toHour'] = dayData['toHour'];
+      } else {
+        availabilityEntry['fromHour'] = null;
+        availabilityEntry['toHour'] = null;
+      }
+      
+      availabilities.add(availabilityEntry);
+    }
+  }
+  
+  debugPrint('📅 Disponibilités formatées pour API: ${availabilities.length} jours');
+  for (final avail in availabilities) {
+    debugPrint('  - ${avail['dayOfWeek']}: ${avail['available']} (${avail['fromHour']} - ${avail['toHour']})');
+  }
+  
+  return availabilities;
+}
+Future<Map<String, dynamic>> addCustomServices({
     required String salonId,
     required List<CustomService> customServices,
   }) async {
