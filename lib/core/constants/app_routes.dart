@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:saloony/features/Dashboard/views/DashboardView.dart';
-import 'package:saloony/features/TeamManagement/views/team_members_list_view.dart';
+import 'package:saloony/features/Salon/team_members_list_view.dart';
 import 'package:saloony/features/auth/views/VerifyEmailWidget.dart';
 import 'package:saloony/features/auth/views/VerifyResetCodeWidget.dart';
-import 'package:saloony/features/availability/views/DisponibiliteView.dart';
+import 'package:saloony/features/Salon/DisponibiliteView.dart';
 import 'package:saloony/features/profile/views/ChangeEmailView.dart';
 import 'package:saloony/features/profile/views/HelpCenterScreen.dart';
 import 'package:saloony/features/profile/views/PrivacyPolicyScreen.dart';

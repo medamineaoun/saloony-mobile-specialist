@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/enum/SalonCategory.dart';
+import 'package:saloony/core/enum/additional_service.dart';
+import 'package:saloony/features/Salon/AdditionalServicesPage.dart';
+import 'package:saloony/features/Salon/DisponibiliteView.dart';
 import 'package:saloony/features/Salon/LocalisationPage.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 import 'package:saloony/features/Salon/location_result.dart';
+import 'package:saloony/features/Salon/ServicesManagementPage.dart';
+import 'package:saloony/features/Salon/team_members_list_view.dart';
 
 class SalonCreationFlow extends StatelessWidget {
   const SalonCreationFlow({super.key});
@@ -273,24 +278,25 @@ class SalonCreationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStepContent(BuildContext context, SalonCreationViewModel vm) {
-    switch (vm.currentStep) {
-      case 0:
-        return _accountInfoStep(context, vm);
-      case 1:
-        return _businessDetailsStep(context, vm);
-      case 2:
-        return _availabilityStep(context, vm);
-      case 3:
-        return _treatmentsStep(context, vm);
-      case 4:
-        return _teamStep(context, vm);
-      case 5:
-      default:
-        return _confirmationStep(context, vm);
-    }
+Widget _buildStepContent(BuildContext context, SalonCreationViewModel vm) {
+  switch (vm.currentStep) {
+    case 0:
+      return _accountInfoStep(context, vm);
+    case 1:
+      return _businessDetailsStep(context, vm);
+    case 2:
+      return _additionalServicesStep(context, vm); // NOUVELLE ÉTAPE
+    case 3:
+      return _availabilityStep(context, vm);
+    case 4:
+      return _treatmentsStep(context, vm);
+    case 5:
+      return _teamStep(context, vm);
+    case 6:
+    default:
+      return _confirmationStep(context, vm);
   }
-
+}
   Widget _accountInfoStep(BuildContext context, SalonCreationViewModel vm) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,7 +530,277 @@ Container(
       ],
     );
   }
+Widget _additionalServicesStep(BuildContext context, SalonCreationViewModel vm) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildStepHeader(
+        'Additional Services',
+        'Select amenities and facilities you offer',
+        Icons.emoji_food_beverage_outlined,
+      ),
+      const SizedBox(height: 32),
+      
+      // Bouton pour naviguer vers la page des services additionnels
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF1B2B3E).withOpacity(0.05),
+              const Color(0xFFF0CD97).withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey[200]!, width: 1),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0CD97).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.emoji_food_beverage_outlined,
+                    color: Color(0xFF1B2B3E),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Additional Services & Amenities',
+                    style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1B2B3E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Select WiFi, parking, amenities and other services that make your salon stand out',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final result = await Navigator.push<List<AdditionalService>?>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AdditionalServicesPage(
+                        initialServices: vm.selectedAdditionalServices,
+                      ),
+                    ),
+                  );
+                  
+                  if (result != null) {
+                    vm.setAdditionalServices(result);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B2B3E),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      vm.selectedAdditionalServices.isEmpty 
+                          ? Icons.add_circle_outline 
+                          : Icons.edit_outlined,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      vm.selectedAdditionalServices.isEmpty 
+                          ? 'Select Additional Services' 
+                          : 'Edit Selected Services',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Affichage des services sélectionnés
+            if (vm.selectedAdditionalServices.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFF0CD97).withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.green[50],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.check_circle,
+                            color: Colors.green[600],
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${vm.selectedAdditionalServices.length} services selected',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: vm.selectedAdditionalServices.take(5).map((service) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B2B3E).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _getAdditionalServiceLabel(service),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF1B2B3E),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    if (vm.selectedAdditionalServices.length > 5) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '+ ${vm.selectedAdditionalServices.length - 5} more',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 24),
+      
+      // Section d'information
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B2B3E).withOpacity(0.03),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 18,
+              color: Colors.blue[600],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Adding services helps customers find your salon and improves your visibility in search results.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
+// Méthode utilitaire pour obtenir le libellé d'un service
+String _getAdditionalServiceLabel(AdditionalService service) {
+  switch (service) {
+    case AdditionalService.wifi:
+      return 'WiFi';
+    case AdditionalService.tv:
+      return 'TV';
+    case AdditionalService.backgroundMusic:
+      return 'Music';
+    case AdditionalService.airConditioning:
+      return 'A/C';
+    case AdditionalService.heating:
+      return 'Heating';
+    case AdditionalService.coffeeTea:
+      return 'Coffee & Tea';
+    case AdditionalService.drinksSnacks:
+      return 'Drinks & Snacks';
+    case AdditionalService.freeParking:
+      return 'Free Parking';
+    case AdditionalService.paidParking:
+      return 'Paid Parking';
+    case AdditionalService.publicTransportAccess:
+      return 'Public Transport';
+    case AdditionalService.wheelchairAccessible:
+      return 'Wheelchair Access';
+    case AdditionalService.childFriendly:
+      return 'Child Friendly';
+    case AdditionalService.shower:
+      return 'Shower';
+    case AdditionalService.lockers:
+      return 'Lockers';
+    case AdditionalService.creditCardAccepted:
+      return 'Credit Cards';
+    case AdditionalService.mobilePayment:
+      return 'Mobile Payment';
+    case AdditionalService.securityCameras:
+      return 'Security';
+    case AdditionalService.petFriendly:
+      return 'Pet Friendly';
+    case AdditionalService.noPets:
+      return 'No Pets';
+    case AdditionalService.smokingAllowed:
+      return 'Smoking Allowed';
+    case AdditionalService.nonSmoking:
+      return 'Non-Smoking';
+  }
+}
   Widget _buildLocationSection(BuildContext context, SalonCreationViewModel vm) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -687,399 +963,18 @@ Container(
       ),
     );
   }
+Widget _availabilityStep(BuildContext context, SalonCreationViewModel vm) {
+  return const AvailabilityPage();
+}
 
-  Widget _availabilityStep(BuildContext context, SalonCreationViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStepHeader(
-          'Availability',
-          'Set your working days',
-          Icons.calendar_today_outlined,
-        ),
-        const SizedBox(height: 32),
-        ...List.generate(vm.availability.length, (index) {
-          final day = vm.availability[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: day.isAvailable 
-                    ? const Color(0xFFF0CD97).withOpacity(0.3) 
-                    : Colors.grey[200]!,
-                width: day.isAvailable ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: day.isAvailable 
-                      ? const Color(0xFF1B2B3E).withOpacity(0.06)
-                      : Colors.black.withOpacity(0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: day.isAvailable
-                        ? LinearGradient(
-                            colors: [
-                              const Color(0xFF1B2B3E).withOpacity(0.1),
-                              const Color(0xFFF0CD97).withOpacity(0.1),
-                            ],
-                          )
-                        : LinearGradient(
-                            colors: [Colors.grey[100]!, Colors.grey[100]!],
-                          ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.calendar_month_outlined,
-                    size: 22,
-                    color: day.isAvailable ? const Color(0xFF1B2B3E) : Colors.grey[400],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    day.day,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: day.isAvailable ? const Color(0xFF1B2B3E) : Colors.grey[500],
-                    ),
-                  ),
-                ),
-                Switch(
-                  value: day.isAvailable,
-                  onChanged: (_) => vm.toggleDayAvailability(index),
-                  activeColor: const Color(0xFFF0CD97),
-                  activeTrackColor: const Color(0xFF1B2B3E),
-                ),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
 
   Widget _treatmentsStep(BuildContext context, SalonCreationViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStepHeader(
-          'Services & Treatments',
-          'Select the treatments you offer',
-          Icons.spa_outlined,
-        ),
-        const SizedBox(height: 32),
-        if (vm.availableTreatments.isEmpty)
-          Center(
-            child: Column(
-              children: [
-                const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B2B3E)),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Loading treatments...',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ...vm.availableTreatments.map((treatment) {
-            final isSelected = vm.selectedTreatmentIds.contains(treatment.treatmentId);
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected 
-                      ? const Color(0xFF1B2B3E) 
-                      : Colors.grey[200]!,
-                  width: isSelected ? 2 : 1,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF1B2B3E).withOpacity(0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => vm.toggleTreatmentSelection(treatment.treatmentId),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? LinearGradient(
-                                    colors: [
-                                      const Color(0xFF1B2B3E).withOpacity(0.1),
-                                      const Color(0xFFF0CD97).withOpacity(0.1),
-                                    ],
-                                  )
-                                : LinearGradient(
-                                    colors: [Colors.grey[100]!, Colors.grey[100]!],
-                                  ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.spa_outlined,
-                            color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[400],
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                treatment.treatmentName,
-                                style: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1B2B3E),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                treatment.treatmentDescription,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isSelected 
-                                ? const Color(0xFF1B2B3E) 
-                                : Colors.transparent,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected 
-                                  ? const Color(0xFF1B2B3E) 
-                                  : Colors.grey[300]!,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.check,
-                            color: isSelected ? const Color(0xFFF0CD97) : Colors.transparent,
-                            size: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-      ],
-    );
-  }
+  return const ServicesManagementPage();
+}
 
   Widget _teamStep(BuildContext context, SalonCreationViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStepHeader(
-          'Team Members',
-          vm.accountType == AccountType.solo
-              ? 'Optional: Add team members'
-              : 'Add your team members',
-          Icons.group_outlined,
-        ),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => vm.showAddTeamMemberDialog(context),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF1B2B3E), width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            icon: const Icon(Icons.person_add_outlined, color: Color(0xFF1B2B3E)),
-            label: Text(
-              'Add Team Member',
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1B2B3E),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        if (vm.teamMembers.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(48),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey[200]!, width: 1),
-            ),
-            child: Center(
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.people_outline,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No team members yet',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Add team members to collaborate',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          ...vm.teamMembers.map((member) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[200]!, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF1B2B3E).withOpacity(0.1),
-                            const Color(0xFFF0CD97).withOpacity(0.1),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.person_outline,
-                        color: Color(0xFF1B2B3E),
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            member.fullName,
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1B2B3E),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.work_outline,
-                                size: 14,
-                                color: Colors.grey[500],
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                member.specialty,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.red[50],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.delete_outline,
-                          color: Colors.red[600],
-                          size: 20,
-                        ),
-                      ),
-                      onPressed: () => vm.removeTeamMember(member.id),
-                    ),
-                  ],
-                ),
-              )),
-      ],
-    );
-  }
+  return const TeamManagementPage();
+ }
 
   Widget _confirmationStep(BuildContext context, SalonCreationViewModel vm) {
     return Column(

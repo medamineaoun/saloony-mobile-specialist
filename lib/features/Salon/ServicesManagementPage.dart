@@ -3,10 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:saloony/core/enum/TreatmentCategory.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
-class ServicesManagementPage extends StatelessWidget {
+
+class ServicesManagementPage extends StatefulWidget {
   const ServicesManagementPage({super.key});
+
+  @override
+  State<ServicesManagementPage> createState() => _ServicesManagementPageState();
+}
+
+class _ServicesManagementPageState extends State<ServicesManagementPage> {
+  TreatmentCategory? selectedCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -17,54 +26,235 @@ class ServicesManagementPage extends StatelessWidget {
       children: [
         _buildStepHeader(),
         const SizedBox(height: 24),
-        
-        // Bouton pour ajouter un service personnalisé
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _showAddServiceDialog(context, vm),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B2B3E),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+
+        // Sélection de catégorie
+        _buildCategorySelector(vm),
+        const SizedBox(height: 24),
+
+        // Bouton pour ajouter un service personnalisé (uniquement si une catégorie est sélectionnée)
+        if (selectedCategory != null) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showAddServiceDialog(context, vm),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B2B3E),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            icon: const Icon(Icons.add_circle_outline, size: 22),
-            label: Text(
-              'Ajouter un service personnalisé',
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+              icon: const Icon(Icons.add_circle_outline, size: 22),
+              label: Text(
+                'Ajouter un service personnalisé',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // Liste des services disponibles filtrés par catégorie
+        if (selectedCategory != null) ...[
+          _buildServicesSection(vm),
+        ] else ...[
+          // Message si aucune catégorie n'est sélectionnée
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Icon(Icons.category_outlined, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Sélectionnez une catégorie',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choisissez une catégorie pour voir les services disponibles',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+
+  Widget _buildCategorySelector(SalonCreationViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Catégorie de services',
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1B2B3E),
           ),
         ),
-        
-        const SizedBox(height: 24),
-        
-        // Liste des services existants (depuis l'API)
-        if (vm.availableTreatments.isNotEmpty) ...[
-          Text(
-            'Services disponibles',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B2B3E),
-            ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: TreatmentCategory.values.map((category) {
+            final isSelected = selectedCategory == category;
+            final count = _getServiceCountForCategory(vm, category);
+            
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedCategory = category;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF1B2B3E) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[300]!,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF1B2B3E).withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      category.emoji,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      category.displayName,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : const Color(0xFF1B2B3E),
+                      ),
+                    ),
+                    if (count > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  int _getServiceCountForCategory(SalonCreationViewModel vm, TreatmentCategory category) {
+    // Compte les services de l'API
+    final apiCount = vm.availableTreatments
+        .where((t) => t.treatmentCategory?.toUpperCase() == category.value)
+        .length;
+    
+    // Compte les services personnalisés
+    final customCount = vm.customServices
+        .where((s) => s.category?.toUpperCase() == category.value)
+        .length;
+    
+    return apiCount + customCount;
+  }
+
+  Widget _buildServicesSection(SalonCreationViewModel vm) {
+    // Filtrer les services par catégorie sélectionnée
+    final filteredTreatments = vm.availableTreatments.where((treatment) {
+      return treatment.treatmentCategory?.toUpperCase() == selectedCategory?.value;
+    }).toList();
+
+    final filteredCustomServices = vm.customServices.where((service) {
+      return service.category?.toUpperCase() == selectedCategory?.value;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Services disponibles (depuis l'API)
+        if (filteredTreatments.isNotEmpty) ...[
+          Row(
+            children: [
+              Text(
+                'Services disponibles',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1B2B3E),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${filteredTreatments.length}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          ...vm.availableTreatments.map((treatment) {
+          ...filteredTreatments.map((treatment) {
             final isSelected = vm.selectedTreatmentIds.contains(treatment.treatmentId);
             return _buildServiceCard(
               context: context,
               name: treatment.treatmentName,
               description: treatment.treatmentDescription,
               price: treatment.treatmentPrice?.toDouble() ?? 0.0,
-              imagePath: treatment.treatmentPhotosPaths?.isNotEmpty == true 
-                  ? treatment.treatmentPhotosPaths!.first 
+              imagePath: treatment.treatmentPhotosPaths?.isNotEmpty == true
+                  ? treatment.treatmentPhotosPaths!.first
                   : null,
               isSelected: isSelected,
               onTap: () => vm.toggleTreatmentSelection(treatment.treatmentId),
@@ -72,20 +262,40 @@ class ServicesManagementPage extends StatelessWidget {
             );
           }),
         ],
-        
-        // Liste des services personnalisés
-        if (vm.customServices.isNotEmpty) ...[
+
+        // Services personnalisés
+        if (filteredCustomServices.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Text(
-            'Vos services personnalisés',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B2B3E),
-            ),
+          Row(
+            children: [
+              Text(
+                'Vos services personnalisés',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1B2B3E),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0CD97).withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${filteredCustomServices.length}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1B2B3E),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          ...vm.customServices.map((service) {
+          ...filteredCustomServices.map((service) {
             return _buildServiceCard(
               context: context,
               name: service.name,
@@ -101,8 +311,40 @@ class ServicesManagementPage extends StatelessWidget {
             );
           }),
         ],
-        
-        const SizedBox(height: 100), // Espace pour le bouton en bas
+
+        // Message si aucun service dans cette catégorie
+        if (filteredTreatments.isEmpty && filteredCustomServices.isEmpty) ...[
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Text(
+                    selectedCategory!.emoji,
+                    style: const TextStyle(fontSize: 48),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aucun service dans cette catégorie',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ajoutez votre premier service personnalisé',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -169,7 +411,7 @@ class ServicesManagementPage extends StatelessWidget {
                       : null,
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Informations du service
                 Expanded(
                   child: Column(
@@ -204,10 +446,10 @@ class ServicesManagementPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: gender == 'Man' 
-                                ? Colors.blue[50] 
-                                : gender == 'Woman' 
-                                    ? Colors.pink[50] 
+                            color: gender == 'Man'
+                                ? Colors.blue[50]
+                                : gender == 'Woman'
+                                    ? Colors.pink[50]
                                     : Colors.purple[50],
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -216,10 +458,10 @@ class ServicesManagementPage extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: gender == 'Man' 
-                                  ? Colors.blue[700] 
-                                  : gender == 'Woman' 
-                                      ? Colors.pink[700] 
+                              color: gender == 'Man'
+                                  ? Colors.blue[700]
+                                  : gender == 'Woman'
+                                      ? Colors.pink[700]
                                       : Colors.purple[700],
                             ),
                           ),
@@ -247,7 +489,7 @@ class ServicesManagementPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Actions à droite
                 Column(
                   children: [
@@ -255,13 +497,13 @@ class ServicesManagementPage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isSelected 
-                              ? const Color(0xFF1B2B3E) 
+                          color: isSelected
+                              ? const Color(0xFF1B2B3E)
                               : Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected 
-                                ? const Color(0xFF1B2B3E) 
+                            color: isSelected
+                                ? const Color(0xFF1B2B3E)
                                 : Colors.grey[300]!,
                             width: 2,
                           ),
@@ -294,9 +536,9 @@ class ServicesManagementPage extends StatelessWidget {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final priceController = TextEditingController();
+    final durationController = TextEditingController();
     String? selectedGender;
     String? imagePath;
-    final categoryController = TextEditingController(text: vm.selectedCategory?.name ?? '');
 
     showDialog(
       context: context,
@@ -317,15 +559,32 @@ class ServicesManagementPage extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.add_business, color: Color(0xFF1B2B3E), size: 24),
+                child: Text(
+                  selectedCategory!.emoji,
+                  style: const TextStyle(fontSize: 24),
+                ),
               ),
               const SizedBox(width: 12),
-              Text(
-                'Ajouter un service',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B2B3E),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ajouter un service',
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1B2B3E),
+                      ),
+                    ),
+                    Text(
+                      selectedCategory!.displayName,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -363,9 +622,9 @@ class ServicesManagementPage extends StatelessWidget {
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_photo_alternate_outlined, 
-                                   size: 48, 
-                                   color: Colors.grey[400]),
+                              Icon(Icons.add_photo_alternate_outlined,
+                                  size: 48,
+                                  color: Colors.grey[400]),
                               const SizedBox(height: 8),
                               Text(
                                 'Upload Service Photo',
@@ -380,7 +639,7 @@ class ServicesManagementPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Nom du service
                 _buildDialogTextField(
                   label: 'Service Type Name',
@@ -388,7 +647,7 @@ class ServicesManagementPage extends StatelessWidget {
                   controller: nameController,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Gender spécifique
                 Text(
                   'Specific Gender',
@@ -430,7 +689,7 @@ class ServicesManagementPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Description
                 _buildDialogTextField(
                   label: 'Description (optional)',
@@ -439,7 +698,16 @@ class ServicesManagementPage extends StatelessWidget {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 16),
-                
+
+                // Durée
+                _buildDialogTextField(
+                  label: 'Duration (minutes)',
+                  hint: '30',
+                  controller: durationController,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+
                 // Prix
                 _buildDialogTextField(
                   label: 'Price',
@@ -476,7 +744,7 @@ class ServicesManagementPage extends StatelessWidget {
                     price: double.tryParse(priceController.text) ?? 0.0,
                     photoPath: imagePath,
                     specificGender: selectedGender,
-                    category: categoryController.text,
+                    category: selectedCategory!.value,
                   );
                   vm.addCustomService(service);
                   Navigator.pop(context);
@@ -531,7 +799,6 @@ class ServicesManagementPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Upload photo
                 GestureDetector(
                   onTap: () async {
                     final picker = ImagePicker();
@@ -556,9 +823,9 @@ class ServicesManagementPage extends StatelessWidget {
                           : null,
                     ),
                     child: imagePath == null
-                        ? Icon(Icons.add_photo_alternate_outlined, 
-                               size: 48, 
-                               color: Colors.grey[400])
+                        ? Icon(Icons.add_photo_alternate_outlined,
+                            size: 48,
+                            color: Colors.grey[400])
                         : null,
                   ),
                 ),
@@ -612,6 +879,8 @@ class ServicesManagementPage extends StatelessWidget {
                   controller: descriptionController,
                   maxLines: 3,
                 ),
+                const SizedBox(height: 16),
+              
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   label: 'Prix',

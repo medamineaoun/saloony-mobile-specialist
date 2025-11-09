@@ -3,12 +3,79 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
 import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/SalonService.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
 
 bool notificationsEnabled = true;
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  final AuthService _authService = AuthService();
+  final SalonService _salonService = SalonService();
+  
+  bool _isLoading = true;
+  Map<String, dynamic>? _userSalon;
+  Map<String, dynamic>? _currentUser;
+  String _userRole = 'CUSTOMER';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final userResult = await _authService.getCurrentUser();
+      
+      if (userResult['success'] == true && userResult['user'] != null) {
+        _currentUser = userResult['user'];
+        _userRole = _currentUser!['appRole'] ?? 'CUSTOMER';
+        
+        if (_userRole == 'SPECIALIST') {
+          final userId = _currentUser!['userId'];
+          final salonResult = await _salonService.getSpecialistSalon(userId);
+          
+          if (salonResult['success'] == true && salonResult['salon'] != null) {
+            _userSalon = salonResult['salon'];
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des données: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _getSalonImageUrl(String? photoPath) {
+    if (photoPath == null || photoPath.isEmpty) {
+      return '';
+    }
+    
+    if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+      return photoPath;
+    }
+    
+    final cleanPath = photoPath.startsWith('/') 
+        ? photoPath.substring(1) 
+        : photoPath;
+    
+    final uri = Uri.parse(_salonService.baseUrl);
+    final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+    
+    return '$baseUrlWithoutPath/$cleanPath';
+  }
 
   void _showSideMenu(BuildContext context) {
     showDialog(
@@ -19,7 +86,6 @@ class ProfileView extends StatelessWidget {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    // Show confirmation dialog
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -27,14 +93,14 @@ class ProfileView extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         title: Text(
-          'Logout',
+          'Déconnexion',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: const Color(0xFF1B2B3E),
           ),
         ),
         content: Text(
-          'Are you sure you want to log out?',
+          'Êtes-vous sûr de vouloir vous déconnecter ?',
           style: GoogleFonts.poppins(
             color: const Color(0xFF1B2B3E),
           ),
@@ -43,7 +109,7 @@ class ProfileView extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              'Annuler',
               style: GoogleFonts.poppins(
                 color: Colors.grey,
                 fontWeight: FontWeight.w600,
@@ -59,7 +125,7 @@ class ProfileView extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Logout',
+              'Déconnexion',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
               ),
@@ -69,12 +135,10 @@ class ProfileView extends StatelessWidget {
       ),
     );
 
-    if (shouldLogout == true) {
-      // Logout
-      await AuthService().signOut();
+    if (shouldLogout == true && mounted) {
+      await _authService.signOut();
       
-      // Navigate to login page
-      if (context.mounted) {
+      if (mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/login',
           (route) => false,
@@ -109,7 +173,6 @@ class ProfileView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Drag handle
               Container(
                 margin: const EdgeInsets.only(top: 8),
                 width: 40,
@@ -119,7 +182,6 @@ class ProfileView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Header
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -132,13 +194,13 @@ class ProfileView extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.settings_outlined,
-                      color: const Color(0xFF1B2B3E),
+                      color: Color(0xFF1B2B3E),
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Salon Settings',
+                      'Paramètres du Salon',
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -148,7 +210,6 @@ class ProfileView extends StatelessWidget {
                   ],
                 ),
               ),
-              // Menu Items
               Expanded(
                 child: ListView(
                   controller: scrollController,
@@ -157,19 +218,17 @@ class ProfileView extends StatelessWidget {
                     _buildSalonSettingsMenuItem(
                       context,
                       icon: Icons.calendar_today_outlined,
-                      title: 'Appointments',
+                      title: 'Rendez-vous',
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to appointments page
                       },
                     ),
                     _buildSalonSettingsMenuItem(
                       context,
                       icon: Icons.edit_outlined,
-                      title: 'Edit Salon',
+                      title: 'Modifier le Salon',
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to edit salon page
                       },
                     ),
                     _buildSalonSettingsMenuItem(
@@ -178,7 +237,6 @@ class ProfileView extends StatelessWidget {
                       title: 'Services',
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to services page
                       },
                     ),
                     _buildSalonSettingsMenuItem(
@@ -187,31 +245,27 @@ class ProfileView extends StatelessWidget {
                       title: 'Clients',
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to clients page
                       },
                     ),
                     _buildSalonSettingsMenuItem(
                       context,
                       icon: Icons.group_outlined,
-                      title: 'Team',
+                      title: 'Équipe',
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to team page
                       },
                     ),
                     _buildSalonSettingsMenuItem(
                       context,
                       icon: Icons.attach_money_outlined,
-                      title: 'Commodity',
+                      title: 'Tarifs',
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to commodity page
                       },
                     ),
                   ],
                 ),
               ),
-              // Close Button
               Container(
                 padding: const EdgeInsets.all(20),
                 child: ElevatedButton(
@@ -224,7 +278,7 @@ class ProfileView extends StatelessWidget {
                     minimumSize: const Size(double.infinity, 50),
                   ),
                   child: Text(
-                    'Close',
+                    'Fermer',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -305,7 +359,7 @@ class ProfileView extends StatelessWidget {
           onPressed: () => _showSideMenu(context),
         ),
         title: Text(
-          'Profile',
+          'Profil',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -339,118 +393,148 @@ class ProfileView extends StatelessWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 20),
-              
-              // Salon Card
-              _buildSalonCard(),
-              const SizedBox(height: 24),
-              
-              // Application Section
-              _buildSection(
-                title: 'Application',
-                items: [
-                  _MenuItem(
-                    icon: Icons.settings_outlined,
-                    title: 'Salon Settings',
-                    onTap: () {
-                      _showSalonSettingsMenu(context);
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.person_outline_rounded,
-                    title: 'Edit Profile',
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.editProfile);
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.person_outline_rounded,
-                    title: 'Change Password',
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.person_outline_rounded,
-                    title: 'Change Email',
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.ChangeEmail);
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.calendar_today_outlined,
-                    title: 'Availability',
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.Disponibilite);
-                    },
-                  ),
-                ],
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF1B2B3E),
               ),
-              const SizedBox(height: 24),
-              
-              // About Section
-              _buildSection(
-                title: 'About',
-                items: [
-                  _MenuItem(
-                    icon: Icons.description_outlined,
-                    title: 'Terms of Use',
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
-                    },
+            )
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _loadUserData,
+                color: const Color(0xFF1B2B3E),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 20),
+                      
+                      if (_userRole == 'SPECIALIST')
+                        _userSalon != null
+                            ? _buildSalonCard()
+                            : _buildCreateSalonCard(),
+                      
+                      if (_userRole == 'SPECIALIST')
+                        const SizedBox(height: 24),
+                      
+                      _buildSection(
+                        title: 'Application',
+                        items: [
+                          _MenuItem(
+                            icon: Icons.person_outline_rounded,
+                            title: 'Modifier le Profil',
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.editProfile);
+                            },
+                          ),
+                          _MenuItem(
+                            icon: Icons.lock_outline_rounded,
+                            title: 'Changer le Mot de Passe',
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
+                            },
+                          ),
+                          _MenuItem(
+                            icon: Icons.email_outlined,
+                            title: 'Changer l\'Email',
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.ChangeEmail);
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      if (_userRole == 'SPECIALIST' && _userSalon != null)
+                        _buildSection(
+                          title: 'Paramètres du Salon',
+                          items: [
+                            _MenuItem(
+                              icon: Icons.settings_outlined,
+                              title: 'Gérer le Salon',
+                              onTap: () {
+                                _showSalonSettingsMenu(context);
+                              },
+                            ),
+                            _MenuItem(
+                              icon: Icons.calendar_today_outlined,
+                              title: 'Rendez-vous',
+                              onTap: () {},
+                            ),
+                            _MenuItem(
+                              icon: Icons.room_service_outlined,
+                              title: 'Services & Tarifs',
+                              onTap: () {},
+                            ),
+                            _MenuItem(
+                              icon: Icons.group_outlined,
+                              title: 'Équipe',
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                      
+                      if (_userRole == 'SPECIALIST' && _userSalon != null)
+                        const SizedBox(height: 24),
+                      
+                      _buildSection(
+                        title: 'À Propos',
+                        items: [
+                          _MenuItem(
+                            icon: Icons.description_outlined,
+                            title: 'Conditions d\'Utilisation',
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
+                            },
+                          ),
+                          _MenuItem(
+                            icon: Icons.privacy_tip_outlined,
+                            title: 'Politique de Confidentialité',
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      _buildSection(
+                        title: 'Autres',
+                        items: [
+                          _MenuItem(
+                            icon: Icons.dark_mode_outlined,
+                            title: 'Thème de l\'App',
+                            trailing: 'Clair',
+                            onTap: () {},
+                          ),
+                          _MenuItem(
+                            icon: Icons.language_outlined,
+                            title: 'Langue',
+                            trailing: 'Français',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: LogoutButtonWidget(),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                  _MenuItem(
-                    icon: Icons.privacy_tip_outlined,
-                    title: 'Privacy Policy',
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
-                    },
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 24),
-              
-              // Other Section
-              _buildSection(
-                title: 'Other',
-                items: [
-                  _MenuItem(
-                    icon: Icons.dark_mode_outlined,
-                    title: 'App Theme',
-                    trailing: 'Light',
-                    onTap: () {},
-                  ),
-                  _MenuItem(
-                    icon: Icons.language_outlined,
-                    title: 'App Language',
-                    trailing: 'English',
-                    onTap: () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              // Logout Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: LogoutButtonWidget(),
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
   Widget _buildSalonCard() {
+    final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotoPath']);
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -467,43 +551,69 @@ class ProfileView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Salon image
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Stack(
               children: [
-                Image.network(
-                  'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800',
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.store, size: 60, color: Colors.grey),
-                    );
-                  },
-                ),
+                salonImageUrl.isNotEmpty
+                    ? Image.network(
+                        salonImageUrl,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.store, size: 60, color: Colors.grey),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: const Color(0xFF1B2B3E),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.store, size: 60, color: Colors.grey),
+                      ),
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: Color(0xFF1B2B3E),
+                  child: InkWell(
+                    onTap: () {
+                      // TODO: Navigate to edit salon
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: Color(0xFF1B2B3E),
+                      ),
                     ),
                   ),
                 ),
@@ -511,7 +621,6 @@ class ProfileView extends StatelessWidget {
             ),
           ),
 
-          // Salon information
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -522,7 +631,7 @@ class ProfileView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Captain\'s Barber Shop',
+                        _userSalon?['salonName'] ?? 'Mon Salon',
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -532,8 +641,8 @@ class ProfileView extends StatelessWidget {
                     ),
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8F9FA),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -544,18 +653,128 @@ class ProfileView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                _buildInfoRow(Icons.language, 'www.reallygreatsite.com'),
                 const SizedBox(height: 12),
-                _buildInfoRow(Icons.phone_outlined, '+1 234 567 890 000'),
-                const SizedBox(height: 12),
-                _buildInfoRow(Icons.email_outlined, 'example@mybarbershop.com'),
-                const SizedBox(height: 12),
-                _buildInfoRow(Icons.location_on_outlined, 'KK 15 AVE, Kigali, RW'),
+                if (_userSalon?['salonDescription'] != null && 
+                    _userSalon!['salonDescription'].toString().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      _userSalon!['salonDescription'],
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: const Color(0xFF1B2B3E).withOpacity(0.7),
+                        height: 1.5,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                if (_userSalon?['address'] != null && 
+                    _userSalon!['address'].toString().isNotEmpty)
+                  _buildInfoRow(Icons.location_on_outlined, _userSalon!['address']),
+                if (_userSalon?['latitude'] != null && _userSalon?['longitude'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _buildInfoRow(
+                      Icons.map_outlined,
+                      'GPS: ${_userSalon!['latitude'].toStringAsFixed(4)}, ${_userSalon!['longitude'].toStringAsFixed(4)}',
+                    ),
+                  ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCreateSalonCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1B2B3E),
+            const Color(0xFF1B2B3E).withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B2B3E).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.store_outlined,
+                size: 50,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Créer Votre Salon',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Commencez à gérer votre salon professionnel et vos rendez-vous',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.createsalon);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF1B2B3E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                minimumSize: const Size(double.infinity, 50),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add_circle_outline),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Créer Mon Salon',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -565,7 +784,7 @@ class ProfileView extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 20,
+          size: 18,
           color: const Color(0xFF1B2B3E).withOpacity(0.6),
         ),
         const SizedBox(width: 12),
@@ -573,7 +792,7 @@ class ProfileView extends StatelessWidget {
           child: Text(
             text,
             style: GoogleFonts.poppins(
-              fontSize: 14,
+              fontSize: 13,
               color: const Color(0xFF1B2B3E).withOpacity(0.8),
             ),
           ),

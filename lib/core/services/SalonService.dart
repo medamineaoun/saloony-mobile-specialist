@@ -6,14 +6,54 @@ import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class SalonService {
-  final String baseUrl = 'http://YOUR_API_URL/api'; // Remplacez par votre URL
+  final String baseUrl = 'http://YOUR_API_URL/api';
   final AuthService _authService = AuthService();
 
-Future<String?> _getAuthToken() async {
-  final token = await _authService.getAccessToken();
-  return token;
-}
+  Future<String?> _getAuthToken() async {
+    final token = await _authService.getAccessToken();
+    return token;
+  }
 
+  /// Récupérer le salon d'un spécialiste par son userId
+  Future<Map<String, dynamic>> getSpecialistSalon(String userId) async {
+    try {
+      final token = await _getAuthToken();
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/salon/specialist/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('🏢 Récupération salon spécialiste: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'salon': data,
+        };
+      } else if (response.statusCode == 404) {
+        return {
+          'success': false,
+          'message': 'Aucun salon trouvé pour ce spécialiste',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur serveur: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur récupération salon: $e');
+      return {
+        'success': false,
+        'message': 'Erreur de connexion: $e',
+      };
+    }
+  }
 
   /// Vérifier si un spécialiste existe par email
   Future<Map<String, dynamic>> verifySpecialistEmail(String email) async {
@@ -118,7 +158,6 @@ Future<String?> _getAuthToken() async {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         
-        // Upload photo si disponible
         if (photoPath != null && data['treatmentId'] != null) {
           await uploadTreatmentPhoto(data['treatmentId'], photoPath);
         }
@@ -159,7 +198,7 @@ Future<String?> _getAuthToken() async {
       request.files.add(await http.MultipartFile.fromPath('file', imagePath));
 
       final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
+      await response.stream.bytesToString();
 
       debugPrint('📷 Upload photo traitement: ${response.statusCode}');
 
@@ -184,7 +223,7 @@ Future<String?> _getAuthToken() async {
   }
 
   /// Créer un salon
-   Future<Map<String, dynamic>> createSalon({
+  Future<Map<String, dynamic>> createSalon({
     required BuildContext context,
     required String salonName,
     required String salonDescription,
@@ -202,7 +241,7 @@ Future<String?> _getAuthToken() async {
       final token = await _getAuthToken();
 
       final salonData = {
-         "salonName": salonName,
+        "salonName": salonName,
         "salonDescription": salonDescription,
         "salonCategory": salonCategory,
         "additionalServices": additionalServices,
@@ -392,7 +431,7 @@ Future<String?> _getAuthToken() async {
     }
   }
 
-  /// Obtenir les détails d'un salon
+  /// Obtenir les détails d'un salon par ID
   Future<Map<String, dynamic>> getSalonDetails(String salonId) async {
     try {
       final token = await _getAuthToken();
@@ -404,6 +443,8 @@ Future<String?> _getAuthToken() async {
           if (token != null) 'Authorization': 'Bearer $token',
         },
       );
+
+      debugPrint('🏢 Récupération détails salon: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -443,6 +484,8 @@ Future<String?> _getAuthToken() async {
         body: jsonEncode(updateData),
       );
 
+      debugPrint('✏️ Mise à jour salon: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return {
@@ -457,6 +500,41 @@ Future<String?> _getAuthToken() async {
       }
     } catch (e) {
       debugPrint('❌ Erreur mise à jour salon: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Supprimer un salon
+  Future<Map<String, dynamic>> deleteSalon(String salonId) async {
+    try {
+      final token = await _getAuthToken();
+      
+      final response = await http.delete(
+        Uri.parse('$baseUrl/salon/$salonId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('🗑️ Suppression salon: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return {
+          'success': true,
+          'message': 'Salon supprimé avec succès',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de la suppression',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur suppression salon: $e');
       return {
         'success': false,
         'message': 'Erreur: $e',

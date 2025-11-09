@@ -30,7 +30,7 @@ class DayAvailabilityWithSlots {
   
   DayAvailabilityWithSlots({
     required this.day,
-    this.isAvailable = true,
+    this.isAvailable = false,
     this.timeRange,
   });
 }
@@ -67,80 +67,36 @@ class SalonCreationViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
   final ImagePicker _picker = ImagePicker();
+  
+  // Contrôleurs de texte
   final TextEditingController businessNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController additionalAddressController = TextEditingController();
-  
+
+  // Données utilisateur
   User? _currentUser;
   bool _isLoadingUser = true;
   bool _isCreatingSalon = false;
   int _currentStep = 0;
+
+  // Informations du salon
   SalonCategory? selectedCategory;
   String? _businessImagePath;
   LocationResult? _location;
   SalonGenderType? _selectedGenderType;
-  List<AdditionalService> _selectedAdditionalServices = [];
+  List<AdditionalService> selectedAdditionalServices = [];
   
   // Traitements et services
   List<Treatment> _availableTreatments = [];
   List<String> _selectedTreatmentIds = [];
   List<CustomService> _customServices = [];
   
-  // Nouvelle structure d'availability avec time slots
-  Map<String, DayAvailabilityWithSlots> _weeklyAvailability = {
-    'Lundi': DayAvailabilityWithSlots(
-      day: 'Lundi',
-      isAvailable: true,
-      timeRange: TimeRange(
-        startTime: const TimeOfDay(hour: 8, minute: 0),
-        endTime: const TimeOfDay(hour: 18, minute: 0),
-      ),
-    ),
-    'Mardi': DayAvailabilityWithSlots(
-      day: 'Mardi',
-      isAvailable: true,
-      timeRange: TimeRange(
-        startTime: const TimeOfDay(hour: 8, minute: 0),
-        endTime: const TimeOfDay(hour: 18, minute: 0),
-      ),
-    ),
-    'Mercredi': DayAvailabilityWithSlots(
-      day: 'Mercredi',
-      isAvailable: true,
-      timeRange: TimeRange(
-        startTime: const TimeOfDay(hour: 8, minute: 0),
-        endTime: const TimeOfDay(hour: 18, minute: 0),
-      ),
-    ),
-    'Jeudi': DayAvailabilityWithSlots(
-      day: 'Jeudi',
-      isAvailable: true,
-      timeRange: TimeRange(
-        startTime: const TimeOfDay(hour: 8, minute: 0),
-        endTime: const TimeOfDay(hour: 18, minute: 0),
-      ),
-    ),
-    'Vendredi': DayAvailabilityWithSlots(
-      day: 'Vendredi',
-      isAvailable: true,
-      timeRange: TimeRange(
-        startTime: const TimeOfDay(hour: 8, minute: 0),
-        endTime: const TimeOfDay(hour: 18, minute: 0),
-      ),
-    ),
-    'Samedi': DayAvailabilityWithSlots(
-      day: 'Samedi',
-      isAvailable: false,
-    ),
-    'Dimanche': DayAvailabilityWithSlots(
-      day: 'Dimanche',
-      isAvailable: false,
-    ),
-  };
-  
   // Équipe
   List<TeamMember> _teamMembers = [];
   AccountType? _accountType;
+
+  // Disponibilité - CORRECTION COMPLÈTE
+  final Map<String, DayAvailabilityWithSlots> _weeklyAvailability = {};
 
   // Getters
   User? get currentUser => _currentUser;
@@ -156,7 +112,6 @@ class SalonCreationViewModel extends ChangeNotifier {
   List<String> get selectedTreatmentIds => _selectedTreatmentIds;
   List<CustomService> get customServices => _customServices;
   SalonGenderType? get selectedGenderType => _selectedGenderType;
-  List<AdditionalService> get selectedAdditionalServices => _selectedAdditionalServices;
 
   List<AdditionalService> get availableAdditionalServices => AdditionalService.values;
   List<SalonGenderType> get availableGenderTypes => SalonGenderType.values;
@@ -187,54 +142,71 @@ class SalonCreationViewModel extends ChangeNotifier {
   List<String> get availableGenderTypesStrings => 
       SalonGenderType.values.map((e) => e.name).toList();
 
-  void setGenderTypeFromString(String typeString) {
-    try {
-      _selectedGenderType = SalonGenderType.fromString(typeString);
-      notifyListeners();
-    } catch (e) {
-      debugPrint('❌ Erreur conversion gender type: $e');
-    }
+  // CORRECTION: Getter pour la disponibilité sous forme de liste
+  List<DayAvailabilityWithSlots> get availability {
+    return _weeklyAvailability.values.toList();
   }
 
-  bool get canContinue {
-    switch (_currentStep) {
-      case 0: // Account Information
-        return businessNameController.text.trim().isNotEmpty &&
-               selectedCategory != null;
-               
-      case 1: // Business Details
-        return descriptionController.text.trim().isNotEmpty &&
-               _location != null &&
-               _businessImagePath != null &&
-               _selectedGenderType != null;
-               
-      case 2: // Availability
-        return _weeklyAvailability.values.any((day) => day.isAvailable);
-        
-      case 3: // Treatments
-        return _selectedTreatmentIds.isNotEmpty || _customServices.isNotEmpty;
-        
-      case 4: // Team
-        return true; // Optionnel
-        
-      case 5: // Confirmation
-        return true;
-        
-      default:
-        return false;
-    }
+bool get canContinue {
+  switch (_currentStep) {
+    case 0: // Account Information
+      return businessNameController.text.trim().isNotEmpty &&
+             selectedCategory != null;
+             
+    case 1: // Business Details
+      return descriptionController.text.trim().isNotEmpty &&
+             _location != null &&
+             _businessImagePath != null &&
+             _selectedGenderType != null;
+    
+    case 2: // Additional Services (optionnel)
+      return true;
+             
+    case 3: // Availability ← CORRECTION ICI
+      return _weeklyAvailability.values.any((day) => day.isAvailable);
+      
+    case 4: // Treatments
+      return _selectedTreatmentIds.isNotEmpty || _customServices.isNotEmpty;
+      
+    case 5: // Team (optionnel)
+      return true;
+      
+    case 6: // Confirmation
+      return true;
+      
+    default:
+      return false;
   }
+}
 
   SalonCreationViewModel() {
     _loadCurrentUser();
     _loadAvailableTreatments();
     _setupControllerListeners();
+    _initializeAvailability(); // ← INITIALISATION AJOUTÉE
   }
 
   void _setupControllerListeners() {
     businessNameController.addListener(notifyListeners);
     descriptionController.addListener(notifyListeners);
     additionalAddressController.addListener(notifyListeners);
+  }
+
+  // CORRECTION: Initialisation de la disponibilité
+  void _initializeAvailability() {
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    for (final day in days) {
+      _weeklyAvailability[day] = DayAvailabilityWithSlots(
+        day: day,
+        isAvailable: false, // Par défaut non disponible
+        timeRange: TimeRange(
+          startTime: const TimeOfDay(hour: 9, minute: 0),
+          endTime: const TimeOfDay(hour: 18, minute: 0),
+        ),
+      );
+    }
+    notifyListeners();
   }
 
   Future<void> _loadCurrentUser() async {
@@ -283,11 +255,20 @@ class SalonCreationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setGenderTypeFromString(String typeString) {
+    try {
+      _selectedGenderType = SalonGenderType.fromString(typeString);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Erreur conversion gender type: $e');
+    }
+  }
+
   void toggleAdditionalService(AdditionalService service) {
-    if (_selectedAdditionalServices.contains(service)) {
-      _selectedAdditionalServices.remove(service);
+    if (selectedAdditionalServices.contains(service)) {
+      selectedAdditionalServices.remove(service);
     } else {
-      _selectedAdditionalServices.add(service);
+      selectedAdditionalServices.add(service);
     }
     notifyListeners();
   }
@@ -323,12 +304,28 @@ class SalonCreationViewModel extends ChangeNotifier {
     }
   }
 
- 
-
-  void setDayTimeRange(String day, TimeOfDay start, TimeOfDay end) {
+  // CORRECTION: Méthode pour mettre à jour les horaires d'un jour
+  void setDayTimeRange(String day, TimeOfDay startTime, TimeOfDay endTime) {
     if (_weeklyAvailability.containsKey(day)) {
-      _weeklyAvailability[day]!.timeRange = TimeRange(startTime: start, endTime: end);
+      _weeklyAvailability[day]!.timeRange = TimeRange(
+        startTime: startTime,
+        endTime: endTime,
+      );
+      // Marquer automatiquement le jour comme disponible quand on définit des horaires
+      _weeklyAvailability[day]!.isAvailable = true;
       notifyListeners();
+    }
+  }
+
+  // CORRECTION: Méthode pour basculer la disponibilité d'un jour
+  void toggleDayAvailability(int index) {
+    if (index >= 0 && index < _weeklyAvailability.values.length) {
+      final dayKey = _weeklyAvailability.keys.elementAt(index);
+      final day = _weeklyAvailability[dayKey];
+      if (day != null) {
+        day.isAvailable = !day.isAvailable;
+        notifyListeners();
+      }
     }
   }
 
@@ -394,6 +391,11 @@ class SalonCreationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setAdditionalServices(List<AdditionalService> services) {
+    selectedAdditionalServices = services;
+    notifyListeners();
+  }
+
   Future<void> _finishCreation(BuildContext context) async {
     if (_isCreatingSalon) return;
 
@@ -421,6 +423,12 @@ class SalonCreationViewModel extends ChangeNotifier {
         return;
       }
 
+      // Vérifier qu'au moins un jour est disponible
+      if (!_weeklyAvailability.values.any((day) => day.isAvailable)) {
+        _showError(context, 'Veuillez définir au moins un jour de disponibilité');
+        return;
+      }
+
       List<String> specialistIds = [];
       if (_currentUser != null) {
         specialistIds = [_currentUser!.userId!];
@@ -433,7 +441,7 @@ class SalonCreationViewModel extends ChangeNotifier {
         return;
       }
 
-      final List<String> additionalServicesStrings = _selectedAdditionalServices
+      final List<String> additionalServicesStrings = selectedAdditionalServices
           .map((service) => service.toJson())
           .toList();
 
@@ -445,9 +453,10 @@ class SalonCreationViewModel extends ChangeNotifier {
       debugPrint('Traitements: ${_selectedTreatmentIds.length}');
       debugPrint('Services personnalisés: ${_customServices.length}');
       debugPrint('Spécialistes: ${specialistIds.length}');
+      debugPrint('Jours disponibles: ${_weeklyAvailability.values.where((d) => d.isAvailable).length}');
 
       final createResult = await _salonService.createSalon(
-          context: context, 
+        context: context, 
         salonName: businessNameController.text.trim(),
         salonDescription: descriptionController.text.trim(),
         salonCategory: selectedCategory!.name,
@@ -520,43 +529,27 @@ class SalonCreationViewModel extends ChangeNotifier {
     );
   }
 
-  @override
-  void dispose() {
-    businessNameController.dispose();
-    descriptionController.dispose();
-    additionalAddressController.dispose();
-    super.dispose();
-  }
-List<DayAvailabilityWithSlots> get availability {
-  return _weeklyAvailability.values.toList();
-}
-void toggleDayAvailability(int index) {
-  if (index >= 0 && index < _weeklyAvailability.values.length) {
-    final day = _weeklyAvailability.values.toList()[index];
-    day.isAvailable = !day.isAvailable;
-    notifyListeners();
-  }
-}
-void showAddTeamMemberDialog(BuildContext context) {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final specialtyController = TextEditingController();
+  // CORRECTION: Méthode pour afficher le dialog d'ajout d'équipe
+  void showAddTeamMemberDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final specialtyController = TextEditingController();
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF1B2B3E).withOpacity(0.1),
-                  const Color(0xFFF0CD97).withOpacity(0.1),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF1B2B3E).withOpacity(0.1),
+                    const Color(0xFFF0CD97).withOpacity(0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -660,7 +653,6 @@ void showAddTeamMemberDialog(BuildContext context) {
                   fullName: name,
                   email: email,
                   specialty: specialty,
-                 
                 );
 
                 addTeamMember(teamMember);
@@ -710,57 +702,65 @@ void showAddTeamMemberDialog(BuildContext context) {
   );
 }
 
-// Helper method for text fields in the dialog
-Widget _buildTeamMemberTextField({
-  required TextEditingController controller,
-  required String label,
-  required String hint,
-  required IconData icon,
-  TextInputType keyboardType = TextInputType.text,
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF1B2B3E),
-        ),
-      ),
-      const SizedBox(height: 6),
-      Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F7FA),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!, width: 1),
-        ),
-        child: TextField(
-          controller: controller,
-          keyboardType: keyboardType,
+  // Helper method for text fields in the dialog
+  Widget _buildTeamMemberTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
           style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
             color: const Color(0xFF1B2B3E),
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.inter(
-              color: Colors.grey[500],
-              fontSize: 14,
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F7FA),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!, width: 1),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1B2B3E),
             ),
-            prefixIcon: Icon(
-              icon,
-              color: const Color(0xFFF0CD97),
-              size: 20,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                color: Colors.grey[500],
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: const Color(0xFFF0CD97),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    businessNameController.dispose();
+    descriptionController.dispose();
+    additionalAddressController.dispose();
+    super.dispose();
+  }
 }
