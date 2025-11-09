@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:saloony/core/enum/TreatmentCategory.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
-
 class ServicesManagementPage extends StatefulWidget {
   const ServicesManagementPage({super.key});
 
@@ -27,174 +26,220 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         _buildStepHeader(),
         const SizedBox(height: 24),
 
-        // Sélection de catégorie
-        _buildCategorySelector(vm),
+        // Category List (vertical)
+        _buildCategoryList(vm),
         const SizedBox(height: 24),
 
-        // Bouton pour ajouter un service personnalisé (uniquement si une catégorie est sélectionnée)
-        if (selectedCategory != null) ...[
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddServiceDialog(context, vm),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B2B3E),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              icon: const Icon(Icons.add_circle_outline, size: 22),
-              label: Text(
-                'Ajouter un service personnalisé',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-
-        // Liste des services disponibles filtrés par catégorie
-        if (selectedCategory != null) ...[
-          _buildServicesSection(vm),
-        ] else ...[
-          // Message si aucune catégorie n'est sélectionnée
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                children: [
-                  Icon(Icons.category_outlined, size: 64, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Sélectionnez une catégorie',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Choisissez une catégorie pour voir les services disponibles',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      
 
         const SizedBox(height: 100),
       ],
     );
   }
 
-  Widget _buildCategorySelector(SalonCreationViewModel vm) {
+  Widget _buildCategoryList(SalonCreationViewModel vm) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Catégorie de services',
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1B2B3E),
-          ),
-        ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: TreatmentCategory.values.map((category) {
-            final isSelected = selectedCategory == category;
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: TreatmentCategory.values.length,
+          itemBuilder: (context, index) {
+            final category = TreatmentCategory.values[index];
             final count = _getServiceCountForCategory(vm, category);
-            
-            return GestureDetector(
+            final isSelected = selectedCategory == category;
+
+            return _buildCategoryListItem(
+              category: category,
+              count: count,
+              isSelected: isSelected,
               onTap: () {
                 setState(() {
                   selectedCategory = category;
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF1B2B3E) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[300]!,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF1B2B3E).withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      category.emoji,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      category.displayName,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF1B2B3E),
-                      ),
-                    ),
-                    if (count > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '$count',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[700],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              onAdd: () => _showAddServiceDialog(context, vm, category),
             );
-          }).toList(),
+          },
         ),
       ],
     );
   }
 
+  Widget _buildCategoryListItem({
+    required TreatmentCategory category,
+    required int count,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required VoidCallback onAdd,
+  }) {
+    final categoryData = _getCategoryVisualData(category);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSelected ? (categoryData['gradient'] as List<Color>)[0].withOpacity(0.1) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? (categoryData['gradient'] as List<Color>)[0] : Colors.grey[200]!,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Category Icon
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: categoryData['gradient'] as List<Color>,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      category.emoji,
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Category Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category.displayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1B2B3E),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$count types',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Three dots menu
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_vert,
+                    color: Colors.grey[600],
+                  ),
+                  onSelected: (value) {
+                    if (value == 'add') {
+                      onAdd();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                 PopupMenuItem<String>(
+  value: 'add',
+  child: Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: (categoryData['gradient'] as List<Color>)[0].withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.add,
+          color: (categoryData['gradient'] as List<Color>)[0],
+          size: 20,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Create a Service',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1B2B3E),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getCategoryVisualData(TreatmentCategory category) {
+    switch (category) {
+      case TreatmentCategory.HAIRCUT:
+        return {
+          'gradient': [const Color(0xFF8B5CF6), const Color(0xFF6366F1)],
+        };
+      case TreatmentCategory.COLORING:
+        return {
+          'gradient': [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
+        };
+      case TreatmentCategory.BEARD:
+        return {
+          'gradient': [const Color(0xFF78716C), const Color(0xFF57534E)],
+        };
+      case TreatmentCategory.FACIAL:
+        return {
+          'gradient': [const Color(0xFF14B8A6), const Color(0xFF06B6D4)],
+        };
+      case TreatmentCategory.MASSAGE:
+        return {
+          'gradient': [const Color(0xFF3B82F6), const Color(0xFF06B6D4)],
+        };
+      case TreatmentCategory.NAILS:
+        return {
+          'gradient': [const Color(0xFFEC4899), const Color(0xFFF43F5E)],
+        };
+      case TreatmentCategory.WAXING:
+        return {
+          'gradient': [const Color(0xFFEF4444), const Color(0xFFF97316)],
+        };
+      case TreatmentCategory.MAKEUP:
+        return {
+          'gradient': [const Color(0xFFF59E0B), const Color(0xFFEC4899)],
+        };
+      default:
+        return {
+          'gradient': [const Color(0xFF64748B), const Color(0xFF475569)],
+        };
+    }
+  }
+
   int _getServiceCountForCategory(SalonCreationViewModel vm, TreatmentCategory category) {
-    // Compte les services de l'API
     final apiCount = vm.availableTreatments
         .where((t) => t.treatmentCategory?.toUpperCase() == category.value)
         .length;
     
-    // Compte les services personnalisés
     final customCount = vm.customServices
         .where((s) => s.category?.toUpperCase() == category.value)
         .length;
@@ -202,152 +247,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     return apiCount + customCount;
   }
 
-  Widget _buildServicesSection(SalonCreationViewModel vm) {
-    // Filtrer les services par catégorie sélectionnée
-    final filteredTreatments = vm.availableTreatments.where((treatment) {
-      return treatment.treatmentCategory?.toUpperCase() == selectedCategory?.value;
-    }).toList();
-
-    final filteredCustomServices = vm.customServices.where((service) {
-      return service.category?.toUpperCase() == selectedCategory?.value;
-    }).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Services disponibles (depuis l'API)
-        if (filteredTreatments.isNotEmpty) ...[
-          Row(
-            children: [
-              Text(
-                'Services disponibles',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B2B3E),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${filteredTreatments.length}',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...filteredTreatments.map((treatment) {
-            final isSelected = vm.selectedTreatmentIds.contains(treatment.treatmentId);
-            return _buildServiceCard(
-              context: context,
-              name: treatment.treatmentName,
-              description: treatment.treatmentDescription,
-              price: treatment.treatmentPrice?.toDouble() ?? 0.0,
-              imagePath: treatment.treatmentPhotosPaths?.isNotEmpty == true
-                  ? treatment.treatmentPhotosPaths!.first
-                  : null,
-              isSelected: isSelected,
-              onTap: () => vm.toggleTreatmentSelection(treatment.treatmentId),
-              isCustom: false,
-            );
-          }),
-        ],
-
-        // Services personnalisés
-        if (filteredCustomServices.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Text(
-                'Vos services personnalisés',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B2B3E),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0CD97).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${filteredCustomServices.length}',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1B2B3E),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...filteredCustomServices.map((service) {
-            return _buildServiceCard(
-              context: context,
-              name: service.name,
-              description: service.description,
-              price: service.price,
-              gender: service.specificGender,
-              imagePath: service.photoPath,
-              isSelected: true,
-              isCustom: true,
-              onTap: () {},
-              onEdit: () => _showEditServiceDialog(context, vm, service),
-              onDelete: () => _confirmDelete(context, vm, service.id),
-            );
-          }),
-        ],
-
-        // Message si aucun service dans cette catégorie
-        if (filteredTreatments.isEmpty && filteredCustomServices.isEmpty) ...[
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                children: [
-                  Text(
-                    selectedCategory!.emoji,
-                    style: const TextStyle(fontSize: 48),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aucun service dans cette catégorie',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Ajoutez votre premier service personnalisé',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
 
   Widget _buildServiceCard({
     required BuildContext context,
@@ -361,6 +260,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     required VoidCallback onTap,
     VoidCallback? onEdit,
     VoidCallback? onDelete,
+    required Color categoryColor,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -368,13 +268,13 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[200]!,
+          color: isSelected ? categoryColor : Colors.grey[200]!,
           width: isSelected ? 2 : 1,
         ),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1B2B3E).withOpacity(0.1),
+                  color: categoryColor.withOpacity(0.2),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -390,7 +290,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Image du service
+                // Service Image
                 Container(
                   width: 80,
                   height: 80,
@@ -412,7 +312,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 ),
                 const SizedBox(width: 12),
 
-                // Informations du service
+                // Service Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,32 +342,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      if (gender != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: gender == 'Man'
-                                ? Colors.blue[50]
-                                : gender == 'Woman'
-                                    ? Colors.pink[50]
-                                    : Colors.purple[50],
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            gender,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: gender == 'Man'
-                                  ? Colors.blue[700]
-                                  : gender == 'Woman'
-                                      ? Colors.pink[700]
-                                      : Colors.purple[700],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
                       Text(
                         description,
                         style: GoogleFonts.inter(
@@ -483,34 +357,30 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFFF0CD97),
+                          color: categoryColor,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Actions à droite
+                // Actions
                 Column(
                   children: [
                     if (!isCustom) ...[
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF1B2B3E)
-                              : Colors.transparent,
+                          color: isSelected ? categoryColor : Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF1B2B3E)
-                                : Colors.grey[300]!,
+                            color: isSelected ? categoryColor : Colors.grey[300]!,
                             width: 2,
                           ),
                         ),
                         child: Icon(
                           Icons.check,
-                          color: isSelected ? const Color(0xFFF0CD97) : Colors.transparent,
+                          color: isSelected ? Colors.white : Colors.transparent,
                           size: 16,
                         ),
                       ),
@@ -531,14 +401,255 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
       ),
     );
   }
+void _showAddServiceDialog(
+    BuildContext context, SalonCreationViewModel vm, TreatmentCategory category) {
+  final nameController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final priceController = TextEditingController();
+  final durationController = TextEditingController();
+  String? selectedGender;
+  String? imagePath;
 
-  void _showAddServiceDialog(BuildContext context, SalonCreationViewModel vm) {
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final priceController = TextEditingController();
-    final durationController = TextEditingController();
-    String? selectedGender;
-    String? imagePath;
+  final categoryData = _getCategoryVisualData(category);
+
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: categoryData['gradient'] as List<Color>,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        category.emoji,
+                        style: const TextStyle(fontSize: 28),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Add Service',
+                            style: GoogleFonts.inter(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1B2B3E),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            category.displayName,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Image Upload
+                GestureDetector(
+                  onTap: () async {
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() => imagePath = image.path);
+                    }
+                  },
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      gradient: imagePath == null
+                          ? LinearGradient(
+                              colors: [
+                                (categoryData['gradient'] as List<Color>)[0]
+                                    .withOpacity(0.1),
+                                (categoryData['gradient'] as List<Color>)[1]
+                                    .withOpacity(0.1),
+                              ],
+                            )
+                          : null,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: (categoryData['gradient'] as List<Color>)[0]
+                            .withOpacity(0.3),
+                        width: 2,
+                      ),
+                      image: imagePath != null
+                          ? DecorationImage(
+                              image: FileImage(File(imagePath!)),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: imagePath == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate_outlined,
+                                size: 48,
+                                color:
+                                    (categoryData['gradient'] as List<Color>)[0],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Upload Service Photo',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      (categoryData['gradient'] as List<Color>)[0],
+                                ),
+                              ),
+                            ],
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Input Fields
+                _buildDialogTextField(
+                  label: 'Service Name',
+                  hint: 'e.g., Haircut, Manicure...',
+                  controller: nameController,
+                ),
+            
+           
+                const SizedBox(height: 16),
+                _buildDialogTextField(
+                  label: 'Description (optional)',
+                  hint: 'Describe your service...',
+                  controller: descriptionController,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                _buildDialogTextField(
+                  label: 'Duration (minutes)',
+                  hint: '30',
+                  controller: durationController,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                _buildDialogTextField(
+                  label: 'Price',
+                  hint: '\$0.00',
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 24),
+
+                // Actions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (nameController.text.trim().isNotEmpty &&
+                            priceController.text.trim().isNotEmpty) {
+                          final service = CustomService(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            name: nameController.text.trim(),
+                            description: descriptionController.text.trim(),
+                            price: double.tryParse(priceController.text) ?? 0.0,
+                            photoPath: imagePath,
+                            specificGender: selectedGender,
+                            category: category.value,
+                          );
+                          vm.addCustomService(service);
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            (categoryData['gradient'] as List<Color>)[0],
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 14),
+                      ),
+                      child: Text(
+                        'Save',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+  void _showEditServiceDialog(BuildContext context, SalonCreationViewModel vm, CustomService service) {
+    final nameController = TextEditingController(text: service.name);
+    final descriptionController = TextEditingController(text: service.description);
+    final priceController = TextEditingController(text: service.price.toString());
+    String? selectedGender = service.specificGender;
+    String? imagePath = service.photoPath;
+
+    final category = TreatmentCategory.values.firstWhere(
+      (cat) => cat.value == service.category?.toUpperCase(),
+      orElse: () => TreatmentCategory.HAIRCUT,
+    );
+    final categoryData = _getCategoryVisualData(category);
 
     showDialog(
       context: context,
@@ -552,39 +663,25 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF1B2B3E).withOpacity(0.1),
-                      const Color(0xFFF0CD97).withOpacity(0.1),
-                    ],
+                    colors: categoryData['gradient'] as List<Color>,
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
-                  selectedCategory!.emoji,
-                  style: const TextStyle(fontSize: 24),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: Colors.white,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Ajouter un service',
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1B2B3E),
-                      ),
-                    ),
-                    Text(
-                      selectedCategory!.displayName,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Edit Service',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1B2B3E),
+                  ),
                 ),
               ),
             ],
@@ -594,7 +691,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Upload photo
                 GestureDetector(
                   onTap: () async {
                     final picker = ImagePicker();
@@ -608,9 +704,19 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   child: Container(
                     height: 150,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      gradient: imagePath == null 
+                          ? LinearGradient(
+                              colors: [
+                                (categoryData['gradient'] as List<Color>)[0].withOpacity(0.1),
+                                (categoryData['gradient'] as List<Color>)[1].withOpacity(0.1),
+                              ],
+                            )
+                          : null,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(
+                        color: (categoryData['gradient'] as List<Color>)[0].withOpacity(0.3),
+                        width: 2,
+                      ),
                       image: imagePath != null
                           ? DecorationImage(
                               image: FileImage(File(imagePath!)),
@@ -619,36 +725,21 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                           : null,
                     ),
                     child: imagePath == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_photo_alternate_outlined,
-                                  size: 48,
-                                  color: Colors.grey[400]),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Upload Service Photo',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
+                        ? Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 48,
+                            color: (categoryData['gradient'] as List<Color>)[0],
                           )
                         : null,
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Nom du service
                 _buildDialogTextField(
-                  label: 'Service Type Name',
-                  hint: 'Undercut, etc...',
+                  label: 'Service Name',
+                  hint: 'Service name',
                   controller: nameController,
                 ),
                 const SizedBox(height: 16),
-
-                // Gender spécifique
                 Text(
                   'Specific Gender',
                   style: GoogleFonts.inter(
@@ -675,193 +766,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                     items: ['Man', 'Woman', 'Mixed'].map((gender) {
                       return DropdownMenuItem<String>(
                         value: gender,
-                        child: Text(
-                          gender,
-                          style: GoogleFonts.inter(fontSize: 14),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedGender = value;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Description
-                _buildDialogTextField(
-                  label: 'Description (optional)',
-                  hint: 'Describe your service type',
-                  controller: descriptionController,
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-
-                // Durée
-                _buildDialogTextField(
-                  label: 'Duration (minutes)',
-                  hint: '30',
-                  controller: durationController,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
-
-                // Prix
-                _buildDialogTextField(
-                  label: 'Price',
-                  hint: '\$0.99',
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              child: Text(
-                'Back',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.trim().isNotEmpty &&
-                    priceController.text.trim().isNotEmpty) {
-                  final service = CustomService(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: nameController.text.trim(),
-                    description: descriptionController.text.trim(),
-                    price: double.tryParse(priceController.text) ?? 0.0,
-                    photoPath: imagePath,
-                    specificGender: selectedGender,
-                    category: selectedCategory!.value,
-                  );
-                  vm.addCustomService(service);
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B2B3E),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: Text(
-                'Save',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showEditServiceDialog(BuildContext context, SalonCreationViewModel vm, CustomService service) {
-    final nameController = TextEditingController(text: service.name);
-    final descriptionController = TextEditingController(text: service.description);
-    final priceController = TextEditingController(text: service.price.toString());
-    String? selectedGender = service.specificGender;
-    String? imagePath = service.photoPath;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: const EdgeInsets.all(24),
-          title: Text(
-            'Modifier le service',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B2B3E),
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      setState(() {
-                        imagePath = image.path;
-                      });
-                    }
-                  },
-                  child: Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[300]!),
-                      image: imagePath != null
-                          ? DecorationImage(
-                              image: FileImage(File(imagePath!)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: imagePath == null
-                        ? Icon(Icons.add_photo_alternate_outlined,
-                            size: 48,
-                            color: Colors.grey[400])
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildDialogTextField(
-                  label: 'Nom',
-                  hint: 'Nom du service',
-                  controller: nameController,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Genre spécifique',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B2B3E),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: DropdownButtonFormField<String>(
-                    value: selectedGender,
-                    decoration: InputDecoration(
-                      hintText: 'Sélectionner',
-                      hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    items: ['Man', 'Woman', 'Mixed'].map((gender) {
-                      return DropdownMenuItem<String>(
-                        value: gender,
                         child: Text(gender, style: GoogleFonts.inter(fontSize: 14)),
                       );
                     }).toList(),
@@ -875,16 +779,14 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   label: 'Description',
-                  hint: 'Description du service',
+                  hint: 'Service description',
                   controller: descriptionController,
                   maxLines: 3,
                 ),
                 const SizedBox(height: 16),
-              
-                const SizedBox(height: 16),
                 _buildDialogTextField(
-                  label: 'Prix',
-                  hint: '0.00',
+                  label: 'Price',
+                  hint: '\$0.00',
                   controller: priceController,
                   keyboardType: TextInputType.number,
                 ),
@@ -895,7 +797,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Annuler',
+                'Cancel',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -921,7 +823,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B2B3E),
+                backgroundColor: (categoryData['gradient'] as List<Color>)[0],
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -930,7 +832,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               child: Text(
-                'Sauvegarder',
+                'Save',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -948,18 +850,34 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Supprimer le service',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.delete_outline, color: Colors.red[600], size: 24),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Service',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+          ],
         ),
         content: Text(
-          'Êtes-vous sûr de vouloir supprimer ce service ?',
-          style: GoogleFonts.inter(),
+          'Are you sure you want to delete this service? This action cannot be undone.',
+          style: GoogleFonts.inter(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler', style: GoogleFonts.inter()),
+            child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -969,8 +887,11 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red[600],
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: Text('Supprimer', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+            child: Text('Delete', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -1045,20 +966,12 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Services & Traitements',
+                ' Treatments',
                 style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1B2B3E),
                   letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Ajoutez les services que vous proposez',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: Colors.grey[600],
                 ),
               ),
             ],

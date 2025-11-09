@@ -1,11 +1,10 @@
-// models/treatment.dart
 class Treatment {
   final String treatmentId;
   final String treatmentName;
   final String treatmentDescription;
   final String treatmentCategory;
-  final double? treatmentTime; // Durée en heures
-  final double? treatmentPrice; // Prix
+  final double? treatmentTime;
+  final double? treatmentPrice; 
   final List<String>? treatmentPhotosPaths; // Photos du traitement
 
   Treatment({
@@ -111,7 +110,6 @@ class CustomService {
     required this.category,
   });
 
-  // Convertir en Treatment pour l'API
   Treatment toTreatment() {
     return Treatment(
       treatmentId: id,

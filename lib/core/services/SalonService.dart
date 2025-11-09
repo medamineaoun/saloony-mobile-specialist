@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class SalonService {
-  final String baseUrl = 'http://YOUR_API_URL/api';
   final AuthService _authService = AuthService();
 
   Future<String?> _getAuthToken() async {
@@ -20,7 +20,7 @@ class SalonService {
       final token = await _getAuthToken();
       
       final response = await http.get(
-        Uri.parse('$baseUrl/salon/specialist/$userId'),
+        Uri.parse('${Config.salonBaseUrl}/get-salon-by-specialist/$userId'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -55,13 +55,12 @@ class SalonService {
     }
   }
 
-  /// Vérifier si un spécialiste existe par email
   Future<Map<String, dynamic>> verifySpecialistEmail(String email) async {
     try {
       final token = await _getAuthToken();
       
       final response = await http.get(
-        Uri.parse('$baseUrl/v1/auth/user/verify-specialist-email?email=$email'),
+        Uri.parse('${Config.userBaseUrl}/verify-specialist-email?email=$email'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -94,7 +93,7 @@ class SalonService {
       final token = await _getAuthToken();
       
       final response = await http.get(
-        Uri.parse('$baseUrl/treatment/retrieve-all-treatments'),
+        Uri.parse('${Config.treatmentBaseUrl}/retrieve-all-treatments'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -145,7 +144,7 @@ class SalonService {
       };
 
       final response = await http.post(
-        Uri.parse('$baseUrl/treatment/add-treatment'),
+        Uri.parse('${Config.treatmentBaseUrl}/add-treatment'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -188,7 +187,7 @@ class SalonService {
       
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/treatment/$treatmentId/photo'),
+        Uri.parse('${Config.treatmentBaseUrl}/$treatmentId/photo'),
       );
 
       if (token != null) {
@@ -255,7 +254,7 @@ class SalonService {
       debugPrint('📤 Données salon: ${jsonEncode(salonData)}');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/salon/create-salon'),
+        Uri.parse('${Config.salonBaseUrl}/add-salon'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -267,6 +266,23 @@ class SalonService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
+        
+        // Ajouter les services personnalisés si fournis
+        if (customServices != null && customServices.isNotEmpty) {
+          await addCustomServices(
+            salonId: data['salonId'] ?? data['id'],
+            customServices: customServices,
+          );
+        }
+        
+        // Ajouter la disponibilité si fournie
+        if (availability != null) {
+          await addSalonAvailability(
+            salonId: data['salonId'] ?? data['id'],
+            availability: availability,
+          );
+        }
+        
         return {
           'success': true,
           'salon': data,
@@ -304,7 +320,7 @@ class SalonService {
       }).toList();
 
       final response = await http.post(
-        Uri.parse('$baseUrl/salon/$salonId/custom-services'),
+        Uri.parse('${Config.salonBaseUrl}/$salonId/custom-services'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -356,7 +372,7 @@ class SalonService {
       });
 
       final response = await http.post(
-        Uri.parse('$baseUrl/salon/$salonId/availability'),
+        Uri.parse('${Config.salonBaseUrl}/$salonId/availability'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -396,7 +412,7 @@ class SalonService {
       
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/salon/$salonId/photo'),
+        Uri.parse('${Config.salonBaseUrl}/$salonId/photos'),
       );
 
       if (token != null) {
@@ -437,7 +453,7 @@ class SalonService {
       final token = await _getAuthToken();
       
       final response = await http.get(
-        Uri.parse('$baseUrl/salon/$salonId'),
+        Uri.parse('${Config.salonBaseUrl}/retrieve-salon/$salonId'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -476,7 +492,7 @@ class SalonService {
       final token = await _getAuthToken();
       
       final response = await http.put(
-        Uri.parse('$baseUrl/salon/$salonId'),
+        Uri.parse('${Config.salonBaseUrl}/modify-salon'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -513,7 +529,7 @@ class SalonService {
       final token = await _getAuthToken();
       
       final response = await http.delete(
-        Uri.parse('$baseUrl/salon/$salonId'),
+        Uri.parse('${Config.salonBaseUrl}/remove-salon/$salonId'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -535,6 +551,42 @@ class SalonService {
       }
     } catch (e) {
       debugPrint('❌ Erreur suppression salon: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Obtenir tous les salons
+  Future<Map<String, dynamic>> getAllSalons() async {
+    try {
+      final token = await _getAuthToken();
+      
+      final response = await http.get(
+        Uri.parse('${Config.salonBaseUrl}/retrieve-all-salons'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('🏢 Récupération tous les salons: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> salons = jsonDecode(response.body);
+        return {
+          'success': true,
+          'salons': salons,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de la récupération des salons',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur récupération salons: $e');
       return {
         'success': false,
         'message': 'Erreur: $e',

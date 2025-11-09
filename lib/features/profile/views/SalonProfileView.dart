@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart' as AppConfig;
 import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/core/services/SalonService.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart';
 
 bool notificationsEnabled = true;
 
@@ -58,24 +60,25 @@ class _ProfileViewState extends State<ProfileView> {
     }
   }
 
-  String _getSalonImageUrl(String? photoPath) {
-    if (photoPath == null || photoPath.isEmpty) {
-      return '';
-    }
-    
-    if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
-      return photoPath;
-    }
-    
-    final cleanPath = photoPath.startsWith('/') 
-        ? photoPath.substring(1) 
-        : photoPath;
-    
-    final uri = Uri.parse(_salonService.baseUrl);
-    final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
-    
-    return '$baseUrlWithoutPath/$cleanPath';
+String _getSalonImageUrl(String? photoPath) {
+  if (photoPath == null || photoPath.isEmpty) {
+    return '';
   }
+
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+    return photoPath;
+  }
+
+  final cleanPath = photoPath.startsWith('/') 
+      ? photoPath.substring(1) 
+      : photoPath;
+
+  final uri = Uri.parse(AppConfig.Config.baseUrl);
+  final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+
+  return '$baseUrlWithoutPath/$cleanPath';
+}
+
 
   void _showSideMenu(BuildContext context) {
     showDialog(

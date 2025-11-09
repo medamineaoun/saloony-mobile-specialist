@@ -142,36 +142,35 @@ class SalonCreationViewModel extends ChangeNotifier {
   List<String> get availableGenderTypesStrings => 
       SalonGenderType.values.map((e) => e.name).toList();
 
-  // CORRECTION: Getter pour la disponibilité sous forme de liste
   List<DayAvailabilityWithSlots> get availability {
     return _weeklyAvailability.values.toList();
   }
 
 bool get canContinue {
   switch (_currentStep) {
-    case 0: // Account Information
+    case 0: 
       return businessNameController.text.trim().isNotEmpty &&
              selectedCategory != null;
              
-    case 1: // Business Details
+    case 1: 
       return descriptionController.text.trim().isNotEmpty &&
              _location != null &&
              _businessImagePath != null &&
              _selectedGenderType != null;
     
-    case 2: // Additional Services (optionnel)
+    case 2: 
       return true;
              
-    case 3: // Availability ← CORRECTION ICI
+    case 3:
       return _weeklyAvailability.values.any((day) => day.isAvailable);
       
-    case 4: // Treatments
+    case 4:
       return _selectedTreatmentIds.isNotEmpty || _customServices.isNotEmpty;
       
-    case 5: // Team (optionnel)
+    case 5: 
       return true;
       
-    case 6: // Confirmation
+    case 6:
       return true;
       
     default:

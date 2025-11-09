@@ -330,206 +330,262 @@ Widget _buildStepContent(BuildContext context, SalonCreationViewModel vm) {
             ],
           ),
      child: DropdownButtonFormField<SalonCategory>(
+  value: vm.selectedCategory,
   decoration: InputDecoration(
-    hintText: 'Select a category',
-    hintStyle: GoogleFonts.inter(
-      color: Colors.grey[400],
-      fontSize: 15,
+    labelText: 'Salon Category',
+    labelStyle: GoogleFonts.inter(
+      color: Colors.grey[600],
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
     ),
     prefixIcon: const Icon(
       Icons.category_outlined,
       color: Color(0xFFF0CD97),
       size: 22,
     ),
-    border: InputBorder.none,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+    filled: true,
+    fillColor: Colors.grey[50],
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1.2),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFF0CD97), width: 1.8),
+    ),
   ),
-  value: vm.selectedCategory,
+  icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFFF0CD97)),
+  dropdownColor: Colors.white,
+  borderRadius: BorderRadius.circular(12),
+  style: GoogleFonts.inter(
+    fontSize: 15,
+    color: Colors.black87,
+    fontWeight: FontWeight.w500,
+  ),
   items: SalonCategory.values.map((category) {
     return DropdownMenuItem<SalonCategory>(
       value: category,
-      child: Text(
-        category.name.replaceAll('_', ' '),
-        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
+      child: Row(
+        children: [
+          Text(category.emoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Text(
+            category.displayName,
+            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+        ],
       ),
     );
   }).toList(),
-  onChanged: (value) {
-    vm.setCategory(value!);  // ✅ Utiliser le setter
-  },
-),  ),
+  onChanged: (value) => vm.setCategory(value!),
+),
+        ),
       ],
     );
   }
 
-  Widget _businessDetailsStep(BuildContext context, SalonCreationViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStepHeader(
-          'Business Details',
-          'Add photos and location information',
-          Icons.business_outlined,
-        ),
-        const SizedBox(height: 32),
-        GestureDetector(
-          onTap: () => vm.pickImage(),
-          child: Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: vm.businessImagePath == null 
-                    ? Colors.grey[200]! 
-                    : const Color(0xFFF0CD97),
-                width: vm.businessImagePath == null ? 2 : 3,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: vm.businessImagePath == null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF1B2B3E).withOpacity(0.1),
-                              const Color(0xFFF0CD97).withOpacity(0.1),
-                            ],
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_photo_alternate_outlined,
-                          size: 40,
-                          color: Color(0xFF1B2B3E),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Upload Salon Photo',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1B2B3E),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'JPG, PNG (Max 5MB)',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  )
-          : Stack(
+Widget _businessDetailsStep(BuildContext context, SalonCreationViewModel vm) {
+  final size = MediaQuery.of(context).size;
+
+  return SingleChildScrollView(
+    physics: const BouncingScrollPhysics(),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.file(  // ✅ Changé de Image.network à Image.file
-              File(vm.businessImagePath!),
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
+          _buildStepHeader(
+            'Business Details',
+            'Add salon photos, category, and location information',
+            Icons.business_outlined,
           ),
-          Positioned(
-            top: 12,
-            right: 12,
+
+          const SizedBox(height: 32),
+
+          // --- Salon Image Upload Section ---
+          GestureDetector(
+            onTap: vm.pickImage,
             child: Container(
-              padding: const EdgeInsets.all(8),
+              width: double.infinity,
+              height: size.height * 0.25,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.edit,
                 color: Colors.white,
-                size: 18,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: vm.businessImagePath == null
+                      ? Colors.grey[300]!
+                      : const Color(0xFFF0CD97),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
+              child: vm.businessImagePath == null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFFF0CD97).withOpacity(0.1),
+                                const Color(0xFF1B2B3E).withOpacity(0.05),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 42,
+                            color: Color(0xFF1B2B3E),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Upload Salon Photo',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1B2B3E),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'JPG, PNG (Max 5MB)',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.file(
+                            File(vm.businessImagePath!),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
+                        ),
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
-        ],
-      ), ),
-        ),
-    _buildLabel('Gender Type *'),
-const SizedBox(height: 8),
+
+          const SizedBox(height: 32),
+
+       // --- Gender Type Dropdown ---
+_buildLabel('Gender Type *'),
+const SizedBox(height: 6),
 Container(
   decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: Colors.grey[200]!, width: 1),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.03),
-        blurRadius: 8,
-        offset: const Offset(0, 2),
-      ),
-    ],
+    color: Colors.grey[50],
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: Colors.grey.shade300, width: 1),
   ),
   child: DropdownButtonFormField<String>(
+    value: vm.selectedGenderTypeString,
     decoration: InputDecoration(
-      hintText: 'Select gender type',
-      hintStyle: GoogleFonts.inter(
-        color: Colors.grey[400],
-        fontSize: 15,
-      ),
       prefixIcon: const Icon(
         Icons.people_outline,
         color: Color(0xFFF0CD97),
         size: 22,
       ),
+      hintText: 'Select gender type',
+      hintStyle: GoogleFonts.inter(
+        color: Colors.grey[500],
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
       border: InputBorder.none,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
     ),
-    value: vm.selectedGenderTypeString, // ← UTILISEZ LA NOUVELLE MÉTHODE
-    items: vm.availableGenderTypesStrings.map((type) { // ← UTILISEZ LA NOUVELLE MÉTHODE
+    icon: const Icon(
+      Icons.keyboard_arrow_down_rounded,
+      color: Colors.grey,
+      size: 22,
+    ),
+    style: GoogleFonts.inter(
+      color: Colors.black87,
+      fontSize: 15,
+      fontWeight: FontWeight.w500,
+    ),
+    dropdownColor: Colors.white,
+    items: vm.availableGenderTypesStrings.map((type) {
       return DropdownMenuItem<String>(
         value: type,
         child: Text(
-          type.toUpperCase(), // Ou formattez comme vous voulez
-          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
+          type,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       );
     }).toList(),
     onChanged: (value) {
-      if (value != null) {
-        vm.setGenderTypeFromString(value); // ← UTILISEZ LA NOUVELLE MÉTHODE
-      }
+      if (value != null) vm.setGenderTypeFromString(value);
     },
   ),
 ),
-        const SizedBox(height: 24),
-        _buildTextField(
-          label: 'Description',
-          hint: 'Tell us about your salon',
-          icon: Icons.description_outlined,
-          maxLines: 4,
-          controller: vm.descriptionController,
-        ),
-        const SizedBox(height: 24),
-        _buildLocationSection(context, vm),
-        const SizedBox(height: 24),
-        _buildTextField(
-          label: 'Additional Address Details (Optional)',
-          hint: 'Floor, Building name, Landmark, etc.',
-          icon: Icons.location_city_outlined,
-          controller: vm.additionalAddressController,
-        ),
-      ],
-    );
-  }
+const SizedBox(height: 28),
+
+          // --- Description ---
+          _buildTextField(
+            label: 'Description',
+            hint: 'Tell us about your salon',
+            icon: Icons.description_outlined,
+            maxLines: 4,
+            controller: vm.descriptionController,
+          ),
+
+          const SizedBox(height: 28),
+
+          // --- Location Section ---
+          _buildLocationSection(context, vm),
+
+          const SizedBox(height: 28),
+
+          // --- Additional Address Details ---
+          _buildTextField(
+            label: 'Additional Address Details (Optional)',
+            hint: 'Floor, Building name, Landmark, etc.',
+            icon: Icons.location_city_outlined,
+            controller: vm.additionalAddressController,
+          ),
+
+          const SizedBox(height: 50),
+        ],
+      ),
+    ),
+  );
+}
 Widget _additionalServicesStep(BuildContext context, SalonCreationViewModel vm) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,7 +629,7 @@ Widget _additionalServicesStep(BuildContext context, SalonCreationViewModel vm) 
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Additional Services & Amenities',
+                    ' Services',
                     style: GoogleFonts.inter(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,

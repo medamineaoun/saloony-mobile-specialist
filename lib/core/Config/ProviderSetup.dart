@@ -18,6 +18,7 @@ class ProviderSetup {
 
 
 class Config {
+  
   static const String ipAddressAndPort ='192.168.1.117:8081';
   static const String baseUrl = 'http://$ipAddressAndPort';
   static const String authBaseUrl = '$baseUrl/api/v1/auth';
