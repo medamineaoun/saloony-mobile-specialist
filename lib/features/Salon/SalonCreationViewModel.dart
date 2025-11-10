@@ -11,6 +11,7 @@ import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/core/models/User.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:saloony/core/services/SalonService.dart';
+import 'package:saloony/core/services/TreatmentService.dart';
 import 'package:saloony/features/Salon/location_result.dart';
 
 enum AccountType { solo, team }
@@ -36,6 +37,7 @@ class DayAvailabilityWithSlots {
 
 class CustomService {
   String id;
+  final double? duration; // en minutes
   String name;
   String description;
   double price;
@@ -46,6 +48,7 @@ class CustomService {
   CustomService({
     required this.id,
     required this.name,
+    required this.duration,
     required this.description,
     required this.price,
     this.photoPath,
@@ -57,6 +60,8 @@ class CustomService {
 class SalonCreationViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
+  final TreatmentService _treatmentService = TreatmentService();
+
   final ImagePicker _picker = ImagePicker();
   
   // Controllers
@@ -393,7 +398,6 @@ class SalonCreationViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ FIXED: Better validation for availability and team members
   Future<void> _finishCreation(BuildContext context) async {
     if (_isCreatingSalon) return;
 
@@ -409,7 +413,7 @@ class SalonCreationViewModel extends ChangeNotifier {
         return;
       }
 
-      // Vérifier qu'au moins un traitement OU service personnalisé est sélectionné
+      // ✅ FIXED: Vérifier qu'au moins un traitement OU service personnalisé est sélectionné
       if (_selectedTreatmentIds.isEmpty && _customServices.isEmpty) {
         _showError(savedContext, 'Veuillez sélectionner au moins un traitement ou service personnalisé');
         return;
@@ -425,13 +429,11 @@ class SalonCreationViewModel extends ChangeNotifier {
         return;
       }
 
-      // Vérifier qu'au moins un service additionnel est sélectionné
       if (selectedAdditionalServices.isEmpty) {
         _showError(savedContext, 'Veuillez sélectionner au moins un service additionnel');
         return;
       }
 
-      // ✅ FIXED: Vérifier qu'au moins un jour avec des horaires VALIDES est disponible
       final availableDays = _weeklyAvailability.values
           .where((day) => day.isAvailable && 
                          day.timeRange != null && 
@@ -439,11 +441,10 @@ class SalonCreationViewModel extends ChangeNotifier {
           .length;
 
       if (availableDays == 0) {
-        _showError(savedContext, 'Veuillez définir au moins un jour de disponibilité avec des horaires valides (heure de fin après heure de début)');
+        _showError(savedContext, 'Veuillez définir au moins un jour de disponibilité avec des horaires valides');
         return;
       }
 
-      // S'assurer qu'on a exactement 7 disponibilités (même les jours non disponibles)
       if (_weeklyAvailability.length != 7) {
         _showError(savedContext, 'Veuillez définir la disponibilité pour tous les jours de la semaine');
         return;
@@ -454,7 +455,6 @@ class SalonCreationViewModel extends ChangeNotifier {
         specialistIds = [_currentUser!.userId!];
       }
       
-      // ✅ FIXED: Validate team member IDs are UUIDs
       for (final member in _teamMembers) {
         if (!_isValidUUID(member.id)) {
           _showError(savedContext, 'ID invalide pour ${member.fullName}. Veuillez contacter le support.');
@@ -481,7 +481,55 @@ class SalonCreationViewModel extends ChangeNotifier {
       debugPrint('Spécialistes IDs: $specialistIds');
       debugPrint('Jours disponibles: $availableDays/7');
 
-      // Préparer les disponibilités au format backend
+      // ✅ SOLUTION: Si aucun traitement API n'est sélectionné mais qu'il y a des services personnalisés,
+      // créer d'abord les traitements personnalisés dans le backend
+      List<String> finalTreatmentIds = List.from(_selectedTreatmentIds);
+      
+   if (_customServices.isNotEmpty) {
+  debugPrint('📝 Création des ${_customServices.length} services personnalisés...');
+  
+  for (final customService in _customServices) {
+    try {
+      // ✅ SIMPLE FIX: Map category to backend format
+      final backendCategory = _mapTreatmentCategoryToBackend(customService.category);
+      
+      debugPrint('  🎯 Catégorie mapping: ${customService.category} -> $backendCategory');
+      
+      // Créer le traitement personnalisé dans le backend
+      final treatmentResult = await _treatmentService.addTreatment(
+        name: customService.name,
+        description: customService.description,
+        price: customService.price,
+        duration: customService.duration != null ? customService.duration! / 60 : 1.0,
+        category: backendCategory, // ✅ Utiliser la catégorie mappée
+        photoPath: customService.photoPath,
+      );
+      
+      if (treatmentResult['success'] && treatmentResult['treatment'] != null) {
+        final treatmentId = treatmentResult['treatment']['treatmentId'] ?? treatmentResult['treatment']['id'];
+        if (treatmentId != null) {
+          finalTreatmentIds.add(treatmentId);
+          debugPrint('  ✅ Service "${customService.name}" créé avec ID: $treatmentId');
+        } else {
+          debugPrint('  ⚠️ ID manquant pour service "${customService.name}"');
+        }
+      } else {
+        debugPrint('  ⚠️ Échec création service "${customService.name}": ${treatmentResult['message']}');
+      }
+    } catch (e) {
+      debugPrint('  ❌ Erreur création service "${customService.name}": $e');
+    }
+  }
+}
+
+      // ✅ Vérifier qu'on a au moins un traitement après la création
+      if (finalTreatmentIds.isEmpty) {
+        _showError(savedContext, 'Impossible de créer les services. Veuillez réessayer.');
+        return;
+      }
+
+      debugPrint('📋 Total traitements finaux: ${finalTreatmentIds.length}');
+
       final availabilityForApi = _prepareAvailabilityForApi();
 
       final createResult = await _salonService.createSalon(
@@ -492,16 +540,14 @@ class SalonCreationViewModel extends ChangeNotifier {
         genderType: genderTypeForApi,
         latitude: _location!.latitude,
         longitude: _location!.longitude,
-        treatmentIds: _selectedTreatmentIds,
+        treatmentIds: finalTreatmentIds, // ✅ Utiliser les IDs finaux (API + personnalisés)
         specialistIds: specialistIds,
-        customServices: _customServices,
         availability: availabilityForApi,
       );
 
       if (!createResult['success']) {
         final errorMessage = createResult['message'] ?? 'Erreur lors de la création';
         debugPrint('❌ Erreur création: $errorMessage');
-        
         _showError(savedContext, errorMessage);
         return;
       }
@@ -694,7 +740,50 @@ class SalonCreationViewModel extends ChangeNotifier {
     debugPrint('✅ Disponibilités initialisées: ${_weeklyAvailability.length} jours');
     notifyListeners();
   }
-
+// ✅ SIMPLE FIX: Map frontend categories to backend categories
+String _mapTreatmentCategoryToBackend(String frontendCategory) {
+  // Si la catégorie est déjà une valeur backend valide, la retourner telle quelle
+  const backendCategories = [
+    'BARBER', 'HAIRDRESSING', 'NAILS', 
+    'FACE_AND_BODY_TREATMENTS', 'MAKEUP_AND_EYELASHES', 'SPA_AND_MASSAGES'
+  ];
+  
+  if (backendCategories.contains(frontendCategory)) {
+    return frontendCategory;
+  }
+  
+  // Mapping simple des catégories frontend vers backend
+  switch (frontendCategory.toUpperCase()) {
+    case 'HAIRCUT':
+    case 'HAIR_STYLING':
+    case 'HAIR_COLOR':
+    case 'HAIR_TREATMENT':
+      return 'HAIRDRESSING';
+    case 'MANICURE':
+    case 'PEDICURE':
+    case 'NAIL_ART':
+      return 'NAILS';
+    case 'MASSAGE':
+    case 'FACIAL':
+    case 'BODY_TREATMENT':
+    case 'SPA_TREATMENTS':
+      return 'SPA_AND_MASSAGES';
+    case 'BEARD_TRIM':
+    case 'SHAVING':
+    case 'BARBER_SERVICES':
+      return 'BARBER';
+    case 'MAKEUP':
+    case 'EYELASH_EXTENSIONS':
+    case 'EYEBROWS':
+      return 'MAKEUP_AND_EYELASHES';
+    case 'SKIN_CARE':
+    case 'WAXING':
+    case 'BODY_CARE':
+      return 'FACE_AND_BODY_TREATMENTS';
+    default:
+      return 'HAIRDRESSING'; // Default fallback
+  }
+}
   String get salonCategoryForApi {
     if (selectedCategory == null) return '';
     

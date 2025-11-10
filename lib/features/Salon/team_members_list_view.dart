@@ -5,7 +5,6 @@ import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 import 'package:saloony/core/models/TeamMember.dart';
 
 class TeamManagementPage extends StatefulWidget {
- 
   final SalonCreationViewModel vm;
 
   const TeamManagementPage({super.key, required this.vm});
@@ -27,13 +26,8 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
           children: [
             _buildStepHeader(),
             const SizedBox(height: 24),
-
-            // Add member form
             _buildAddMemberSection(context, vm),
-
             const SizedBox(height: 24),
-
-            // Team members list
             _buildTeamMembersList(vm),
           ],
         ),
@@ -205,7 +199,6 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
 
           return Row(
             children: [
-              // Avatar with initials
               Container(
                 width: isSmallScreen ? 50 : 60,
                 height: isSmallScreen ? 50 : 60,
@@ -227,8 +220,6 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Member info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,11 +286,8 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                   ],
                 ),
               ),
-
-              // Actions
               Row(
                 children: [
-                 
                   IconButton(
                     icon: Container(
                       padding: const EdgeInsets.all(6),
@@ -322,6 +310,54 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
         },
       ),
     );
+  }
+
+  // HELPER: Safely extract string from specialistData
+  String _getSpecialistValue(Map<String, dynamic>? data, String key, [String defaultValue = '']) {
+    if (data == null) return defaultValue;
+    
+    final value = data[key];
+    
+    // Si c'est déjà une string
+    if (value is String) return value.isNotEmpty ? value : defaultValue;
+    
+    // Si c'est null
+    if (value == null) return defaultValue;
+    
+    // Convertir en string
+    return value.toString();
+  }
+
+  // HELPER: Get full name from specialist data
+  String _getFullName(Map<String, dynamic>? data) {
+    if (data == null) return 'Unknown Specialist';
+    
+    // Essayer d'abord 'fullName' (format du backend)
+    if (data.containsKey('fullName') && data['fullName'] != null) {
+      final fullName = data['fullName'].toString().trim();
+      if (fullName.isNotEmpty) return fullName;
+    }
+    
+    // Sinon essayer userFirstName + userLastName
+    final firstName = _getSpecialistValue(data, 'userFirstName');
+    final lastName = _getSpecialistValue(data, 'userLastName');
+    final combinedName = '$firstName $lastName'.trim();
+    
+    return combinedName.isNotEmpty ? combinedName : 'Unknown Specialist';
+  }
+  
+  // HELPER: Get specialty from specialist data
+  String _getSpecialty(Map<String, dynamic>? data) {
+    if (data == null) return 'Specialist';
+    
+    // Essayer 'specialty' puis 'speciality' (variantes possibles)
+    final specialty = _getSpecialistValue(data, 'specialty');
+    if (specialty.isNotEmpty) return specialty;
+    
+    final speciality = _getSpecialistValue(data, 'speciality');
+    if (speciality.isNotEmpty) return speciality;
+    
+    return 'Specialist';
   }
 
   void _showAddMemberDialog(BuildContext context, SalonCreationViewModel vm) {
@@ -384,7 +420,6 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                 ),
                 const SizedBox(height: 8),
 
-                // Email input with verify button
                 Row(
                   children: [
                     Expanded(
@@ -440,22 +475,33 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                                   emailController.text.trim(),
                                 );
 
+                                // DEBUG: Print the result to see the structure
+                                print('DEBUG - Result: $result');
+                                print('DEBUG - Specialist data: ${result['specialist']}');
+
                                 setDialogState(() {
                                   isVerifying = false;
                                   if (result['success'] == true && result['specialist'] != null) {
                                     isVerified = true;
                                     specialistData = result['specialist'];
                                     verificationMessage = '✓ Specialist found!';
+                                    
+                                    // DEBUG: Print the actual data structure
+                                    print('DEBUG - Full specialist data: $specialistData');
+                                    print('DEBUG - Full name: ${specialistData!['fullName']}');
+                                    print('DEBUG - Email: ${specialistData!['email']}');
+                                    print('DEBUG - Phone: ${specialistData!['phoneNumber']}');
                                   } else {
                                     isVerified = false;
                                     verificationMessage = result['message'] ?? 'No specialist found with this email';
                                   }
                                 });
                               } catch (e) {
+                                print('DEBUG - Error: $e');
                                 setDialogState(() {
                                   isVerifying = false;
                                   isVerified = false;
-                                  verificationMessage = 'Error during search';
+                                  verificationMessage = 'Error during search: $e';
                                 });
                               }
                             },
@@ -546,11 +592,13 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                           children: [
                             Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
                             const SizedBox(width: 8),
-                            Text(
-                              '${specialistData!['userFirstName'] ?? ''} ${specialistData!['userLastName'] ?? ''}',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Text(
+                                _getFullName(specialistData),
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
@@ -560,11 +608,13 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                           children: [
                             Icon(Icons.work_outline, size: 16, color: Colors.grey[600]),
                             const SizedBox(width: 8),
-                            Text(
-                              specialistData!['specialty'] ?? 'Specialist',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                            Expanded(
+                              child: Text(
+                                _getSpecialty(specialistData),
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
                               ),
                             ),
                           ],
@@ -572,14 +622,55 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
+                            Icon(Icons.email_outlined, size: 16, color: Colors.grey[600]),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _getSpecialistValue(specialistData, 'email', emailController.text),
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (specialistData!['phoneNumber'] != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.phone_outlined, size: 16, color: Colors.grey[600]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _getSpecialistValue(specialistData, 'phoneNumber'),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
                             Icon(Icons.verified_user_outlined, size: 16, color: Colors.green[600]),
                             const SizedBox(width: 8),
-                            Text(
-                              'Role: ${specialistData!['appRole'] ?? 'Specialist'}',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: Colors.green[600],
-                                fontWeight: FontWeight.w500,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.green[50],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Verified Specialist',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.green[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
@@ -610,24 +701,49 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
               onPressed: (!isVerified || specialistData == null)
                   ? null
                   : () {
+                      final fullName = _getFullName(specialistData);
+                      final specialty = _getSpecialty(specialistData);
+                      final email = emailController.text.trim();
+                      final userId = _getSpecialistValue(specialistData, 'userId');
+                      
+                      // DEBUG avant d'ajouter
+                      print('DEBUG - Adding member:');
+                      print('  Full Name: $fullName');
+                      print('  Specialty: $specialty');
+                      print('  Email: $email');
+                      print('  User ID: $userId');
+                      
                       final member = TeamMember(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        fullName: '${specialistData!['userFirstName']} ${specialistData!['userLastName']}',
-                        specialty: specialistData!['specialty'] ?? 'Specialist',
-                        email: emailController.text.trim(),
-                        userId: specialistData!['userId']?.toString(),
+  id: userId,    // ✅ Utiliser le vrai userId comme id
+                        fullName: fullName,
+                        specialty: specialty,
+                        email: email,
+                        userId: userId,
                       );
+                      
                       vm.addTeamMember(member);
                       Navigator.pop(dialogContext);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(
-                            'Specialist added to the team',
-                            style: GoogleFonts.inter(),
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '$fullName added to the team',
+                                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
                           ),
                           backgroundColor: Colors.green[600],
-                          duration: const Duration(seconds: 2),
+                          duration: const Duration(seconds: 3),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       );
                     },
@@ -660,17 +776,10 @@ class _TeamManagementPageState extends State<TeamManagementPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isSmallScreen = constraints.maxWidth < 600;
-
-        return Row(
-          children: [
-        
-         ],
-        );
+        return Row(children: []);
       },
     );
   }
-
- 
 
   void _confirmDeleteMember(BuildContext context, SalonCreationViewModel vm, String memberId) {
     showDialog(
