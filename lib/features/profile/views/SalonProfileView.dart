@@ -7,6 +7,7 @@ import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/core/services/SalonService.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
 import 'package:saloony/core/Config/ProviderSetup.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart' as AppConfig; // ✅ Alias
 
 bool notificationsEnabled = true;
 
@@ -60,27 +61,9 @@ class _ProfileViewState extends State<ProfileView> {
     }
   }
 
-String _getSalonImageUrl(String? photoPath) {
-  if (photoPath == null || photoPath.isEmpty) {
-    return '';
-  }
-
-  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
-    return photoPath;
-  }
-
-  final cleanPath = photoPath.startsWith('/') 
-      ? photoPath.substring(1) 
-      : photoPath;
-
-  final uri = Uri.parse(AppConfig.Config.baseUrl);
-  final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
-
-  return '$baseUrlWithoutPath/$cleanPath';
-}
-
-
-  void _showSideMenu(BuildContext context) {
+ 
+ void _showSideMenu(BuildContext context) {
+  
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
@@ -534,163 +517,314 @@ String _getSalonImageUrl(String? photoPath) {
             ),
     );
   }
+// Remplacez ces deux méthodes dans votre ProfileView
 
-  Widget _buildSalonCard() {
-    final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotoPath']);
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: Stack(
-              children: [
-                salonImageUrl.isNotEmpty
-                    ? Image.network(
-                        salonImageUrl,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 200,
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.store, size: 60, color: Colors.grey),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 200,
-                            color: Colors.grey[200],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: const Color(0xFF1B2B3E),
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        height: 200,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.store, size: 60, color: Colors.grey),
-                      ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: InkWell(
-                    onTap: () {
-                      // TODO: Navigate to edit salon
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.edit_outlined,
-                        size: 20,
-                        color: Color(0xFF1B2B3E),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _userSalon?['salonName'] ?? 'Mon Salon',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1B2B3E),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF8F9FA),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.verified,
-                        size: 20,
-                        color: Color(0xFFF0CD97),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (_userSalon?['salonDescription'] != null && 
-                    _userSalon!['salonDescription'].toString().isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      _userSalon!['salonDescription'],
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: const Color(0xFF1B2B3E).withOpacity(0.7),
-                        height: 1.5,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                if (_userSalon?['address'] != null && 
-                    _userSalon!['address'].toString().isNotEmpty)
-                  _buildInfoRow(Icons.location_on_outlined, _userSalon!['address']),
-                if (_userSalon?['latitude'] != null && _userSalon?['longitude'] != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: _buildInfoRow(
-                      Icons.map_outlined,
-                      'GPS: ${_userSalon!['latitude'].toStringAsFixed(4)}, ${_userSalon!['longitude'].toStringAsFixed(4)}',
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+String _getSalonImageUrl(dynamic photoData) {
+  if (photoData == null) {
+    return '';
   }
 
+  // Si c'est une liste, prendre le premier élément
+  if (photoData is List) {
+    if (photoData.isEmpty) return '';
+    photoData = photoData.first;
+  }
+
+  // Si c'est une chaîne de caractères
+  if (photoData is String) {
+    if (photoData.isEmpty) return '';
+    
+    // ✅ CORRECTION: Nettoyer le préfixe file:// si présent
+    String cleanPath = photoData;
+    if (cleanPath.startsWith('file://')) {
+      cleanPath = cleanPath.substring(7); // Enlever "file://"
+    }
+    
+    // Si déjà une URL complète
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+      return cleanPath;
+    }
+
+    // Nettoyer le slash initial si présent
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+
+    // Construire l'URL complète
+    final uri = Uri.parse(AppConfig.Config.baseUrl);
+    final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+
+    return '$baseUrlWithoutPath/$cleanPath';
+  }
+
+  // Si c'est un Map avec une clé 'url' ou 'path'
+  if (photoData is Map) {
+    final url = photoData['url'] ?? photoData['path'] ?? photoData['photoPath'];
+    if (url != null && url is String && url.isNotEmpty) {
+      // Nettoyer le préfixe file:// si présent
+      String cleanPath = url;
+      if (cleanPath.startsWith('file://')) {
+        cleanPath = cleanPath.substring(7);
+      }
+      
+      if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+        return cleanPath;
+      }
+      
+      if (cleanPath.startsWith('/')) {
+        cleanPath = cleanPath.substring(1);
+      }
+      
+      final uri = Uri.parse(AppConfig.Config.baseUrl);
+      final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+      
+      return '$baseUrlWithoutPath/$cleanPath';
+    }
+  }
+
+  return '';
+}
+
+// ✅ CORRECTION: Utiliser les bons noms de champs du backend
+String _getSalonAddress(Map<String, dynamic>? salonData) {
+  if (salonData == null) return '';
+  
+  debugPrint('📦 Données salon reçues: $salonData');
+  
+  // Essayer différentes clés possibles pour l'adresse
+  final address = salonData['address'] ?? 
+                 salonData['fullAddress'] ?? 
+                 salonData['location'] ?? 
+                 salonData['salonAddress'];
+  
+  if (address is String && address.isNotEmpty) {
+    return address;
+  }
+  
+  // Si l'adresse est dans un Map
+  if (address is Map) {
+    final street = address['street'] ?? address['addressLine1'];
+    final city = address['city'];
+    final postalCode = address['postalCode'] ?? address['zipCode'];
+    
+    final parts = [street, city, postalCode]
+        .where((part) => part != null && part.toString().isNotEmpty)
+        .toList();
+    if (parts.isNotEmpty) {
+      return parts.join(', ');
+    }
+  }
+  
+  // ✅ CORRECTION: Utiliser les bons noms de champs (avec préfixe salon)
+  final latitude = salonData['salonLatitude'];
+  final longitude = salonData['salonLongitude'];
+  
+  if (latitude != null && longitude != null) {
+    try {
+      final lat = latitude is num ? latitude : double.parse(latitude.toString());
+      final lng = longitude is num ? longitude : double.parse(longitude.toString());
+      return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+    } catch (e) {
+      debugPrint('❌ Erreur conversion coordonnées: $e');
+    }
+  }
+  
+  return 'Adresse non disponible';
+}
+
+// ✅ BONUS: Ajouter aussi ces corrections dans _buildSalonCard si nécessaire
+Widget _buildSalonCard() {
+  final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotosPaths']); // ⚠️ Notez le 's' à Photos
+  final salonAddress = _getSalonAddress(_userSalon);
+  
+  debugPrint('🖼️ URL image finale: $salonImageUrl');
+  debugPrint('📍 Adresse finale: $salonAddress');
+  debugPrint('📦 Données salon complètes: $_userSalon');
+  
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Stack(
+            children: [
+              if (salonImageUrl.isNotEmpty)
+                SizedBox(
+                  height: 200,
+                  width: double.infinity,
+                  child: Image.network(
+                    salonImageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint('❌ Erreur chargement image: $error');
+                      debugPrint('❌ URL tentée: $salonImageUrl');
+                      return _buildPlaceholderImage();
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: const Color(0xFF1B2B3E),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              else
+                _buildPlaceholderImage(),
+              
+              Positioned(
+                top: 12,
+                right: 12,
+                child: InkWell(
+                  onTap: () {
+                    debugPrint('Édition du salon');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: Color(0xFF1B2B3E),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _userSalon?['salonName'] ?? 'Nom du salon non disponible',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1B2B3E),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8F9FA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.verified,
+                      size: 20,
+                      color: Color(0xFFF0CD97),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              if (_userSalon?['salonDescription'] != null && 
+                  _userSalon!['salonDescription'].toString().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    _userSalon!['salonDescription'].toString(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF1B2B3E).withOpacity(0.7),
+                      height: 1.5,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              
+              if (salonAddress.isNotEmpty && salonAddress != 'Adresse non disponible')
+                _buildInfoRow(Icons.location_on_outlined, salonAddress),
+              
+              // ✅ CORRECTION: Utiliser les bons noms de champs
+              if (_userSalon?['salonLatitude'] != null && _userSalon?['salonLongitude'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildInfoRow(
+                    Icons.map_outlined,
+                    '${_userSalon!['salonLatitude'].toString()}, ${_userSalon!['salonLongitude'].toString()}',
+                  ),
+                ),
+              
+              if (_userSalon?['salonCategory'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildInfoRow(
+                    Icons.category_outlined,
+                    _userSalon!['salonCategory'].toString(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Méthode pour l'image de placeholder
+Widget _buildPlaceholderImage() {
+  return Container(
+    height: 200,
+    color: Colors.grey[300],
+    child: const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.store, size: 60, color: Colors.grey),
+        SizedBox(height: 8),
+        Text(
+          'Aucune image',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildCreateSalonCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),

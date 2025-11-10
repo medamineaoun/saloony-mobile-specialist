@@ -481,8 +481,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       debugPrint('Spécialistes IDs: $specialistIds');
       debugPrint('Jours disponibles: $availableDays/7');
 
-      // ✅ SOLUTION: Si aucun traitement API n'est sélectionné mais qu'il y a des services personnalisés,
-      // créer d'abord les traitements personnalisés dans le backend
+   
       List<String> finalTreatmentIds = List.from(_selectedTreatmentIds);
       
    if (_customServices.isNotEmpty) {
@@ -490,18 +489,16 @@ class SalonCreationViewModel extends ChangeNotifier {
   
   for (final customService in _customServices) {
     try {
-      // ✅ SIMPLE FIX: Map category to backend format
       final backendCategory = _mapTreatmentCategoryToBackend(customService.category);
       
       debugPrint('  🎯 Catégorie mapping: ${customService.category} -> $backendCategory');
       
-      // Créer le traitement personnalisé dans le backend
       final treatmentResult = await _treatmentService.addTreatment(
         name: customService.name,
         description: customService.description,
         price: customService.price,
         duration: customService.duration != null ? customService.duration! / 60 : 1.0,
-        category: backendCategory, // ✅ Utiliser la catégorie mappée
+        category: backendCategory, 
         photoPath: customService.photoPath,
       );
       
@@ -522,7 +519,6 @@ class SalonCreationViewModel extends ChangeNotifier {
   }
 }
 
-      // ✅ Vérifier qu'on a au moins un traitement après la création
       if (finalTreatmentIds.isEmpty) {
         _showError(savedContext, 'Impossible de créer les services. Veuillez réessayer.');
         return;
@@ -540,7 +536,7 @@ class SalonCreationViewModel extends ChangeNotifier {
         genderType: genderTypeForApi,
         latitude: _location!.latitude,
         longitude: _location!.longitude,
-        treatmentIds: finalTreatmentIds, // ✅ Utiliser les IDs finaux (API + personnalisés)
+        treatmentIds: finalTreatmentIds, 
         specialistIds: specialistIds,
         availability: availabilityForApi,
       );
