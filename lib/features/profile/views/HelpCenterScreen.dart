@@ -22,384 +22,327 @@ class HelpCenterScreenP extends StatelessWidget {
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw 'Impossible d ouvrir : $url';
+      throw 'Could not open: $url';
     }
   }
 
   Future<void> _launchWhatsApp(String phone) async {
     final Uri uri = Uri.parse('https://wa.me/$phone');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw 'Impossible douvrir WhatsApp avec le numéro $phone';
+      throw 'Could not open WhatsApp with number $phone';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: SaloonyColors.tertiary,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: SaloonyColors.primary,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: SaloonyColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Service client",
+        title: Text(
+          "Help Center",
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
+            color: SaloonyColors.textPrimary,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
           ),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Section
+            // Header Section
             Container(
               width: double.infinity,
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    SaloonyColors.secondary,
-                    SaloonyColors.secondary,
-                  ],
-                ),
+                color: SaloonyColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SaloonyColors.primary.withOpacity(0.1)),
               ),
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
               child: Column(
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: SaloonyColors.primary.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: SaloonyColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.support_agent,
-                      size: 40,
-                      color: SaloonyColors.primary,
-                    ),
+                  Icon(
+                    Icons.help_outline_rounded,
+                    size: 40,
+                    color: SaloonyColors.primary,
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Comment pouvons-nous vous aider ?',
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: 16),
+                  Text(
+                    'How can we help you?',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: SaloonyColors.primary,
-                      letterSpacing: 0.5,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: SaloonyColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Notre équipe est à votre écoute',
+                  Text(
+                    'Our support team is here to assist you',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 15,
-                      color: SaloonyColors.primary,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      color: SaloonyColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 24),
-/*
-            // FAQ Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      SaloonyColors.secondary,
-                      SaloonyColors.gold,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: SaloonyColors.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _launchURL('https://www.saloony.tn/'),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.quiz_outlined,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                               
-                                const SizedBox(height: 4),
-                              
-                              ],
-                            ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+            const SizedBox(height: 32),
+
+            // Contact Section
+            Text(
+              'Contact Options',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: SaloonyColors.textPrimary,
               ),
             ),
-*/
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // Section Header
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Contactez-nous',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: SaloonyColors.textPrimary,
-                  letterSpacing: 0.3,
-                ),
-              ),
+            _buildContactCard(
+              icon: Icons.phone_outlined,
+              title: 'Phone Support',
+              subtitle: 'Call us directly',
+              onTap: () => _launchURL('tel:+21626320130'),
             ),
 
-            const SizedBox(height: 12),
-
-            // Contact Options
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildModernContactTile(
-                      icon: Icons.phone_outlined,
-                      iconColor: SaloonyColors.primary,
-                      title: 'Téléphone',
-                      subtitle: 'Appelez-nous directement',
-                      onTap: () => _launchURL('tel:+21612345678'),
-                      isFirst: true,
-                    ),
-                    _buildModernContactTile(
-                      icon: Icons.language_outlined,
-                      iconColor: SaloonyColors.primary,
-                      title: 'Site web',
-                      subtitle: 'Visitez notre site',
-                      onTap: () => _launchURL('https://www.saloony.tn/'),
-                    ),
-                    _buildModernContactTile(
-                      icon: FontAwesomeIcons.whatsapp,
-                      iconColor: const Color(0xFF25D366),
-                      title: 'WhatsApp',
-                      subtitle: 'Message instantané',
-                      onTap: () => _launchWhatsApp('21612345678'),
-                    ),
-                  ],
-                ),
-              ),
+            _buildContactCard(
+              icon: Icons.email_outlined,
+              title: 'Email Support',
+              subtitle: 'Send us an email',
+              onTap: () => _launchURL('mailto:support@saloony.tn'),
             ),
 
-            const SizedBox(height: 24),
-
-            // Social Media Section
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Suivez-nous',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: SaloonyColors.textPrimary,
-                  letterSpacing: 0.3,
-                ),
-              ),
+            _buildContactCard(
+              icon: FontAwesomeIcons.whatsapp,
+              title: 'WhatsApp',
+              subtitle: 'Instant messaging',
+              onTap: () => _launchWhatsApp('21612345678'),
             ),
 
-            const SizedBox(height: 12),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildModernContactTile(
-                      icon: Icons.facebook,
-                      iconColor: const Color(0xFF1877F2),
-                      title: 'Facebook',
-                      subtitle: '@saloonyfacebook',
-                      onTap: () => _launchURL('https://www.facebook.com/saloonyfacebook'),
-                      isFirst: true,
-                    ),
-                    _buildModernContactTile(
-                      icon: Icons.music_note,
-                      iconColor: Colors.black,
-                      title: 'TikTok',
-                      subtitle: '@saloonytiktok',
-                      onTap: () => _launchURL('https://www.tiktok.com/@saloonytiktok'),
-                    ),
-                    _buildModernContactTile(
-                      icon: Icons.camera_alt,
-                      iconColor: const Color(0xFFE4405F),
-                      title: 'Instagram',
-                      subtitle: '@saloonyinsta',
-                      onTap: () => _launchURL('https://www.instagram.com/saloonyinsta'),
-                      isLast: true,
-                    ),
-                  ],
-                ),
-              ),
+            _buildContactCard(
+              icon: Icons.language_outlined,
+              title: 'Website',
+              subtitle: 'Visit our website',
+              onTap: () => _launchURL('https://www.saloony.tn/'),
             ),
 
             const SizedBox(height: 32),
+
+            // Social Media Section
+            Text(
+              'Follow Us',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: SaloonyColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSocialButton(
+                    icon: Icons.facebook,
+                    color: const Color(0xFF1877F2),
+                    onTap: () => _launchURL('https://www.facebook.com/saloonyfacebook'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildSocialButton(
+                    icon: Icons.camera_alt,
+                    color: const Color(0xFFE4405F),
+                    onTap: () => _launchURL('https://www.instagram.com/saloonyinsta'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildSocialButton(
+                    icon: Icons.music_note,
+                    color: Colors.black,
+                    onTap: () => _launchURL('https://www.tiktok.com/@saloonytiktok'),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+
+            // FAQ Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: SaloonyColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SaloonyColors.primary.withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Need more help?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: SaloonyColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Check our FAQ section for common questions and answers.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: SaloonyColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => _launchURL('https://www.saloony.tn/faq'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        side: BorderSide(color: SaloonyColors.primary),
+                      ),
+                      child: Text(
+                        'View FAQ',
+                        style: TextStyle(
+                          color: SaloonyColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildModernContactTile({
+  Widget _buildContactCard({
     required IconData icon,
-    required Color iconColor,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    bool isFirst = false,
-    bool isLast = false,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.vertical(
-          top: isFirst ? const Radius.circular(16) : Radius.zero,
-          bottom: isLast ? const Radius.circular(16) : Radius.zero,
-        ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            border: !isLast
-                ? const Border(
-                    bottom: BorderSide(
-                      color: SaloonyColors.tertiary,
-                      width: 1,
-                    ),
-                  )
-                : null,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: SaloonyColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: SaloonyColors.primary,
+                    size: 24,
+                  ),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: SaloonyColors.textPrimary,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: SaloonyColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: SaloonyColors.textSecondary,
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: SaloonyColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: SaloonyColors.tertiary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
                   color: SaloonyColors.textSecondary,
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Center(
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
           ),
         ),
       ),

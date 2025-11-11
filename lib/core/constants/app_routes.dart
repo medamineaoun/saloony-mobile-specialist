@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:saloony/features/Dashboard/views/DashboardView.dart';
+import 'package:saloony/features/Salon/TeamMembersScreen.dart';
 import 'package:saloony/features/Salon/team_members_list_view.dart';
 import 'package:saloony/features/auth/views/VerifyEmailWidget.dart';
 import 'package:saloony/features/auth/views/VerifyResetCodeWidget.dart';
@@ -23,6 +24,7 @@ import '../../features/auth/views/SuccessResetWidget.dart';
 class AppRoutes {
   static const String signIn = '/signIn';
   static const String splash = '/splash';
+  static const String TeamMembersScreen = '/teamMembers';
 
   static const String signUp = '/signUp';
   static const String forgotPassword = '/forgotPassword';
@@ -62,6 +64,7 @@ class AppRoutes {
   home: (_) => DashboardView(), 
   createsalon: (_) => const SalonCreationFlow(),
    PrivacyPolicy: (_) => const PrivacyPolicyScreen(),
+
 
 };
 

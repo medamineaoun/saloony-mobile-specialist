@@ -8,157 +8,147 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw 'Impossible d’ouvrir : $url';
+      throw 'Could not open: $url';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: SaloonyColors.tertiary,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: SaloonyColors.primary,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: SaloonyColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Politique de confidentialité",
+        title: Text(
+          "Privacy Policy",
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
+            color: SaloonyColors.textPrimary,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Section
+            // Header Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [SaloonyColors.secondary, SaloonyColors.gold],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: SaloonyColors.primary.withOpacity(0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                color: SaloonyColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SaloonyColors.primary.withOpacity(0.1)),
               ),
               child: Column(
-                children: const [
+                children: [
                   Icon(
-                    Icons.privacy_tip_outlined,
-                    size: 48,
+                    Icons.security_rounded,
+                    size: 40,
                     color: SaloonyColors.primary,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
-                    'Votre vie privée est importante pour nous',
-                    textAlign: TextAlign.center,
+                    'Your Privacy Matters',
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: SaloonyColors.primary,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Veuillez lire attentivement notre politique de confidentialité.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                       color: SaloonyColors.textPrimary,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Last updated: ${_getCurrentDate()}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: SaloonyColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            // Section Cards
-            _buildPrivacyCard(
-              title: "Collecte de données",
-              content:
-                  "Nous collectons uniquement les informations nécessaires pour améliorer votre expérience utilisateur.",
-            ),
-            _buildPrivacyCard(
-              title: "Utilisation des données",
-              content:
-                  "Vos données sont utilisées pour fournir les services et ne seront jamais partagées sans votre consentement.",
-            ),
-            _buildPrivacyCard(
-              title: "Cookies",
-              content:
-                  "Notre application utilise des cookies pour améliorer la navigation et personnaliser votre expérience.",
-            ),
-            _buildPrivacyCard(
-              title: "Liens externes",
-              content:
-                  "Nous pouvons inclure des liens vers des sites externes. Nous ne sommes pas responsables de leurs politiques de confidentialité.",
+            // Content Sections
+            _buildSection(
+              title: "Information We Collect",
+              content: "We collect information you provide directly to us, such as when you create an account, book appointments, or contact us for support.",
             ),
 
-            const SizedBox(height: 24),
+            _buildSection(
+              title: "How We Use Your Information",
+              content: "We use the information we collect to provide, maintain, and improve our services, communicate with you, and personalize your experience.",
+            ),
 
-            // Button to visit website
-            ElevatedButton(
-              onPressed: () => _launchURL("https://www.saloony.tn/"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SaloonyColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            _buildSection(
+              title: "Information Sharing",
+              content: "We do not sell your personal information. We may share information only with your consent or to comply with legal obligations.",
+            ),
+
+            _buildSection(
+              title: "Data Security",
+              content: "We implement appropriate security measures to protect your personal information against unauthorized access and disclosure.",
+            ),
+
+            _buildSection(
+              title: "Your Rights",
+              content: "You have the right to access, correct, or delete your personal information. Contact us to exercise these rights.",
+            ),
+
+            _buildSection(
+              title: "Contact Us",
+              content: "If you have any questions about this Privacy Policy, please contact us at privacy@saloony.tn",
+            ),
+
+            const SizedBox(height: 32),
+
+            // Website Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _launchURL("https://www.saloony.tn/"),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: SaloonyColors.primary),
+                ),
+                child: Text(
+                  "Visit Our Website",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: SaloonyColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              child: const Text(
-                "Visitez notre site",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ),
-            const SizedBox(height: 40),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPrivacyCard({required String title, required String content}) {
+  Widget _buildSection({required String title, required String content}) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: SaloonyColors.textPrimary,
@@ -167,15 +157,28 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
+              height: 1.5,
               color: SaloonyColors.textSecondary,
             ),
+          ),
+          const SizedBox(height: 16),
+          Divider(
+            color: Colors.grey[300],
+            height: 1,
           ),
         ],
       ),
     );
   }
+
+  String _getCurrentDate() {
+    final now = DateTime.now();
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
 }
-
-

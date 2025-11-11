@@ -5,9 +5,15 @@ import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/core/services/SalonService.dart';
+import 'package:saloony/features/Salon/AppThemeScreen.dart';
+import 'package:saloony/features/Salon/AppointmentsScreen.dart';
+import 'package:saloony/features/Salon/ClientsScreen.dart';
+import 'package:saloony/features/Salon/EditSalonScreen.dart';
+import 'package:saloony/features/Salon/ServicesManagementScreen.dart';
+import 'package:saloony/features/Salon/TeamMembersScreen.dart';
+import 'package:saloony/features/profile/views/LanguageScreen.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
 import 'package:saloony/core/Config/ProviderSetup.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart' as AppConfig; // ✅ Alias
 
 bool notificationsEnabled = true;
 
@@ -53,7 +59,7 @@ class _ProfileViewState extends State<ProfileView> {
         }
       }
     } catch (e) {
-      debugPrint('Erreur lors du chargement des données: $e');
+      debugPrint('Error loading data: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -61,9 +67,7 @@ class _ProfileViewState extends State<ProfileView> {
     }
   }
 
- 
- void _showSideMenu(BuildContext context) {
-  
+  void _showSideMenu(BuildContext context) {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
@@ -71,266 +75,29 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Future<void> _handleLogout(BuildContext context) async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Text(
-          'Déconnexion',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B2B3E),
-          ),
-        ),
-        content: Text(
-          'Êtes-vous sûr de vouloir vous déconnecter ?',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF1B2B3E),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Annuler',
-              style: GoogleFonts.poppins(
-                color: Colors.grey,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              'Déconnexion',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldLogout == true && mounted) {
-      await _authService.signOut();
-      
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/login',
-          (route) => false,
-        );
-      }
-    }
+  // Navigation directe vers les différentes sections du salon
+  void _navigateToAppointments() {
+    // Navigator.pushNamed(context, AppRoutes.appointments);
+    debugPrint('Navigate to Appointments');
   }
 
-  void _showSalonSettingsMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.settings_outlined,
-                      color: Color(0xFF1B2B3E),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Paramètres du Salon',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1B2B3E),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _buildSalonSettingsMenuItem(
-                      context,
-                      icon: Icons.calendar_today_outlined,
-                      title: 'Rendez-vous',
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildSalonSettingsMenuItem(
-                      context,
-                      icon: Icons.edit_outlined,
-                      title: 'Modifier le Salon',
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildSalonSettingsMenuItem(
-                      context,
-                      icon: Icons.room_service_outlined,
-                      title: 'Services',
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildSalonSettingsMenuItem(
-                      context,
-                      icon: Icons.people_outlined,
-                      title: 'Clients',
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildSalonSettingsMenuItem(
-                      context,
-                      icon: Icons.group_outlined,
-                      title: 'Équipe',
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _buildSalonSettingsMenuItem(
-                      context,
-                      icon: Icons.attach_money_outlined,
-                      title: 'Tarifs',
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B2B3E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  child: Text(
-                    'Fermer',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _navigateToEditSalon() {
+    // Navigator.pushNamed(context, AppRoutes.editSalon);
+    debugPrint('Navigate to Edit Salon');
   }
 
-  Widget _buildSalonSettingsMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.grey[200]!,
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B2B3E).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: const Color(0xFF1B2B3E),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1B2B3E),
-                ),
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Colors.grey,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
+  void _navigateToServices() {
+    // Navigator.pushNamed(context, AppRoutes.services);
+    debugPrint('Navigate to Services');
+  }
+
+  void _navigateToClients() {
+    // Navigator.pushNamed(context, AppRoutes.clients);
+    debugPrint('Navigate to Clients');
+  }
+
+  void _navigateToTeam() {
+     Navigator.pushNamed(context, AppRoutes.TeamMembersScreen);
   }
 
   @override
@@ -345,7 +112,7 @@ class _ProfileViewState extends State<ProfileView> {
           onPressed: () => _showSideMenu(context),
         ),
         title: Text(
-          'Profil',
+          'Profile',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -410,21 +177,21 @@ class _ProfileViewState extends State<ProfileView> {
                         items: [
                           _MenuItem(
                             icon: Icons.person_outline_rounded,
-                            title: 'Modifier le Profil',
+                            title: 'Edit Profile',
                             onTap: () {
                               Navigator.pushNamed(context, AppRoutes.editProfile);
                             },
                           ),
                           _MenuItem(
                             icon: Icons.lock_outline_rounded,
-                            title: 'Changer le Mot de Passe',
+                            title: 'Change Password',
                             onTap: () {
                               Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
                             },
                           ),
                           _MenuItem(
                             icon: Icons.email_outlined,
-                            title: 'Changer l\'Email',
+                            title: 'Change Email',
                             onTap: () {
                               Navigator.pushNamed(context, AppRoutes.ChangeEmail);
                             },
@@ -433,51 +200,26 @@ class _ProfileViewState extends State<ProfileView> {
                       ),
                       const SizedBox(height: 24),
                       
+                      // Section Salon Settings affichée directement
                       if (_userRole == 'SPECIALIST' && _userSalon != null)
-                        _buildSection(
-                          title: 'Paramètres du Salon',
-                          items: [
-                            _MenuItem(
-                              icon: Icons.settings_outlined,
-                              title: 'Gérer le Salon',
-                              onTap: () {
-                                _showSalonSettingsMenu(context);
-                              },
-                            ),
-                            _MenuItem(
-                              icon: Icons.calendar_today_outlined,
-                              title: 'Rendez-vous',
-                              onTap: () {},
-                            ),
-                            _MenuItem(
-                              icon: Icons.room_service_outlined,
-                              title: 'Services & Tarifs',
-                              onTap: () {},
-                            ),
-                            _MenuItem(
-                              icon: Icons.group_outlined,
-                              title: 'Équipe',
-                              onTap: () {},
-                            ),
-                          ],
-                        ),
+                        _buildSalonSettingsSection(),
                       
                       if (_userRole == 'SPECIALIST' && _userSalon != null)
                         const SizedBox(height: 24),
                       
                       _buildSection(
-                        title: 'À Propos',
+                        title: 'About',
                         items: [
                           _MenuItem(
                             icon: Icons.description_outlined,
-                            title: 'Conditions d\'Utilisation',
+                            title: 'Terms of Use',
                             onTap: () {
                               Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
                             },
                           ),
                           _MenuItem(
                             icon: Icons.privacy_tip_outlined,
-                            title: 'Politique de Confidentialité',
+                            title: 'Privacy Policy',
                             onTap: () {
                               Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
                             },
@@ -487,19 +229,30 @@ class _ProfileViewState extends State<ProfileView> {
                       const SizedBox(height: 24),
                       
                       _buildSection(
-                        title: 'Autres',
+                        title: 'Other',
                         items: [
-                          _MenuItem(
-                            icon: Icons.dark_mode_outlined,
-                            title: 'Thème de l\'App',
-                            trailing: 'Clair',
-                            onTap: () {},
-                          ),
+                         _MenuItem(
+  icon: Icons.dark_mode_outlined,
+  title: 'App Theme',
+  trailing: 'Light',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AppThemeScreen()),
+    );
+  },
+),
+
                           _MenuItem(
                             icon: Icons.language_outlined,
-                            title: 'Langue',
-                            trailing: 'Français',
-                            onTap: () {},
+                            title: 'Language',
+                            trailing: 'English',
+                             onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LanguageScreen()),
+    );
+  },
                           ),
                         ],
                       ),
@@ -517,52 +270,181 @@ class _ProfileViewState extends State<ProfileView> {
             ),
     );
   }
-// Remplacez ces deux méthodes dans votre ProfileView
 
-String _getSalonImageUrl(dynamic photoData) {
-  if (photoData == null) {
-    return '';
+  // Section Salon Settings affichée directement
+  Widget _buildSalonSettingsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.settings_outlined,
+                  color: Color(0xFF1B2B3E),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Salon Settings',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1B2B3E),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+             _buildSalonSettingsMenuItem(
+            icon: Icons.edit_outlined,
+            title: 'Edit Salon',
+    onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditSalonScreen(salonData: _userSalon!)
+
+    ),
+  );
+},
+
+          ),
+          _buildSalonSettingsMenuItem(
+            icon: Icons.calendar_today_outlined,
+            title: 'Appointments',
+                                                                 onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AppointmentsScreen()),
+    );
+  },
+          ),
+       
+          _buildSalonSettingsMenuItem(
+             icon: Icons.cut,
+            title: 'Services',
+                                                      onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ServicesManagementScreen()),
+    );
+  },
+          ),
+          _buildSalonSettingsMenuItem(
+            icon: Icons.people_outlined,
+            title: 'Clients',
+                                             onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ClientsScreen()),
+    );
+  },
+          ),
+          
+          _buildSalonSettingsMenuItem(
+            icon: Icons.group_outlined,
+            title: 'Team',
+                                  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TeamMembersScreen()),
+    );
+  },
+          ),
+        ],
+      ),
+    );
   }
 
-  // Si c'est une liste, prendre le premier élément
-  if (photoData is List) {
-    if (photoData.isEmpty) return '';
-    photoData = photoData.first;
+  Widget _buildSalonSettingsMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B2B3E).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: const Color(0xFF1B2B3E),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF1B2B3E),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 66),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Colors.grey[200],
+          ),
+        ),
+      ],
+    );
   }
 
-  // Si c'est une chaîne de caractères
-  if (photoData is String) {
-    if (photoData.isEmpty) return '';
-    
-    // ✅ CORRECTION: Nettoyer le préfixe file:// si présent
-    String cleanPath = photoData;
-    if (cleanPath.startsWith('file://')) {
-      cleanPath = cleanPath.substring(7); // Enlever "file://"
-    }
-    
-    // Si déjà une URL complète
-    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
-      return cleanPath;
+  String _getSalonImageUrl(dynamic photoData) {
+    if (photoData == null) {
+      return '';
     }
 
-    // Nettoyer le slash initial si présent
-    if (cleanPath.startsWith('/')) {
-      cleanPath = cleanPath.substring(1);
+    if (photoData is List) {
+      if (photoData.isEmpty) return '';
+      photoData = photoData.first;
     }
 
-    // Construire l'URL complète
-    final uri = Uri.parse(AppConfig.Config.baseUrl);
-    final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
-
-    return '$baseUrlWithoutPath/$cleanPath';
-  }
-
-  // Si c'est un Map avec une clé 'url' ou 'path'
-  if (photoData is Map) {
-    final url = photoData['url'] ?? photoData['path'] ?? photoData['photoPath'];
-    if (url != null && url is String && url.isNotEmpty) {
-      // Nettoyer le préfixe file:// si présent
-      String cleanPath = url;
+    if (photoData is String) {
+      if (photoData.isEmpty) return '';
+      
+      String cleanPath = photoData;
       if (cleanPath.startsWith('file://')) {
         cleanPath = cleanPath.substring(7);
       }
@@ -570,261 +452,275 @@ String _getSalonImageUrl(dynamic photoData) {
       if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
         return cleanPath;
       }
-      
+
       if (cleanPath.startsWith('/')) {
         cleanPath = cleanPath.substring(1);
       }
-      
+
       final uri = Uri.parse(AppConfig.Config.baseUrl);
       final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
-      
+
       return '$baseUrlWithoutPath/$cleanPath';
     }
+
+    if (photoData is Map) {
+      final url = photoData['url'] ?? photoData['path'] ?? photoData['photoPath'];
+      if (url != null && url is String && url.isNotEmpty) {
+        String cleanPath = url;
+        if (cleanPath.startsWith('file://')) {
+          cleanPath = cleanPath.substring(7);
+        }
+        
+        if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+          return cleanPath;
+        }
+        
+        if (cleanPath.startsWith('/')) {
+          cleanPath = cleanPath.substring(1);
+        }
+        
+        final uri = Uri.parse(AppConfig.Config.baseUrl);
+        final baseUrlWithoutPath = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+        
+        return '$baseUrlWithoutPath/$cleanPath';
+      }
+    }
+
+    return '';
   }
 
-  return '';
-}
-
-// ✅ CORRECTION: Utiliser les bons noms de champs du backend
-String _getSalonAddress(Map<String, dynamic>? salonData) {
-  if (salonData == null) return '';
-  
-  debugPrint('📦 Données salon reçues: $salonData');
-  
-  // Essayer différentes clés possibles pour l'adresse
-  final address = salonData['address'] ?? 
-                 salonData['fullAddress'] ?? 
-                 salonData['location'] ?? 
-                 salonData['salonAddress'];
-  
-  if (address is String && address.isNotEmpty) {
-    return address;
-  }
-  
-  // Si l'adresse est dans un Map
-  if (address is Map) {
-    final street = address['street'] ?? address['addressLine1'];
-    final city = address['city'];
-    final postalCode = address['postalCode'] ?? address['zipCode'];
+  String _getSalonAddress(Map<String, dynamic>? salonData) {
+    if (salonData == null) return '';
     
-    final parts = [street, city, postalCode]
-        .where((part) => part != null && part.toString().isNotEmpty)
-        .toList();
-    if (parts.isNotEmpty) {
-      return parts.join(', ');
+    debugPrint('📦 Salon data received: $salonData');
+    
+    final address = salonData['address'] ?? 
+                   salonData['fullAddress'] ?? 
+                   salonData['location'] ?? 
+                   salonData['salonAddress'];
+    
+    if (address is String && address.isNotEmpty) {
+      return address;
     }
-  }
-  
-  // ✅ CORRECTION: Utiliser les bons noms de champs (avec préfixe salon)
-  final latitude = salonData['salonLatitude'];
-  final longitude = salonData['salonLongitude'];
-  
-  if (latitude != null && longitude != null) {
-    try {
-      final lat = latitude is num ? latitude : double.parse(latitude.toString());
-      final lng = longitude is num ? longitude : double.parse(longitude.toString());
-      return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
-    } catch (e) {
-      debugPrint('❌ Erreur conversion coordonnées: $e');
+    
+    if (address is Map) {
+      final street = address['street'] ?? address['addressLine1'];
+      final city = address['city'];
+      final postalCode = address['postalCode'] ?? address['zipCode'];
+      
+      final parts = [street, city, postalCode]
+          .where((part) => part != null && part.toString().isNotEmpty)
+          .toList();
+      if (parts.isNotEmpty) {
+        return parts.join(', ');
+      }
     }
+    
+    final latitude = salonData['salonLatitude'];
+    final longitude = salonData['salonLongitude'];
+    
+    if (latitude != null && longitude != null) {
+      try {
+        final lat = latitude is num ? latitude : double.parse(latitude.toString());
+        final lng = longitude is num ? longitude : double.parse(longitude.toString());
+        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+      } catch (e) {
+        debugPrint('❌ Coordinate conversion error: $e');
+      }
+    }
+    
+    return 'Address not available';
   }
-  
-  return 'Adresse non disponible';
-}
 
-// ✅ BONUS: Ajouter aussi ces corrections dans _buildSalonCard si nécessaire
-Widget _buildSalonCard() {
-  final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotosPaths']); // ⚠️ Notez le 's' à Photos
-  final salonAddress = _getSalonAddress(_userSalon);
-  
-  debugPrint('🖼️ URL image finale: $salonImageUrl');
-  debugPrint('📍 Adresse finale: $salonAddress');
-  debugPrint('📦 Données salon complètes: $_userSalon');
-  
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 20,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: Stack(
-            children: [
-              if (salonImageUrl.isNotEmpty)
-                SizedBox(
-                  height: 200,
-                  width: double.infinity,
-                  child: Image.network(
-                    salonImageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      debugPrint('❌ Erreur chargement image: $error');
-                      debugPrint('❌ URL tentée: $salonImageUrl');
-                      return _buildPlaceholderImage();
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 200,
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            color: const Color(0xFF1B2B3E),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                )
-              else
-                _buildPlaceholderImage(),
-              
-              Positioned(
-                top: 12,
-                right: 12,
-                child: InkWell(
-                  onTap: () {
-                    debugPrint('Édition du salon');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: Color(0xFF1B2B3E),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  Widget _buildSalonCard() {
+    final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotosPaths']);
+    final salonAddress = _getSalonAddress(_userSalon);
+    
+    debugPrint('🖼️ Final image URL: $salonImageUrl');
+    debugPrint('📍 Final address: $salonAddress');
+    debugPrint('📦 Complete salon data: $_userSalon');
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _userSalon?['salonName'] ?? 'Nom du salon non disponible',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1B2B3E),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Stack(
+              children: [
+                if (salonImageUrl.isNotEmpty)
+                  SizedBox(
+                    height: 200,
+                    width: double.infinity,
+                    child: Image.network(
+                      salonImageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('❌ Image loading error: $error');
+                        debugPrint('❌ Attempted URL: $salonImageUrl');
+                        return _buildPlaceholderImage();
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: const Color(0xFF1B2B3E),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                else
+                  _buildPlaceholderImage(),
+                
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: InkWell(
+                    onTap: _navigateToEditSalon,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: Color(0xFF1B2B3E),
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF8F9FA),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified,
-                      size: 20,
-                      color: Color(0xFFF0CD97),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              if (_userSalon?['salonDescription'] != null && 
-                  _userSalon!['salonDescription'].toString().isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    _userSalon!['salonDescription'].toString(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: const Color(0xFF1B2B3E).withOpacity(0.7),
-                      height: 1.5,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ),
-              
-              if (salonAddress.isNotEmpty && salonAddress != 'Adresse non disponible')
-                _buildInfoRow(Icons.location_on_outlined, salonAddress),
-              
-              // ✅ CORRECTION: Utiliser les bons noms de champs
-              if (_userSalon?['salonLatitude'] != null && _userSalon?['salonLongitude'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _buildInfoRow(
-                    Icons.map_outlined,
-                    '${_userSalon!['salonLatitude'].toString()}, ${_userSalon!['salonLongitude'].toString()}',
-                  ),
-                ),
-              
-              if (_userSalon?['salonCategory'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _buildInfoRow(
-                    Icons.category_outlined,
-                    _userSalon!['salonCategory'].toString(),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
 
-// Méthode pour l'image de placeholder
-Widget _buildPlaceholderImage() {
-  return Container(
-    height: 200,
-    color: Colors.grey[300],
-    child: const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.store, size: 60, color: Colors.grey),
-        SizedBox(height: 8),
-        Text(
-          'Aucune image',
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _userSalon?['salonName'] ?? 'Salon name not available',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1B2B3E),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8F9FA),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.verified,
+                        size: 20,
+                        color: Color(0xFFF0CD97),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                if (_userSalon?['salonDescription'] != null && 
+                    _userSalon!['salonDescription'].toString().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      _userSalon!['salonDescription'].toString(),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: const Color(0xFF1B2B3E).withOpacity(0.7),
+                        height: 1.5,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                
+                if (salonAddress.isNotEmpty && salonAddress != 'Address not available')
+                  _buildInfoRow(Icons.location_on_outlined, salonAddress),
+                
+                if (_userSalon?['salonLatitude'] != null && _userSalon?['salonLongitude'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildInfoRow(
+                      Icons.map_outlined,
+                      '${_userSalon!['salonLatitude'].toString()}, ${_userSalon!['salonLongitude'].toString()}',
+                    ),
+                  ),
+                
+                if (_userSalon?['salonCategory'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildInfoRow(
+                      Icons.category_outlined,
+                      _userSalon!['salonCategory'].toString(),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      height: 200,
+      color: Colors.grey[300],
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.store, size: 60, color: Colors.grey),
+          SizedBox(height: 8),
+          Text(
+            'No image',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCreateSalonCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -864,7 +760,7 @@ Widget _buildPlaceholderImage() {
             ),
             const SizedBox(height: 20),
             Text(
-              'Créer Votre Salon',
+              'Create Your Salon',
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -873,7 +769,7 @@ Widget _buildPlaceholderImage() {
             ),
             const SizedBox(height: 12),
             Text(
-              'Commencez à gérer votre salon professionnel et vos rendez-vous',
+              'Start managing your professional salon and appointments',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 14,
@@ -901,7 +797,7 @@ Widget _buildPlaceholderImage() {
                   const Icon(Icons.add_circle_outline),
                   const SizedBox(width: 8),
                   Text(
-                    'Créer Mon Salon',
+                    'Create My Salon',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
