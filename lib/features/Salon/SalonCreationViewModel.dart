@@ -1,4 +1,4 @@
-// salon_creation_viewmodel.dart - FIXED VERSION
+// salon_creation_viewmodel.dart - VERSION CORRIGÉE
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/enum/SalonCategory.dart';
@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:saloony/core/services/SalonService.dart';
 import 'package:saloony/core/services/TreatmentService.dart';
 import 'package:saloony/features/Salon/location_result.dart';
+import 'package:saloony/core/services/ToastService.dart'; // ✅ AJOUT IMPORT
 
 enum AccountType { solo, team }
 
@@ -61,7 +62,8 @@ class SalonCreationViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
   final TreatmentService _treatmentService = TreatmentService();
-
+  String? _currentUserId;
+  String? get currentUserId => _currentUserId;
   final ImagePicker _picker = ImagePicker();
   
   // Controllers
@@ -197,6 +199,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('❌ Erreur conversion gender type: $e');
+      _showToastError(null, 'Erreur de conversion du type de clientèle');
     }
   }
 
@@ -247,7 +250,12 @@ class SalonCreationViewModel extends ChangeNotifier {
     }
   }
 
- 
+  void previousStep() {
+    if (_currentStep > 0) {
+      _currentStep--;
+      notifyListeners();
+    }
+  }
 
   // salon methods
   void setCategory(SalonCategory category) {
@@ -275,9 +283,11 @@ class SalonCreationViewModel extends ChangeNotifier {
       if (image != null) {
         _salonImagePath = image.path;
         notifyListeners();
+        _showToastSuccess(null, 'Image sélectionnée avec succès');
       }
     } catch (e) {
       debugPrint('❌ Erreur sélection image: $e');
+      _showToastError(null, 'Erreur lors de la sélection de l\'image');
     }
   }
 
@@ -285,11 +295,13 @@ class SalonCreationViewModel extends ChangeNotifier {
   void addTeamMember(TeamMember member) {
     _teamMembers.add(member);
     notifyListeners();
+    _showToastSuccess(null, 'Membre ajouté avec succès');
   }
 
   void removeTeamMember(String memberId) {
     _teamMembers.removeWhere((m) => m.id == memberId);
     notifyListeners();
+    _showToastInfo(null, 'Membre retiré de l\'équipe');
   }
 
   // Services management
@@ -305,11 +317,13 @@ class SalonCreationViewModel extends ChangeNotifier {
   void addCustomService(CustomService service) {
     _customServices.add(service);
     notifyListeners();
+    _showToastSuccess(null, 'Service personnalisé ajouté');
   }
 
   void removeCustomService(String serviceId) {
     _customServices.removeWhere((s) => s.id == serviceId);
     notifyListeners();
+    _showToastInfo(null, 'Service personnalisé supprimé');
   }
 
   // ✅ FIXED: Validate time range when setting
@@ -318,6 +332,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       // Validate the time range
       if (!_isValidTimeRange(startTime, endTime)) {
         debugPrint('⚠️ Invalid time range for $day: ${startTime.format} - ${endTime.format}');
+        _showToastWarning(null, 'Plage horaire invalide pour $day');
         return; // Don't set invalid time ranges
       }
       
@@ -327,10 +342,10 @@ class SalonCreationViewModel extends ChangeNotifier {
       );
       _weeklyAvailability[day]!.isAvailable = true;
       notifyListeners();
+      _showToastSuccess(null, 'Horaire mis à jour pour $day');
     }
   }
 
-  // ✅ FIXED: Auto-fix invalid time ranges when toggling
   void toggleDayAvailability(int index) {
     if (index >= 0 && index < _weeklyAvailability.values.length) {
       final dayKey = _weeklyAvailability.keys.elementAt(index);
@@ -338,7 +353,6 @@ class SalonCreationViewModel extends ChangeNotifier {
       if (day != null) {
         day.isAvailable = !day.isAvailable;
         
-        // If toggling ON but no valid time range, set default
         if (day.isAvailable && day.timeRange == null) {
           day.timeRange = TimeRange(
             startTime: const TimeOfDay(hour: 9, minute: 0),
@@ -358,6 +372,8 @@ class SalonCreationViewModel extends ChangeNotifier {
         }
         
         notifyListeners();
+        final status = day.isAvailable ? 'activé' : 'désactivé';
+        _showToastInfo(null, '$dayKey $status');
       }
     }
   }
@@ -374,6 +390,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ Erreur chargement utilisateur: $e');
+      _showToastError(null, 'Erreur lors du chargement du profil');
     } finally {
       _isLoadingUser = false;
       notifyListeners();
@@ -391,6 +408,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ Erreur chargement traitements: $e');
+      _showToastError(null, 'Erreur lors du chargement des traitements');
     }
   }
 
@@ -477,43 +495,42 @@ class SalonCreationViewModel extends ChangeNotifier {
       debugPrint('Spécialistes IDs: $specialistIds');
       debugPrint('Jours disponibles: $availableDays/7');
 
-   
       List<String> finalTreatmentIds = List.from(_selectedTreatmentIds);
       
-   if (_customServices.isNotEmpty) {
-  debugPrint('📝 Création des ${_customServices.length} services personnalisés...');
-  
-  for (final customService in _customServices) {
-    try {
-      final backendCategory = _mapTreatmentCategoryToBackend(customService.category);
-      
-      debugPrint('  🎯 Catégorie mapping: ${customService.category} -> $backendCategory');
-      
-      final treatmentResult = await _treatmentService.addTreatment(
-        name: customService.name,
-        description: customService.description,
-        price: customService.price,
-        duration: customService.duration != null ? customService.duration! / 60 : 1.0,
-        category: backendCategory, 
-        photoPath: customService.photoPath,
-      );
-      
-      if (treatmentResult['success'] && treatmentResult['treatment'] != null) {
-        final treatmentId = treatmentResult['treatment']['treatmentId'] ?? treatmentResult['treatment']['id'];
-        if (treatmentId != null) {
-          finalTreatmentIds.add(treatmentId);
-          debugPrint('  ✅ Service "${customService.name}" créé avec ID: $treatmentId');
-        } else {
-          debugPrint('  ⚠️ ID manquant pour service "${customService.name}"');
+      if (_customServices.isNotEmpty) {
+        debugPrint('📝 Création des ${_customServices.length} services personnalisés...');
+        
+        for (final customService in _customServices) {
+          try {
+            final backendCategory = _mapTreatmentCategoryToBackend(customService.category);
+            
+            debugPrint('  🎯 Catégorie mapping: ${customService.category} -> $backendCategory');
+            
+            final treatmentResult = await _treatmentService.addTreatment(
+              name: customService.name,
+              description: customService.description,
+              price: customService.price,
+              duration: customService.duration != null ? customService.duration! / 60 : 1.0,
+              category: backendCategory, 
+              photoPath: customService.photoPath,
+            );
+            
+            if (treatmentResult['success'] && treatmentResult['treatment'] != null) {
+              final treatmentId = treatmentResult['treatment']['treatmentId'] ?? treatmentResult['treatment']['id'];
+              if (treatmentId != null) {
+                finalTreatmentIds.add(treatmentId);
+                debugPrint('  ✅ Service "${customService.name}" créé avec ID: $treatmentId');
+              } else {
+                debugPrint('  ⚠️ ID manquant pour service "${customService.name}"');
+              }
+            } else {
+              debugPrint('  ⚠️ Échec création service "${customService.name}": ${treatmentResult['message']}');
+            }
+          } catch (e) {
+            debugPrint('  ❌ Erreur création service "${customService.name}": $e');
+          }
         }
-      } else {
-        debugPrint('  ⚠️ Échec création service "${customService.name}": ${treatmentResult['message']}');
       }
-    } catch (e) {
-      debugPrint('  ❌ Erreur création service "${customService.name}": $e');
-    }
-  }
-}
 
       if (finalTreatmentIds.isEmpty) {
         _showError(savedContext, 'Impossible de créer les services. Veuillez réessayer.');
@@ -562,21 +579,20 @@ class SalonCreationViewModel extends ChangeNotifier {
         
         if (photoResult['success']) {
           debugPrint('✅ Photo uploadée');
+          _showToastSuccess(savedContext, 'Photo du salon uploadée avec succès');
         } else {
           debugPrint('⚠️ Photo non uploadée: ${photoResult['message']}');
+          _showToastWarning(savedContext, 'Photo non uploadée: ${photoResult['message']}');
         }
       }
 
       if (savedContext != null && savedContext.mounted) {
-        ScaffoldMessenger.of(savedContext).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Salon créé avec succès !'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-
-        Navigator.of(savedContext).popUntil((route) => route.isFirst);
+        _showToastSuccess(savedContext, '✅ Salon créé avec succès !');
+        
+        // Navigation après un délai pour voir le toast
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.of(savedContext).popUntil((route) => route.isFirst);
+        });
       }
     } catch (e) {
       debugPrint('❌ Erreur création salon: $e');
@@ -588,14 +604,31 @@ class SalonCreationViewModel extends ChangeNotifier {
   }
 
   void _showError(BuildContext? context, String message) {
+    _showToastError(context, message);
+  }
+
+  // ✅ NOUVELLES MÉTHODES POUR LES TOASTS
+  void _showToastSuccess(BuildContext? context, String message) {
     if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      ToastService.showSuccess(context, message);
+    }
+  }
+
+  void _showToastError(BuildContext? context, String message) {
+    if (context != null && context.mounted) {
+      ToastService.showError(context, message);
+    }
+  }
+
+  void _showToastInfo(BuildContext? context, String message) {
+    if (context != null && context.mounted) {
+      ToastService.showInfo(context, message);
+    }
+  }
+
+  void _showToastWarning(BuildContext? context, String message) {
+    if (context != null && context.mounted) {
+      ToastService.showWarning(context, message);
     }
   }
 
@@ -732,50 +765,52 @@ class SalonCreationViewModel extends ChangeNotifier {
     debugPrint('✅ Disponibilités initialisées: ${_weeklyAvailability.length} jours');
     notifyListeners();
   }
-// ✅ SIMPLE FIX: Map frontend categories to backend categories
-String _mapTreatmentCategoryToBackend(String frontendCategory) {
-  // Si la catégorie est déjà une valeur backend valide, la retourner telle quelle
-  const backendCategories = [
-    'BARBER', 'HAIRDRESSING', 'NAILS', 
-    'FACE_AND_BODY_TREATMENTS', 'MAKEUP_AND_EYELASHES', 'SPA_AND_MASSAGES'
-  ];
-  
-  if (backendCategories.contains(frontendCategory)) {
-    return frontendCategory;
+
+  // ✅ SIMPLE FIX: Map frontend categories to backend categories
+  String _mapTreatmentCategoryToBackend(String frontendCategory) {
+    // Si la catégorie est déjà une valeur backend valide, la retourner telle quelle
+    const backendCategories = [
+      'BARBER', 'HAIRDRESSING', 'NAILS', 
+      'FACE_AND_BODY_TREATMENTS', 'MAKEUP_AND_EYELASHES', 'SPA_AND_MASSAGES'
+    ];
+    
+    if (backendCategories.contains(frontendCategory)) {
+      return frontendCategory;
+    }
+    
+    // Mapping simple des catégories frontend vers backend
+    switch (frontendCategory.toUpperCase()) {
+      case 'HAIRCUT':
+      case 'HAIR_STYLING':
+      case 'HAIR_COLOR':
+      case 'HAIR_TREATMENT':
+        return 'HAIRDRESSING';
+      case 'MANICURE':
+      case 'PEDICURE':
+      case 'NAIL_ART':
+        return 'NAILS';
+      case 'MASSAGE':
+      case 'FACIAL':
+      case 'BODY_TREATMENT':
+      case 'SPA_TREATMENTS':
+        return 'SPA_AND_MASSAGES';
+      case 'BEARD_TRIM':
+      case 'SHAVING':
+      case 'BARBER_SERVICES':
+        return 'BARBER';
+      case 'MAKEUP':
+      case 'EYELASH_EXTENSIONS':
+      case 'EYEBROWS':
+        return 'MAKEUP_AND_EYELASHES';
+      case 'SKIN_CARE':
+      case 'WAXING':
+      case 'BODY_CARE':
+        return 'FACE_AND_BODY_TREATMENTS';
+      default:
+        return 'HAIRDRESSING'; // Default fallback
+    }
   }
-  
-  // Mapping simple des catégories frontend vers backend
-  switch (frontendCategory.toUpperCase()) {
-    case 'HAIRCUT':
-    case 'HAIR_STYLING':
-    case 'HAIR_COLOR':
-    case 'HAIR_TREATMENT':
-      return 'HAIRDRESSING';
-    case 'MANICURE':
-    case 'PEDICURE':
-    case 'NAIL_ART':
-      return 'NAILS';
-    case 'MASSAGE':
-    case 'FACIAL':
-    case 'BODY_TREATMENT':
-    case 'SPA_TREATMENTS':
-      return 'SPA_AND_MASSAGES';
-    case 'BEARD_TRIM':
-    case 'SHAVING':
-    case 'BARBER_SERVICES':
-      return 'BARBER';
-    case 'MAKEUP':
-    case 'EYELASH_EXTENSIONS':
-    case 'EYEBROWS':
-      return 'MAKEUP_AND_EYELASHES';
-    case 'SKIN_CARE':
-    case 'WAXING':
-    case 'BODY_CARE':
-      return 'FACE_AND_BODY_TREATMENTS';
-    default:
-      return 'HAIRDRESSING'; // Default fallback
-  }
-}
+
   String get salonCategoryForApi {
     if (selectedCategory == null) return '';
     
@@ -805,13 +840,7 @@ String _mapTreatmentCategoryToBackend(String frontendCategory) {
         return 'MIXED';
     }
   }
-// Dans SalonCreationViewModel
-void previousStep() {
-  if (_currentStep > 0) {
-    _currentStep--;
-    notifyListeners();
-  }
-}
+
   // ✅ FIXED: Validate UUID when adding team members
   void showAddTeamMemberDialog(BuildContext context) {
     final nameController = TextEditingController();
@@ -912,15 +941,7 @@ void previousStep() {
                 final specialty = specialtyController.text.trim();
 
                 if (name.isEmpty || email.isEmpty || specialty.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Please fill all fields',
-                        style: GoogleFonts.inter(),
-                      ),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
+                  _showToastWarning(context, 'Veuillez remplir tous les champs');
                   return;
                 }
 
@@ -934,16 +955,7 @@ void previousStep() {
                   
                   // ✅ FIXED: Validate UUID format
                   if (!_isValidUUID(userId)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Invalid user ID format. This specialist account may be corrupted. Please contact support.',
-                          style: GoogleFonts.inter(),
-                        ),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 5),
-                      ),
-                    );
+                    _showToastError(context, 'Format d\'ID utilisateur invalide. Ce compte spécialiste peut être corrompu. Veuillez contacter le support.');
                     return;
                   }
                   
@@ -951,32 +963,13 @@ void previousStep() {
                     id: userId,
                     fullName: name,
                     email: email,
-                    specialty: specialty,
                   );
 
                   addTeamMember(teamMember);
                   Navigator.pop(context);
                   
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Team member added successfully!',
-                        style: GoogleFonts.inter(),
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        verificationResult['message'] ?? 'User not found. Please make sure the specialist is registered in the app.',
-                        style: GoogleFonts.inter(),
-                      ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
+                  _showToastError(context, verificationResult['message'] ?? 'Utilisateur non trouvé. Assurez-vous que le spécialiste est enregistré dans l\'application.');
                 }
               },
               style: ElevatedButton.styleFrom(

@@ -14,6 +14,21 @@ class SalonService {
     return token;
   }
 
+  // ✅ NOUVELLE MÉTHODE: Récupérer l'ID de l'utilisateur connecté
+  Future<String?> _getCurrentUserId() async {
+    try {
+      final userResult = await _authService.getCurrentUser();
+      if (userResult['success'] == true && userResult['user'] != null) {
+        final user = userResult['user'];
+        return user['userId'] ?? user['id'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ Erreur récupération userId: $e');
+      return null;
+    }
+  }
+
   /// Récupérer le salon d'un spécialiste par son userId
   Future<Map<String, dynamic>> getSpecialistSalon(String userId) async {
     try {
@@ -221,110 +236,116 @@ class SalonService {
     }
   }
 
+  // ✅ CORRIGÉ: Méthode createSalon avec salonOwnerId
+  Future<Map<String, dynamic>> createSalon({
+    required String salonName,
+    required String salonDescription,
+    required String salonCategory,
+    required List<String> additionalServices,
+    required String genderType,
+    required double latitude,
+    required double longitude,
+    required List<String> treatmentIds,
+    required List<String> specialistIds,
+    required Map<String, dynamic> availability,
+    String? salonOwnerId, // ✅ Paramètre optionnel pour l'owner ID
+  }) async {
+    try {
+      final token = await _getAuthToken();
 
-// Dans SalonService - méthode createSalon
-Future<Map<String, dynamic>> createSalon({
-  required String salonName,
-  required String salonDescription,
-  required String salonCategory,
-  required List<String> additionalServices,
-  required String genderType,
-  required double latitude,
-  required double longitude,
-  required List<String> treatmentIds,
-  required List<String> specialistIds,
-  List<CustomService>? customServices,
-  Map<String, dynamic>? availability,
-}) async {
-  try {
-    final token = await _getAuthToken();
+      // ✅ Récupérer l'owner ID si non fourni
+      final String ownerId = salonOwnerId ?? await _getCurrentUserId() ?? specialistIds.first;
 
-    final salonData = {
-      "salonName": salonName,
-      "salonDescription": salonDescription,
-      "salonCategory": salonCategory,
-      "additionalService": additionalServices,
-      "salonGenderType": genderType, // CORRECTION: salonGenderType au lieu de genderType
-      "salonLatitude": latitude,     // CORRECTION: salonLatitude au lieu de latitude
-      "salonLongitude": longitude,   // CORRECTION: salonLongitude au lieu de longitude
-      "salonTreatmentsIds": treatmentIds, // CORRECTION: salonTreatmentsIds au lieu de treatmentIds
-      "salonSpecialistsIds": specialistIds, // CORRECTION: salonSpecialistsIds au lieu de specialistIds
-      "salonAvailabilities": _formatAvailabilitiesForApi(availability),
-    };
-
-    debugPrint('📤 Données salon (format API): ${jsonEncode(salonData)}');
-
-    final response = await http.post(
-      Uri.parse('${Config.salonBaseUrl}/add-salon'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(salonData),
-    );
-
-    debugPrint('🏢 Création salon: ${response.statusCode}');
-    debugPrint('🏢 Réponse: ${response.body}');
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body);
-      return {
-        'success': true,
-        'salon': data,
+      final salonData = {
+        "salonName": salonName,
+        "salonDescription": salonDescription,
+        "salonCategory": salonCategory,
+        "additionalService": additionalServices,
+        "salonGenderType": genderType,
+        "salonLatitude": latitude,
+        "salonLongitude": longitude,
+        "salonTreatmentsIds": treatmentIds,
+        "salonSpecialistsIds": specialistIds,
+        "salonAvailabilities": _formatAvailabilitiesForApi(availability),
+        "salonOwnerId": ownerId, // ✅ AJOUT CRITIQUE
       };
-    } else {
-      final error = jsonDecode(response.body);
+
+      debugPrint('📤 Données salon complètes: ${jsonEncode(salonData)}');
+
+      final response = await http.post(
+        Uri.parse('${Config.salonBaseUrl}/add-salon'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(salonData),
+      );
+
+      debugPrint('🏢 Création salon: ${response.statusCode}');
+      debugPrint('🏢 Réponse: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'salon': data,
+        };
+      } else {
+        final error = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': error['message'] ?? 'Erreur lors de la création du salon',
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur création salon: $e');
       return {
         'success': false,
-        'message': error['message'] ?? 'Erreur lors de la création du salon',
+        'message': 'Erreur de connexion: $e',
       };
     }
-  } catch (e) {
-    debugPrint('❌ Erreur création salon: $e');
-    return {
-      'success': false,
-      'message': 'Erreur: $e',
-    };
   }
-}
-// Dans SalonService - méthode _formatAvailabilitiesForApi
-List<Map<String, dynamic>> _formatAvailabilitiesForApi(Map<String, dynamic>? availability) {
-  if (availability == null) return [];
-  
-  final List<Map<String, dynamic>> availabilities = [];
-  final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  
-  for (final day in days) {
-    final dayKey = day;
-    final dayData = availability[dayKey];
+
+  // Méthode _formatAvailabilitiesForApi
+  List<Map<String, dynamic>> _formatAvailabilitiesForApi(Map<String, dynamic>? availability) {
+    if (availability == null) return [];
     
-    if (dayData != null && dayData is Map<String, dynamic>) {
-      final availabilityEntry = {
-        'dayOfWeek': dayData['dayOfWeek'],
-        'available': dayData['available'],
-      };
+    final List<Map<String, dynamic>> availabilities = [];
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    for (final day in days) {
+      final dayKey = day;
+      final dayData = availability[dayKey];
       
-      // Ajouter fromHour et toHour seulement si available est true
-      if (dayData['available'] == true) {
-        availabilityEntry['fromHour'] = dayData['fromHour'];
-        availabilityEntry['toHour'] = dayData['toHour'];
-      } else {
-        availabilityEntry['fromHour'] = null;
-        availabilityEntry['toHour'] = null;
+      if (dayData != null && dayData is Map<String, dynamic>) {
+        final availabilityEntry = {
+          'dayOfWeek': dayData['dayOfWeek'],
+          'available': dayData['available'],
+        };
+        
+        // Ajouter fromHour et toHour seulement si available est true
+        if (dayData['available'] == true) {
+          availabilityEntry['fromHour'] = dayData['fromHour'];
+          availabilityEntry['toHour'] = dayData['toHour'];
+        } else {
+          availabilityEntry['fromHour'] = null;
+          availabilityEntry['toHour'] = null;
+        }
+        
+        availabilities.add(availabilityEntry);
       }
-      
-      availabilities.add(availabilityEntry);
     }
+    
+    debugPrint('📅 Disponibilités formatées pour API: ${availabilities.length} jours');
+    for (final avail in availabilities) {
+      debugPrint('  - ${avail['dayOfWeek']}: ${avail['available']} (${avail['fromHour']} - ${avail['toHour']})');
+    }
+    
+    return availabilities;
   }
-  
-  debugPrint('📅 Disponibilités formatées pour API: ${availabilities.length} jours');
-  for (final avail in availabilities) {
-    debugPrint('  - ${avail['dayOfWeek']}: ${avail['available']} (${avail['fromHour']} - ${avail['toHour']})');
-  }
-  
-  return availabilities;
-}
-Future<Map<String, dynamic>> addCustomServices({
+
+  Future<Map<String, dynamic>> addCustomServices({
     required String salonId,
     required List<CustomService> customServices,
   }) async {
@@ -577,25 +598,26 @@ Future<Map<String, dynamic>> addCustomServices({
       };
     }
   }
-Future<Map<String, dynamic>> getSalonById(String salonId) async {
-  try {
-    final response = await http.get(
-      Uri.parse('${Config.baseUrl}/api/salon/retrieve-salon/$salonId'),
-      headers: {
-        'Content-Type': 'application/json',
-        // Ajoutez vos headers d'authentification si nécessaire
-      },
-    );
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Échec de récupération du salon: ${response.statusCode}');
+  Future<Map<String, dynamic>> getSalonById(String salonId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Config.baseUrl}/api/salon/retrieve-salon/$salonId'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Échec de récupération du salon: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération du salon: $e');
     }
-  } catch (e) {
-    throw Exception('Erreur lors de la récupération du salon: $e');
   }
-}
+
   /// Obtenir tous les salons
   Future<Map<String, dynamic>> getAllSalons() async {
     try {
@@ -631,5 +653,4 @@ Future<Map<String, dynamic>> getSalonById(String salonId) async {
       };
     }
   }
-  
 }

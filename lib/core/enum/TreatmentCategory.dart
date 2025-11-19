@@ -2,42 +2,42 @@ enum TreatmentCategory {
   HAIRCUT(
     'HAIRCUT', 
     'Haircut', 
-    'assets/images/treatment_categories/haircut.png'
+    'images/treatment_categories/haircut.png'
   ),
   COLORING(
     'COLORING', 
     'Coloring', 
-    'assets/images/treatment_categories/coloring.png'
+    'images/treatment_categories/coloring.png'
   ),
   BEARD(
     'BEARD', 
     'Beard', 
-    'assets/images/treatment_categories/beard.png'
+    'images/treatment_categories/beard.png'
   ),
   FACIAL(
     'FACIAL', 
     'Facial', 
-    'assets/images/treatment_categories/facial.png'
+    'images/treatment_categories/facial.png'
   ),
   MASSAGE(
     'MASSAGE', 
     'Massage', 
-    'assets/images/treatment_categories/massage.png'
+    'images/treatment_categories/massage.png'
   ),
   NAILS(
     'NAILS', 
     'Nails', 
-    'assets/images/treatment_categories/nails.png'
+    'images/treatment_categories/nails.png'
   ),
   WAXING(
     'WAXING', 
     'Waxing', 
-    'assets/images/treatment_categories/waxing.png'
+    'images/treatment_categories/waxing.png'
   ),
   MAKEUP(
     'MAKEUP', 
     'Makeup', 
-    'assets/images/treatment_categories/makeup.png'
+    'images/treatment_categories/makeup.png'
   );
 
   final String value;

@@ -19,7 +19,7 @@ class ProviderSetup {
 
 class Config {
   
-  static const String ipAddressAndPort ='localhost:8081';
+  static const String ipAddressAndPort ='10.232.208.26:8081';
   static const String baseUrl = 'http://$ipAddressAndPort';
   static const String authBaseUrl = '$baseUrl/api/v1/auth';
   static const String userBaseUrl = '$baseUrl/api/v1/auth/user';
