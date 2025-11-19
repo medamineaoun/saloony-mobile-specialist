@@ -18,15 +18,15 @@ class AccountInfoStep extends StatelessWidget {
         children: [
           const StepHeader(
             title: 'Account Information',
-            subtitle: 'Tell us about yourself and your business',
+            subtitle: 'Tell us about yourself and your salon',
             icon: Icons.account_circle_outlined,
           ),
           const SizedBox(height: 32),
           _buildTextField(
             label: 'Salon Name',
-            hint: 'Enter your business name',
+            hint: 'Enter your salon name',
             icon: Icons.storefront_outlined,
-            controller: vm.businessNameController,
+            controller: vm.salonNameController,
           ),
           const SizedBox(height: 24),
           _buildCategoryDropdown(),
@@ -50,7 +50,6 @@ class AccountInfoStep extends StatelessWidget {
           child: DropdownButtonFormField<SalonCategory>(
             value: vm.selectedCategory,
             decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.category_outlined, color: Colors.grey),
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
@@ -65,7 +64,12 @@ class AccountInfoStep extends StatelessWidget {
                 value: category,
                 child: Row(
                   children: [
-                    Text(category.emoji, style: const TextStyle(fontSize: 16)),
+                    Image.asset(
+                      category.imagePath,
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.contain,
+                    ),
                     const SizedBox(width: 12),
                     Text(
                       category.displayName,

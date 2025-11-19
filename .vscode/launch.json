@@ -1,29 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-         
-        
-        {
-            "name": "📱 Flutter - Development",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "development"
-            ]
-        },
-        {
-            "name": "🚀 Flutter - Production",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "production",
-                "--release"
-            ]
-        },
         {
             "name": "🧪 Flutter - Debug Mode",
             "request": "launch",
@@ -68,7 +45,7 @@
             "args": [
                 "--coverage"
             ]
-        }, 
+        },
         {
             "name": "📲 Flutter - Run on Physical Device",
             "request": "launch",
@@ -84,7 +61,7 @@
         {
             "name": "🎯 All Devices",
             "configurations": [
-                "📱 Flutter - Development"
+                "🧪 Flutter - Debug Mode"
             ],
             "preLaunchTask": "flutter-clean-get"
         }

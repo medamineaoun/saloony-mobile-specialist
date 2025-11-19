@@ -25,7 +25,7 @@ class BusinessDetailsStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const StepHeader(
-              title: 'Business Details',
+              title: 'salon Details',
               subtitle: 'Add salon photos, category, and location information',
               icon: Icons.business_outlined,
             ),
@@ -41,7 +41,7 @@ class BusinessDetailsStep extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: vm.businessImagePath == null
+                    color: vm.salonImagePath == null
                         ? Colors.grey[300]!
                         : const Color(0xFFF0CD97),
                     width: 2,
@@ -54,7 +54,7 @@ class BusinessDetailsStep extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: vm.businessImagePath == null
+                child: vm.salonImagePath == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -99,7 +99,7 @@ class BusinessDetailsStep extends StatelessWidget {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.file(
-                              File(vm.businessImagePath!),
+                              File(vm.salonImagePath!),
                               fit: BoxFit.cover,
                               width: double.infinity,
                               height: double.infinity,
@@ -129,7 +129,7 @@ class BusinessDetailsStep extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Gender Type Dropdown
-            _buildLabel('Gender Type *'),
+            _buildLabel('Customer  Type *'),
             const SizedBox(height: 6),
             Container(
               decoration: BoxDecoration(
@@ -145,7 +145,7 @@ class BusinessDetailsStep extends StatelessWidget {
                     color: Color(0xFFF0CD97),
                     size: 22,
                   ),
-                  hintText: 'Select gender type',
+                  hintText: 'Select Customer  type',
                   hintStyle: GoogleFonts.inter(
                     color: Colors.grey[500],
                     fontSize: 14,
@@ -316,7 +316,7 @@ class BusinessDetailsStep extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Business Location',
+                'Customer Location',
                 style: GoogleFonts.inter(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,

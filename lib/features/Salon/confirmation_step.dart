@@ -85,7 +85,7 @@ class ConfirmationStep extends StatelessWidget {
             _SummaryItem(
               icon: Icons.business_outlined,
               label: 'Salon Name',
-              value: vm.businessNameController.text,
+              value: vm.salonNameController.text,
             ),
             _SummaryItem(
               icon: Icons.category_outlined,

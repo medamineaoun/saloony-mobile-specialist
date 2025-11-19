@@ -51,7 +51,15 @@ class SalonCreationScreen extends StatelessWidget {
               color: Color(0xFF1B2B3E),
             ),
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // Si on est à la première étape, quitter le flow
+            if (vm.currentStep == 0) {
+              Navigator.pop(context);
+            } else {
+              // Sinon, revenir à l'étape précédente
+              vm.previousStep();
+            }
+          },
         ),
         title: Text(
           'Create Your Salon',

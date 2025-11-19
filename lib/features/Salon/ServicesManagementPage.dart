@@ -156,7 +156,16 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(category.emoji, style: const TextStyle(fontSize: 24)),
+                        // Remplacé l'emoji par l'image
+                        child: Image.asset(
+                          category.imagePath,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.spa, size: 24, color: Colors.white);
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -383,10 +392,19 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final priceController = TextEditingController();
-    final durationController = TextEditingController();
-    String? selectedGender;
+    String? selectedDuration;
     String? imagePath;
     final categoryData = _getCategoryVisualData(category);
+
+    // Options de durée prédéfinies
+    final durationOptions = [
+      {'display': '30 min', 'value': '30'},
+      {'display': '1h', 'value': '60'},
+      {'display': '1h 30min', 'value': '90'},
+      {'display': '2h', 'value': '120'},
+      {'display': '2h 30min', 'value': '150'},
+      {'display': '3h', 'value': '180'},
+    ];
 
     showDialog(
       context: context,
@@ -409,7 +427,16 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 6, offset: const Offset(0, 3))],
                         ),
-                        child: Text(category.emoji, style: const TextStyle(fontSize: 28)),
+                        // Remplacé l'emoji par l'image
+                        child: Image.asset(
+                          category.imagePath,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.spa, size: 24, color: Colors.white);
+                          },
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -425,68 +452,140 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: () async {
-                      final picker = ImagePicker();
-                      final image = await picker.pickImage(source: ImageSource.gallery);
-                      if (image != null) {
-                        setState(() => imagePath = image.path);
-                      }
-                    },
-                    child: Container(
-                      height: 160,
-                      decoration: BoxDecoration(
-                        gradient: imagePath == null
-                            ? LinearGradient(colors: [
-                                (categoryData['gradient'] as List<Color>)[0].withOpacity(0.1),
-                                (categoryData['gradient'] as List<Color>)[1].withOpacity(0.1),
-                              ])
-                            : null,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: (categoryData['gradient'] as List<Color>)[0].withOpacity(0.3), width: 2),
-                        image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath!)), fit: BoxFit.cover) : null,
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 3))],
+                  
+                  // Section image avec bouton amélioré
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Service Photo (Optional)', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final picker = ImagePicker();
+                          final image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            setState(() => imagePath = image.path);
+                          }
+                        },
+                        child: Container(
+                          height: 140,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: imagePath == null
+                                ? LinearGradient(colors: [
+                                    (categoryData['gradient'] as List<Color>)[0].withOpacity(0.05),
+                                    (categoryData['gradient'] as List<Color>)[1].withOpacity(0.05),
+                                  ])
+                                : null,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: imagePath == null ? Colors.grey[300]! : (categoryData['gradient'] as List<Color>)[0],
+                              width: imagePath == null ? 1.5 : 2,
+                            ),
+                            image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath!)), fit: BoxFit.cover) : null,
+                          ),
+                          child: imagePath == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey[400]),
+                                    const SizedBox(height: 8),
+                                    Text('Add Photo (Optional)', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500])),
+                                  ],
+                                )
+                              : Stack(
+                                  children: [
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Icon(Icons.edit, color: Colors.white, size: 18),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
-                      child: imagePath == null
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_photo_alternate_outlined, size: 48, color: (categoryData['gradient'] as List<Color>)[0]),
-                                const SizedBox(height: 8),
-                                Text('Upload Service Photo', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: (categoryData['gradient'] as List<Color>)[0])),
-                              ],
-                            )
-                          : null,
-                    ),
+                    ],
                   ),
+                  
                   const SizedBox(height: 20),
                   _buildDialogTextField(label: 'Service Name', hint: 'e.g., Haircut, Manicure...', controller: nameController),
                   const SizedBox(height: 16),
                   _buildDialogTextField(label: 'Description (optional)', hint: 'Describe your service...', controller: descriptionController, maxLines: 3),
+                  
+                  // Sélecteur de durée amélioré
                   const SizedBox(height: 16),
-                  _buildDialogTextField(label: 'Duration (minutes)', hint: '30', controller: durationController, keyboardType: TextInputType.number),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Duration', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedDuration,
+                            isExpanded: true,
+                            hint: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text('Select duration', style: GoogleFonts.inter(color: Colors.grey[400])),
+                            ),
+                            items: durationOptions.map((option) {
+                              return DropdownMenuItem<String>(
+                                value: option['value'],
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(option['display']!, style: GoogleFonts.inter(fontSize: 14)),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedDuration = newValue;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
                   const SizedBox(height: 16),
-                  _buildDialogTextField(label: 'Price', hint: '0.00', controller: priceController, keyboardType: TextInputType.number),
+                  _buildDialogTextField(label: 'Price (TND)', hint: '0.00', controller: priceController, keyboardType: TextInputType.number),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
                         child: Text('Cancel', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[600])),
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () {
-                          if (nameController.text.trim().isNotEmpty && priceController.text.trim().isNotEmpty) {
+                          if (nameController.text.trim().isNotEmpty && 
+                              priceController.text.trim().isNotEmpty &&
+                              selectedDuration != null) {
                             final service = CustomService(
                               id: DateTime.now().millisecondsSinceEpoch.toString(),
                               name: nameController.text.trim(),
                               description: descriptionController.text.trim(),
                               price: double.tryParse(priceController.text) ?? 0.0,
-                              duration: double.tryParse(durationController.text),
+                              duration: double.tryParse(selectedDuration!),
                               photoPath: imagePath,
-                              specificGender: selectedGender,
                               category: category.value,
                             );
                             vm.addCustomService(service);
@@ -500,7 +599,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                         ),
-                        child: Text('Save', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
+                        child: Text('Save Service', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -517,11 +616,22 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     final nameController = TextEditingController(text: service.name);
     final descriptionController = TextEditingController(text: service.description);
     final priceController = TextEditingController(text: service.price.toString());
-    final durationController = TextEditingController(text: service.duration?.toString() ?? '');
     String? selectedGender = service.specificGender;
     String? imagePath = service.photoPath;
     final category = TreatmentCategory.values.firstWhere((cat) => cat.value == service.category.toUpperCase(), orElse: () => TreatmentCategory.HAIRCUT);
     final categoryData = _getCategoryVisualData(category);
+
+    // Options de durée prédéfinies
+    final durationOptions = [
+      {'display': '30 min', 'value': '30'},
+      {'display': '1h', 'value': '60'},
+      {'display': '1h 30min', 'value': '90'},
+      {'display': '2h', 'value': '120'},
+      {'display': '2h 30min', 'value': '150'},
+      {'display': '3h', 'value': '180'},
+    ];
+    
+    String? selectedDuration = service.duration?.toString();
 
     showDialog(
       context: context,
@@ -534,7 +644,16 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(gradient: LinearGradient(colors: categoryData['gradient'] as List<Color>), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.edit_outlined, color: Colors.white, size: 24),
+                // Remplacé l'icône par l'image de la catégorie
+                child: Image.asset(
+                  category.imagePath,
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(Icons.edit_outlined, color: Colors.white, size: 24);
+                  },
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(child: Text('Edit Service', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: const Color(0xFF1B2B3E)))),
@@ -545,73 +664,133 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () async {
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      setState(() => imagePath = image.path);
-                    }
-                  },
-                  child: Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      gradient: imagePath == null
-                          ? LinearGradient(colors: [
-                              (categoryData['gradient'] as List<Color>)[0].withOpacity(0.1),
-                              (categoryData['gradient'] as List<Color>)[1].withOpacity(0.1),
-                            ])
-                          : null,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: (categoryData['gradient'] as List<Color>)[0].withOpacity(0.3), width: 2),
-                      image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath!)), fit: BoxFit.cover) : null,
+                // Section image améliorée
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Service Photo', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        final image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setState(() => imagePath = image.path);
+                        }
+                      },
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: imagePath == null
+                              ? LinearGradient(colors: [
+                                  (categoryData['gradient'] as List<Color>)[0].withOpacity(0.05),
+                                  (categoryData['gradient'] as List<Color>)[1].withOpacity(0.05),
+                                ])
+                              : null,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: imagePath == null ? Colors.grey[300]! : (categoryData['gradient'] as List<Color>)[0],
+                            width: imagePath == null ? 1.5 : 2,
+                          ),
+                          image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath!)), fit: BoxFit.cover) : null,
+                        ),
+                        child: imagePath == null
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey[400]),
+                                  const SizedBox(height: 8),
+                                  Text('Add Photo', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500])),
+                                ],
+                              )
+                            : Stack(
+                                children: [
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Icon(Icons.edit, color: Colors.white, size: 18),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
-                    child: imagePath == null ? Icon(Icons.add_photo_alternate_outlined, size: 48, color: (categoryData['gradient'] as List<Color>)[0]) : null,
-                  ),
+                  ],
                 ),
+                
                 const SizedBox(height: 20),
                 _buildDialogTextField(label: 'Service Name', hint: 'Service name', controller: nameController),
                 const SizedBox(height: 16),
-                Text('Specific Gender', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
-                  child: DropdownButtonFormField<String>(
-                    value: selectedGender,
-                    decoration: InputDecoration(
-                      hintText: 'Select gender',
-                      hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    items: ['Man', 'Woman', 'Mixed'].map((gender) {
-                      return DropdownMenuItem<String>(value: gender, child: Text(gender, style: GoogleFonts.inter(fontSize: 14)));
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => selectedGender = value);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
                 _buildDialogTextField(label: 'Description', hint: 'Service description', controller: descriptionController, maxLines: 3),
+                
                 const SizedBox(height: 16),
-                _buildDialogTextField(label: 'Duration (minutes)', hint: '30', controller: durationController, keyboardType: TextInputType.number),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Duration', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedDuration,
+                          isExpanded: true,
+                          hint: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('Select duration', style: GoogleFonts.inter(color: Colors.grey[400])),
+                          ),
+                          items: durationOptions.map((option) {
+                            return DropdownMenuItem<String>(
+                              value: option['value'],
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(option['display']!, style: GoogleFonts.inter(fontSize: 14)),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedDuration = newValue;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
                 const SizedBox(height: 16),
-                _buildDialogTextField(label: 'Price', hint: '0.00', controller: priceController, keyboardType: TextInputType.number),
+                _buildDialogTextField(label: 'Price (TND)', hint: '0.00', controller: priceController, keyboardType: TextInputType.number),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[600]))),
+            TextButton(
+              onPressed: () => Navigator.pop(context), 
+              child: Text('Cancel', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[600]))
+            ),
             ElevatedButton(
               onPressed: () {
-                if (nameController.text.trim().isNotEmpty && priceController.text.trim().isNotEmpty) {
+                if (nameController.text.trim().isNotEmpty && 
+                    priceController.text.trim().isNotEmpty &&
+                    selectedDuration != null) {
                   final updatedService = CustomService(
                     id: service.id,
                     name: nameController.text.trim(),
                     description: descriptionController.text.trim(),
                     price: double.tryParse(priceController.text) ?? 0.0,
-                    duration: double.tryParse(durationController.text),
+                    duration: double.tryParse(selectedDuration!),
                     photoPath: imagePath,
                     specificGender: selectedGender,
                     category: service.category,
@@ -627,7 +806,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: Text('Save', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
+              child: Text('Save Changes', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -653,13 +832,20 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         ),
         content: Text('Are you sure you want to delete this service? This action cannot be undone.', style: GoogleFonts.inter(fontSize: 14)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600))
+          ),
           ElevatedButton(
             onPressed: () {
               vm.removeCustomService(serviceId);
               Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red[600], foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600], 
+              foregroundColor: Colors.white, 
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+            ),
             child: Text('Delete', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ),
         ],
@@ -680,7 +866,11 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+          decoration: BoxDecoration(
+            color: Colors.grey[50], 
+            borderRadius: BorderRadius.circular(12), 
+            border: Border.all(color: Colors.grey[200]!)
+          ),
           child: TextField(
             controller: controller,
             maxLines: maxLines,
@@ -701,21 +891,13 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
   Widget _buildStepHeader() {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [const Color(0xFF1B2B3E).withOpacity(0.1), const Color(0xFFF0CD97).withOpacity(0.1)]),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(Icons.spa_outlined, color: Color(0xFF1B2B3E), size: 28),
-        ),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Treatments & Services',
+                ' Services',
                 style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,

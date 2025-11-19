@@ -32,9 +32,14 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   SalonCategory _selectedCategory = SalonCategory.barbershop;
   SalonGenderType _selectedGenderType = SalonGenderType.mixed;
   List<AdditionalService> _selectedAdditionalServices = [];
-  List<String> _salonPhotos = [];
-  List<File> _newPhotos = [];
+  
+  // Image unique
+  String? _currentPhotoUrl;
+  File? _newPhoto;
   bool _isLoading = false;
+  
+  // Données du salon original pour conserver les traitements
+  late Map<String, dynamic> _originalSalonData;
 
   @override
   void initState() {
@@ -44,23 +49,27 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
 
   void _initializeData() {
     final salon = widget.salonData;
+    _originalSalonData = Map<String, dynamic>.from(salon);
     
     _nameController = TextEditingController(text: salon['salonName'] ?? '');
     _descriptionController = TextEditingController(text: salon['salonDescription'] ?? '');
     _latitudeController = TextEditingController(text: salon['salonLatitude']?.toString() ?? '');
     _longitudeController = TextEditingController(text: salon['salonLongitude']?.toString() ?? '');
-
+    
     _selectedCategory = SalonCategory.fromString(salon['salonCategory'] ?? 'BARBERSHOP');
     _selectedGenderType = SalonGenderType.fromString(salon['salonGenderType'] ?? 'UNISEX');
     
     _selectedAdditionalServices = (salon['additionalService'] as List<dynamic>?)
         ?.map((e) => AdditionalService.fromString(e.toString()))
         .toList() ?? [];
-
-    _salonPhotos = (salon['salonPhotosPaths'] as List<dynamic>?)
+    
+    // Récupérer la première photo ou null
+    final photos = (salon['salonPhotosPaths'] as List<dynamic>?)
         ?.map((e) => e.toString())
         .where((path) => path.isNotEmpty)
         .toList() ?? [];
+    
+    _currentPhotoUrl = photos.isNotEmpty ? photos.first : null;
   }
 
   @override
@@ -88,10 +97,10 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
         centerTitle: true,
         actions: [
           if (!_isLoading)
-          IconButton(
-            icon: const Icon(Icons.save, color: Color(0xFF1B2B3E)),
-            onPressed: _saveChanges,
-          ),
+            IconButton(
+              icon: const Icon(Icons.save, color: Color(0xFF1B2B3E)),
+              onPressed: _saveChanges,
+            ),
         ],
       ),
       body: _isLoading
@@ -103,7 +112,7 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPhotosSection(isSmallScreen),
+                    _buildPhotoSection(isSmallScreen),
                     const SizedBox(height: 24),
                     _buildBasicInfoSection(isSmallScreen),
                     const SizedBox(height: 24),
@@ -112,8 +121,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
                     _buildGenderTypeSection(isSmallScreen),
                     const SizedBox(height: 24),
                     _buildAdditionalServicesSection(isSmallScreen),
-                    const SizedBox(height: 24),
-                    _buildLocationSection(isSmallScreen),
                     const SizedBox(height: 40),
                     _buildSaveButton(isSmallScreen),
                   ],
@@ -123,14 +130,14 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     );
   }
 
-  Widget _buildPhotosSection(bool isSmallScreen) {
-    final allPhotos = [..._salonPhotos, ..._newPhotos.map((file) => file.path)];
-    
+  Widget _buildPhotoSection(bool isSmallScreen) {
+    final hasPhoto = _newPhoto != null || _currentPhotoUrl != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Photos du Salon',
+          'Photo du Salon',
           style: GoogleFonts.poppins(
             fontSize: isSmallScreen ? 16 : 18,
             fontWeight: FontWeight.w600,
@@ -139,7 +146,7 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Ajoutez des photos pour présenter votre salon',
+          'Ajoutez une photo pour présenter votre salon',
           style: GoogleFonts.poppins(
             fontSize: 14,
             color: const Color(0xFF6B7280),
@@ -147,119 +154,139 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
         ),
         const SizedBox(height: 16),
         
-        if (allPhotos.isEmpty)
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              width: double.infinity,
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey[400]),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Ajouter des photos',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: hasPhoto ? const Color(0xFF1B2B3E) : Colors.grey[300]!,
+                width: hasPhoto ? 2 : 1,
               ),
             ),
-          )
-        else
-          SizedBox(
-            height: 120,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: allPhotos.length + 1,
-              itemBuilder: (context, index) {
-                if (index == allPhotos.length) {
-                  return _buildAddPhotoButton(isSmallScreen);
-                }
-                
-                final photoPath = allPhotos[index];
-                final isFile = index >= _salonPhotos.length;
-                
-                return Container(
-                  width: 100,
-                  height: 100,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      image: isFile 
-                          ? FileImage(File(photoPath))
-                          : NetworkImage('${Config.baseUrl}/$photoPath') as ImageProvider,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Stack(
+            child: hasPhoto
+                ? Stack(
                     children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _newPhoto != null
+                            ? Image.file(
+                                _newPhoto!,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                '${Config.baseUrl}/$_currentPhotoUrl',
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 50,
+                                      color: Colors.grey[400],
+                                    ),
+                                  );
+                                },
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
                       Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () => _removePhoto(index),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 14,
-                            ),
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.white, size: 18),
+                                onPressed: _pickImage,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.white, size: 18),
+                                onPressed: _removePhoto,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.touch_app, color: Colors.white, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Toucher pour changer',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey[400]),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Ajouter une photo',
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Toucher pour sélectionner',
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey[500],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
           ),
+        ),
       ],
-    );
-  }
-
-  Widget _buildAddPhotoButton(bool isSmallScreen) {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        width: 100,
-        height: 100,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate, size: 24, color: Colors.grey[500]),
-            const SizedBox(height: 4),
-            Text(
-              'Ajouter',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -435,31 +462,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     );
   }
 
-  Widget _buildLocationSection(bool isSmallScreen) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Localisation',
-          style: GoogleFonts.poppins(
-            fontSize: isSmallScreen ? 16 : 18,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B2B3E),
-          ),
-        ),
-       
-        const SizedBox(height: 12),
-        Text(
-          'Ces coordonnées seront utilisées pour localiser votre salon sur la carte',
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: const Color(0xFF6B7280),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTextField(
     String label,
     String hint,
@@ -540,6 +542,7 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 2,
         ),
         child: Text(
           'Enregistrer les modifications',
@@ -554,24 +557,37 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
     
     if (image != null) {
       setState(() {
-        _newPhotos.add(File(image.path));
+        _newPhoto = File(image.path);
+        _currentPhotoUrl = null;
       });
     }
   }
 
-  void _removePhoto(int index) {
+  void _removePhoto() {
     setState(() {
-      if (index < _salonPhotos.length) {
-        _salonPhotos.removeAt(index);
-      } else {
-        final newIndex = index - _salonPhotos.length;
-        _newPhotos.removeAt(newIndex);
-      }
+      _newPhoto = null;
+      _currentPhotoUrl = null;
     });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Photo supprimée',
+          style: GoogleFonts.poppins(),
+        ),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _saveChanges() async {
@@ -580,66 +596,234 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 1. Récupérer d'abord les données complètes du salon depuis le backend
+      print('📥 Récupération des données complètes du salon...');
+      final fullSalonData = await _salonService.getSalonById(_originalSalonData['salonId']);
+      
+      print('📋 Données complètes reçues: ${fullSalonData.keys}');
+      
+      // 2. Vérifier si des traitements existent (utiliser salonTreatmentsIds)
+      final treatmentIds = fullSalonData['salonTreatmentsIds'] as List<dynamic>? ?? [];
+      print('💊 Traitements IDs trouvés: ${treatmentIds.length}');
+      print('💊 IDs: $treatmentIds');
+      
+      if (treatmentIds.isEmpty) {
+        // Avertir l'utilisateur qu'il faut d'abord ajouter des traitements
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Vous devez d\'abord ajouter au moins un traitement à votre salon',
+                      style: GoogleFonts.poppins(),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+      
+      // 2b. Récupérer aussi les specialists IDs
+      final specialistIds = fullSalonData['salonSpecialistsIds'] as List<dynamic>? ?? [];
+      print('👥 Spécialistes IDs trouvés: ${specialistIds.length}');
+      
+      if (specialistIds.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Vous devez d\'abord ajouter au moins un spécialiste à votre salon',
+                      style: GoogleFonts.poppins(),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+      
+      // 2c. Récupérer les availabilities
+      final availabilities = fullSalonData['salonAvailabilities'] as List<dynamic>? ?? [];
+      print('📅 Disponibilités trouvées: ${availabilities.length}');
+      
+      if (availabilities.length != 7) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Le salon doit avoir exactement 7 disponibilités (Lundi à Dimanche)',
+                      style: GoogleFonts.poppins(),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+      
+      // 3. Construire les données de mise à jour avec les IDs des traitements et spécialistes
       final updateData = {
-        'salonId': widget.salonData['salonId'],
+        'salonId': fullSalonData['salonId'],
         'salonName': _nameController.text.trim(),
         'salonDescription': _descriptionController.text.trim(),
         'salonCategory': _mapSalonCategoryToBackend(_selectedCategory),
         'salonGenderType': _mapGenderTypeToBackend(_selectedGenderType),
-        'additionalService': _selectedAdditionalServices.map((s) => _mapAdditionalServiceToBackend(s)).toList(),
-        'salonLatitude': double.tryParse(_latitudeController.text) ?? widget.salonData['salonLatitude'],
-        'salonLongitude': double.tryParse(_longitudeController.text) ?? widget.salonData['salonLongitude'],
+        'additionalService': _selectedAdditionalServices
+            .map((s) => _mapAdditionalServiceToBackend(s))
+            .toList(),
+        'salonLatitude': double.tryParse(_latitudeController.text) ?? 
+            fullSalonData['salonLatitude'],
+        'salonLongitude': double.tryParse(_longitudeController.text) ?? 
+            fullSalonData['salonLongitude'],
+        
+        // CRITIQUE: Envoyer les IDs des traitements (pas les objets)
+        'salonTreatmentsIds': treatmentIds,
+        
+        // CRITIQUE: Envoyer les IDs des spécialistes (pas les objets)
+        'salonSpecialistsIds': specialistIds,
+        
+        // CRITIQUE: Envoyer les disponibilités
+        'salonAvailabilities': availabilities,
       };
 
+      print('📤 Envoi des données de mise à jour...');
+      print('   - Nom: ${updateData['salonName']}');
+      print('   - Catégorie: ${updateData['salonCategory']}');
+      print('   - Traitements IDs: ${(updateData['salonTreatmentsIds'] as List).length}');
+      print('   - Spécialistes IDs: ${(updateData['salonSpecialistsIds'] as List).length}');
+      print('   - Disponibilités: ${(updateData['salonAvailabilities'] as List).length}');
+
       final result = await _salonService.updateSalon(
-        salonId: widget.salonData['salonId'],
+        salonId: fullSalonData['salonId'],
         updateData: updateData,
       );
 
       if (result['success'] == true) {
-        // Upload new photos
-        for (final photoFile in _newPhotos) {
-          await _salonService.addSalonPhoto(
-            salonId: widget.salonData['salonId'],
-            imagePath: photoFile.path,
-          );
+        // Upload nouvelle photo si elle existe
+        if (_newPhoto != null) {
+          try {
+            await _salonService.addSalonPhoto(
+              salonId: _originalSalonData['salonId'],
+              imagePath: _newPhoto!.path,
+            );
+            print('✅ Photo uploadée avec succès');
+          } catch (photoError) {
+            print('⚠️ Erreur lors de l\'upload de la photo: $photoError');
+            // Continue même si l'upload de la photo échoue
+          }
         }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Salon modifié avec succès',
-                style: GoogleFonts.poppins(),
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Salon modifié avec succès',
+                    style: GoogleFonts.poppins(),
+                  ),
+                ],
               ),
               backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           );
-
           Navigator.pop(context, true);
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                result['message'] ?? 'Erreur lors de la modification',
-                style: GoogleFonts.poppins(),
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      result['message'] ?? 'Erreur lors de la modification',
+                      style: GoogleFonts.poppins(),
+                    ),
+                  ),
+                ],
               ),
               backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           );
         }
       }
     } catch (e) {
+      print('❌ Erreur lors de la sauvegarde: $e'); // Debug
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Erreur: $e',
-              style: GoogleFonts.poppins(),
+            content: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Erreur: $e',
+                    style: GoogleFonts.poppins(),
+                  ),
+                ),
+              ],
             ),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -660,10 +844,7 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   }
 
   // Méthodes de mapping pour l'API Backend
-  // Si vos enums ont la propriété apiValue, utilisez-la directement
   String _mapSalonCategoryToBackend(SalonCategory category) {
-    // Si SalonCategory a apiValue : return category.apiValue;
-    // Sinon, utilisez ce switch:
     switch (category) {
       case SalonCategory.hairSalon:
         return 'HAIR_SALON';
@@ -679,8 +860,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   }
 
   String _mapGenderTypeToBackend(SalonGenderType genderType) {
-    // Si SalonGenderType a apiValue : return genderType.apiValue;
-    // Sinon, utilisez ce switch:
     switch (genderType) {
       case SalonGenderType.man:
         return 'MEN';
@@ -692,8 +871,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   }
 
   String _mapAdditionalServiceToBackend(AdditionalService service) {
-    // Si AdditionalService a apiValue : return service.apiValue;
-    // Sinon, utilisez ce switch:
     switch (service) {
       case AdditionalService.wifi:
         return 'WIFI';

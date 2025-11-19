@@ -87,11 +87,16 @@ class SignUpViewModel extends ChangeNotifier {
     return null;
   }
 
+  // ✅ Phone est maintenant OPTIONNEL
   String? validatePhone(String? value) {
-    if (value != null && value.isNotEmpty) {
-      if (!RegExp(r'^\+?[\d\s-]{8,}$').hasMatch(value)) {
-        return 'Please enter a valid phone number';
-      }
+    // Si le champ est vide, c'est OK (optionnel)
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    
+    // Si rempli, on valide le format
+    if (!RegExp(r'^\+?[\d\s-]{8,}$').hasMatch(value)) {
+      return 'Please enter a valid phone number';
     }
     return null;
   }
@@ -103,18 +108,27 @@ class SignUpViewModel extends ChangeNotifier {
     if (value.length < 8) {
       return 'Password must be at least 8 characters';
     }
+    
+    // Liste des exigences manquantes
+    List<String> missing = [];
+    
     if (!RegExp(r'[A-Z]').hasMatch(value)) {
-      return 'Must contain at least one uppercase letter';
+      missing.add('uppercase letter');
     }
     if (!RegExp(r'[a-z]').hasMatch(value)) {
-      return 'Must contain at least one lowercase letter';
+      missing.add('lowercase letter');
     }
     if (!RegExp(r'[0-9]').hasMatch(value)) {
-      return 'Must contain at least one number';
+      missing.add('number');
     }
     if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
-      return 'Must contain at least one special character';
+      missing.add('special character (!@#\$&*~)');
     }
+    
+    if (missing.isNotEmpty) {
+      return 'Missing: ${missing.join(', ')}';
+    }
+    
     return null;
   }
 
@@ -122,21 +136,29 @@ class SignUpViewModel extends ChangeNotifier {
   // 🔹 Sign Up Logic
   // =====================
   Future<void> signUp(BuildContext context) async {
-    // Vérification du formulaire
-    if (!formKey.currentState!.validate()) return;
-
-    // Vérification du genre
-    if (_selectedGender.isEmpty) {
-      setGenderError('Please select your gender');
+    // 1️⃣ Vérification du formulaire
+    if (!formKey.currentState!.validate()) {
+      _showErrorSnackBar(context, 'Please fill in all required fields correctly');
       return;
     }
 
-    // Récupération des champs
+    // 2️⃣ Vérification du genre
+    if (_selectedGender.isEmpty) {
+      setGenderError('Please select your gender');
+      _showErrorSnackBar(context, 'Please select your gender');
+      return;
+    }
+
+    // 3️⃣ Récupération des champs
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    final phone = phoneController.text.trim().isEmpty ? "00000000" : phoneController.text.trim();
+    
+    // ✅ Si phone est vide, on envoie "00000000" au backend
+    final phone = phoneController.text.trim().isEmpty 
+        ? "00000000" 
+        : phoneController.text.trim();
 
     _isLoading = true;
     notifyListeners();
@@ -148,7 +170,7 @@ class SignUpViewModel extends ChangeNotifier {
         email: email,
         password: password,
         phoneNumber: phone,
-        gender: _selectedGender, // "MAN" ou "WOMAN"
+        gender: _selectedGender, // "MEN" ou "WOMEN"
         role: "SPECIALIST",       // rôle par défaut
       );
 
@@ -189,8 +211,23 @@ class SignUpViewModel extends ChangeNotifier {
   void _showSuccessSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -199,9 +236,25 @@ class SignUpViewModel extends ChangeNotifier {
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.only(bottom: 50, left: 10, right: 10),
       ),
     );
   }

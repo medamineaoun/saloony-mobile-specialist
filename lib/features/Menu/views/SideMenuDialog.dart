@@ -156,7 +156,7 @@ Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
             viewModel.selectMenuItem(item.route!);
             Navigator.pop(context);
             if (item.route != null) {
-              Navigator.pushNamed(context, item.route!);
+              Navigator. pushNamed(context, item.route!);
             }
           },
         ),

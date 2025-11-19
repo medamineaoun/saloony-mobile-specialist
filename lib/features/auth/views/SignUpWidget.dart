@@ -159,7 +159,7 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Phone avec validation
+                      // Phone - OBLIGATOIRE
                       _buildValidatedTextField(
                         controller: vm.phoneController,
                         enabled: !vm.isLoading,
@@ -171,69 +171,95 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                    // --- GENRE ---
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(
-      "Gender",
-      style: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: const Color(0xFF1B2B3E),
-      ),
-    ),
-    const SizedBox(height: 8),
-    Row(
-      children: [
-        Expanded(
-          child: GenderOption(
-            label: "Man",
-            value: "MEN", // ✅ correspond à ton backend
-            selectedValue: vm.selectedGender,
-            onTap: () => vm.setGender("MEN"), // ✅ correction ici
-            isEnabled: !vm.isLoading,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: GenderOption(
-            label: "Woman",
-            value: "WOMEN", // ✅ correspond à ton backend
-            selectedValue: vm.selectedGender,
-            onTap: () => vm.setGender("WOMEN"), // ✅ correction ici
-            isEnabled: !vm.isLoading,
-          ),
-        ),
-      ],
-    ),
-    if (vm.genderError != null)
-      Padding(
-        padding: const EdgeInsets.only(top: 8, left: 12),
-        child: Text(
-          vm.genderError!,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.red,
-            height: 1.5,
-          ),
-        ),
-      ),
-  ],
-),
- const SizedBox(height: 20),
+                      // --- GENRE ---
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                "Gender",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1B2B3E),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "*",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GenderOption(
+                                  label: "Man",
+                                  value: "MEN",
+                                  selectedValue: vm.selectedGender,
+                                  onTap: () => vm.setGender("MEN"),
+                                  isEnabled: !vm.isLoading,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GenderOption(
+                                  label: "Woman",
+                                  value: "WOMEN",
+                                  selectedValue: vm.selectedGender,
+                                  onTap: () => vm.setGender("WOMEN"),
+                                  isEnabled: !vm.isLoading,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (vm.genderError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, left: 12),
+                              child: Text(
+                                vm.genderError!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
 
                       // Password avec validation
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Password",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1B2B3E),
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                "Password",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1B2B3E),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                "*",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
@@ -450,13 +476,29 @@ Column(
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B2B3E),
-          ),
+        Row(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1B2B3E),
+              ),
+            ),
+            // Ajouter * seulement si pas "Optional" dans le label
+            if (!label.contains("Optional")) ...[
+              const SizedBox(width: 4),
+              Text(
+                "*",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -564,7 +606,7 @@ class GenderOption extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              value == "MAN" ? Icons.male : Icons.female,
+              value == "MEN" ? Icons.male : Icons.female,
               color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[600],
               size: 22,
             ),

@@ -41,15 +41,15 @@ class _AdditionalServicesStepState extends State<AdditionalServicesStep> {
       case AdditionalService.tv:
         return 'TV';
       case AdditionalService.backgroundMusic:
-        return 'Background Music';
+        return 'Music';
       case AdditionalService.airConditioning:
-        return 'Air Conditioning';
+        return 'AC';
       case AdditionalService.heating:
         return 'Heating';
       case AdditionalService.coffeeTea:
-        return 'Coffee & Tea';
+        return 'Coffee/Tea';
       case AdditionalService.drinksSnacks:
-        return 'Drinks & Snacks';
+        return 'Snacks';
       case AdditionalService.freeParking:
         return 'Free Parking';
       case AdditionalService.paidParking:
@@ -57,9 +57,9 @@ class _AdditionalServicesStepState extends State<AdditionalServicesStep> {
       case AdditionalService.publicTransportAccess:
         return 'Public Transport';
       case AdditionalService.wheelchairAccessible:
-        return 'Wheelchair Accessible';
+        return 'Wheelchair';
       case AdditionalService.childFriendly:
-        return 'Child Friendly';
+        return 'Kid Friendly';
       case AdditionalService.shower:
         return 'Shower';
       case AdditionalService.lockers:
@@ -67,15 +67,15 @@ class _AdditionalServicesStepState extends State<AdditionalServicesStep> {
       case AdditionalService.creditCardAccepted:
         return 'Credit Card';
       case AdditionalService.mobilePayment:
-        return 'Mobile Payment';
+        return 'Mobile Pay';
       case AdditionalService.securityCameras:
-        return 'Security Cameras';
+        return 'Security';
       case AdditionalService.petFriendly:
         return 'Pet Friendly';
       case AdditionalService.noPets:
         return 'No Pets';
       case AdditionalService.smokingAllowed:
-        return 'Smoking Allowed';
+        return 'Smoking OK';
       case AdditionalService.nonSmoking:
         return 'Non-Smoking';
     }
@@ -128,103 +128,48 @@ class _AdditionalServicesStepState extends State<AdditionalServicesStep> {
     }
   }
 
-  String _getCategoryName(String category) {
-    switch (category) {
-      case 'comfort':
-        return 'Comfort & Entertainment';
-      case 'food':
-        return 'Food & Beverages';
-      case 'parking':
-        return 'Parking & Transport';
-      case 'accessibility':
-        return 'Accessibility';
-      case 'facilities':
-        return 'Facilities';
-      case 'payment':
-        return 'Payment Options';
-      case 'security':
-        return 'Security & Safety';
-      case 'policies':
-        return 'Policies';
-      default:
-        return category;
-    }
-  }
-
-  Map<String, List<AdditionalService>> _getGroupedServices() {
-    return {
-      'comfort': [
-        AdditionalService.wifi,
-        AdditionalService.tv,
-        AdditionalService.backgroundMusic,
-        AdditionalService.airConditioning,
-        AdditionalService.heating,
-      ],
-      'food': [
-        AdditionalService.coffeeTea,
-        AdditionalService.drinksSnacks,
-      ],
-      'parking': [
-        AdditionalService.freeParking,
-        AdditionalService.paidParking,
-        AdditionalService.publicTransportAccess,
-      ],
-      'accessibility': [
-        AdditionalService.wheelchairAccessible,
-        AdditionalService.childFriendly,
-      ],
-      'facilities': [
-        AdditionalService.shower,
-        AdditionalService.lockers,
-      ],
-      'payment': [
-        AdditionalService.creditCardAccepted,
-        AdditionalService.mobilePayment,
-      ],
-      'security': [
-        AdditionalService.securityCameras,
-      ],
-      'policies': [
-        AdditionalService.petFriendly,
-        AdditionalService.noPets,
-        AdditionalService.smokingAllowed,
-        AdditionalService.nonSmoking,
-      ],
-    };
-  }
-
-  int _getCrossAxisCount(double width) {
-    if (width >= 1400) return 5;
-    if (width >= 1100) return 4;
-    if (width >= 800) return 3;
-    if (width >= 500) return 2;
-    return 1;
-  }
-
-  double _getChildAspectRatio(double width) {
-    if (width >= 1400) return 1.15;
-    if (width >= 1100) return 1.2;
-    if (width >= 800) return 1.25;
-    if (width >= 500) return 1.3;
-    return 2.0;
+  List<AdditionalService> _getAllServices() {
+    return [
+      AdditionalService.wifi,
+      AdditionalService.tv,
+      AdditionalService.backgroundMusic,
+      AdditionalService.airConditioning,
+      AdditionalService.heating,
+      AdditionalService.coffeeTea,
+      AdditionalService.drinksSnacks,
+      AdditionalService.freeParking,
+      AdditionalService.paidParking,
+      AdditionalService.publicTransportAccess,
+      AdditionalService.wheelchairAccessible,
+      AdditionalService.childFriendly,
+      AdditionalService.shower,
+      AdditionalService.lockers,
+      AdditionalService.creditCardAccepted,
+      AdditionalService.mobilePayment,
+      AdditionalService.securityCameras,
+      AdditionalService.petFriendly,
+      AdditionalService.noPets,
+      AdditionalService.smokingAllowed,
+      AdditionalService.nonSmoking,
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final groupedServices = _getGroupedServices();
+    final allServices = _getAllServices();
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = _getCrossAxisCount(screenWidth);
-    final childAspectRatio = _getChildAspectRatio(screenWidth);
     final isMobile = screenWidth < 600;
-    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+    final isTablet = screenWidth >= 600 && screenWidth < 900;
     final horizontalPadding = isMobile ? 16.0 : (isTablet ? 24.0 : 32.0);
-    final spacing = isMobile ? 10.0 : (isTablet ? 14.0 : 16.0);
+    
+    // 3 colonnes sur desktop, 2 sur tablet, 1 sur mobile
+    final crossAxisCount = isMobile ? 2 : (isTablet ? 3 : 3);
 
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1400),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -234,114 +179,66 @@ class _AdditionalServicesStepState extends State<AdditionalServicesStep> {
                 icon: Icons.emoji_food_beverage_outlined,
               ),
               
-              SizedBox(height: isMobile ? 24 : 32),
+              SizedBox(height: isMobile ? 16 : 20),
               
               // Selected count banner
               if (_selectedServices.isNotEmpty)
                 Container(
-                  margin: EdgeInsets.only(bottom: isMobile ? 20 : 24),
-                  padding: EdgeInsets.all(isMobile ? 16 : 20),
+                  margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF1B2B3E).withOpacity(0.03),
-                        const Color(0xFFF0CD97).withOpacity(0.03),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(isMobile ? 16 : 20),
+                    color: const Color(0xFFF0CD97).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xFFF0CD97).withOpacity(0.2),
-                      width: 1,
+                      color: const Color(0xFFF0CD97).withOpacity(0.3),
                     ),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: EdgeInsets.all(isMobile ? 10 : 12),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF1B2B3E),
-                              Color(0xFF2A3F54),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF1B2B3E).withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1B2B3E),
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          Icons.check_circle_rounded,
-                          color: const Color(0xFFF0CD97),
-                          size: isMobile ? 20 : 24,
+                        child: const Icon(
+                          Icons.check,
+                          color: Color(0xFFF0CD97),
+                          size: 12,
                         ),
                       ),
                       
-                      SizedBox(width: isMobile ? 12 : 16),
+                      const SizedBox(width: 8),
                       
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${_selectedServices.length} ${_selectedServices.length > 1 ? 'services' : 'service'} selected',
-                              style: GoogleFonts.inter(
-                                fontSize: isMobile ? 15 : 16,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1B2B3E),
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            if (!isMobile) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                'These will be displayed on your salon profile',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ],
+                      Text(
+                        '${_selectedServices.length} selected',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1B2B3E),
                         ),
                       ),
                       
-                      TextButton.icon(
-                        onPressed: () {
+                      const SizedBox(width: 8),
+                      
+                      InkWell(
+                        onTap: () {
                           setState(() {
                             _selectedServices.clear();
                             widget.vm.setAdditionalServices([]);
                           });
                         },
-                        icon: Icon(
-                          Icons.clear_rounded,
-                          size: isMobile ? 16 : 18,
-                          color: const Color(0xFFF0CD97),
-                        ),
-                        label: Text(
+                        child: Text(
                           'Clear',
                           style: GoogleFonts.inter(
-                            fontSize: isMobile ? 13 : 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFFF0CD97),
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isMobile ? 12 : 16,
-                            vertical: isMobile ? 8 : 10,
-                          ),
-                          backgroundColor: const Color(0xFFF0CD97).withOpacity(0.1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ),
@@ -349,261 +246,144 @@ class _AdditionalServicesStepState extends State<AdditionalServicesStep> {
                   ),
                 ),
               
-              // Services list
-              ListView.separated(
+              // Grid de petites cartes - 3 par ligne
+              GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: groupedServices.length,
-                separatorBuilder: (context, index) => SizedBox(height: isMobile ? 28 : 36),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: isMobile ? 2.2 : 2.5,
+                  crossAxisSpacing: isMobile ? 8 : 10,
+                  mainAxisSpacing: isMobile ? 8 : 10,
+                ),
+                itemCount: allServices.length,
                 itemBuilder: (context, index) {
-                  final category = groupedServices.keys.elementAt(index);
-                  final services = groupedServices[category]!;
+                  final service = allServices[index];
+                  final isSelected = _selectedServices.contains(service);
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Category header
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: 4,
-                          bottom: isMobile ? 12 : 16,
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _toggleService(service),
+                      borderRadius: BorderRadius.circular(10),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 8 : 10,
+                          vertical: isMobile ? 8 : 10,
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: isMobile ? 20 : 24,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Color(0xFF1B2B3E),
-                                    Color(0xFFF0CD97),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              _getCategoryName(category),
-                              style: GoogleFonts.inter(
-                                fontSize: isMobile ? 17 : (isTablet ? 19 : 20),
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF1B2B3E),
-                                letterSpacing: -0.5,
-                              ),
+                        decoration: BoxDecoration(
+                          color: isSelected 
+                              ? const Color(0xFFF0CD97).withOpacity(0.12)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected 
+                                ? const Color(0xFFF0CD97) 
+                                : Colors.grey[200]!,
+                            width: isSelected ? 2 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isSelected
+                                  ? const Color(0xFFF0CD97).withOpacity(0.1)
+                                  : Colors.black.withOpacity(0.02),
+                              blurRadius: isSelected ? 6 : 3,
+                              offset: Offset(0, isSelected ? 2 : 1),
                             ),
                           ],
                         ),
-                      ),
-                      
-                      // Services grid
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                          crossAxisSpacing: spacing,
-                          mainAxisSpacing: spacing,
-                        ),
-                        itemCount: services.length,
-                        itemBuilder: (context, serviceIndex) {
-                          final service = services[serviceIndex];
-                          final isSelected = _selectedServices.contains(service);
-
-                          return Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _toggleService(service),
-                              borderRadius: BorderRadius.circular(16),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                                decoration: BoxDecoration(
-                                  color: isSelected 
-                                      ? const Color(0xFFF0CD97).withOpacity(0.08)
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSelected 
-                                        ? const Color(0xFFF0CD97) 
-                                        : Colors.grey[200]!,
-                                    width: isSelected ? 2.5 : 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: isSelected
-                                          ? const Color(0xFFF0CD97).withOpacity(0.15)
-                                          : Colors.black.withOpacity(0.04),
-                                      blurRadius: isSelected ? 16 : 8,
-                                      offset: Offset(0, isSelected ? 4 : 2),
-                                      spreadRadius: isSelected ? 1 : 0,
-                                    ),
-                                  ],
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.all(
-                                        isMobile ? 14 : (isTablet ? 16 : 20),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          AnimatedContainer(
-                                            duration: const Duration(milliseconds: 250),
-                                            padding: EdgeInsets.all(
-                                              isMobile ? 10 : (isTablet ? 12 : 14),
-                                            ),
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: isSelected
-                                                    ? [
-                                                        const Color(0xFF1B2B3E),
-                                                        const Color(0xFF2A3F54),
-                                                      ]
-                                                    : [
-                                                        const Color(0xFFF5F5F5),
-                                                        const Color(0xFFE8E8E8),
-                                                      ],
-                                              ),
-                                              borderRadius: BorderRadius.circular(14),
-                                              boxShadow: isSelected ? [
-                                                BoxShadow(
-                                                  color: const Color(0xFF1B2B3E).withOpacity(0.2),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ] : [],
-                                            ),
-                                            child: Icon(
-                                              _getServiceIcon(service),
-                                              color: isSelected
-                                                  ? const Color(0xFFF0CD97)
-                                                  : const Color(0xFF1B2B3E).withOpacity(0.6),
-                                              size: isMobile ? 22 : (isTablet ? 26 : 28),
-                                            ),
-                                          ),
-                                          
-                                          SizedBox(height: isMobile ? 10 : 12),
-                                          
-                                          Flexible(
-                                            child: Text(
-                                              _getServiceLabel(service),
-                                              textAlign: TextAlign.center,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.inter(
-                                                fontSize: isMobile ? 12 : (isTablet ? 13 : 14),
-                                                fontWeight: FontWeight.w600,
-                                                color: isSelected
-                                                    ? const Color(0xFF1B2B3E)
-                                                    : Colors.grey[700],
-                                                height: 1.3,
-                                                letterSpacing: -0.2,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    
-                                    // Check mark
-                                    if (isSelected)
-                                      Positioned(
-                                        top: isMobile ? 6 : 8,
-                                        right: isMobile ? 6 : 8,
-                                        child: AnimatedScale(
-                                          duration: const Duration(milliseconds: 200),
-                                          scale: isSelected ? 1.0 : 0.0,
-                                          child: Container(
-                                            padding: EdgeInsets.all(isMobile ? 4 : 5),
-                                            decoration: BoxDecoration(
-                                              gradient: const LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: [
-                                                  Color(0xFF1B2B3E),
-                                                  Color(0xFF2A3F54),
-                                                ],
-                                              ),
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: const Color(0xFF1B2B3E).withOpacity(0.4),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Icon(
-                                              Icons.check_rounded,
-                                              color: const Color(0xFFF0CD97),
-                                              size: isMobile ? 12 : 14,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                        child: Row(
+                          children: [
+                            // Icon
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF1B2B3E)
+                                    : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                _getServiceIcon(service),
+                                color: isSelected
+                                    ? const Color(0xFFF0CD97)
+                                    : Colors.grey[600],
+                                size: 16,
+                              ),
+                            ),
+                            
+                            const SizedBox(width: 8),
+                            
+                            // Label
+                            Expanded(
+                              child: Text(
+                                _getServiceLabel(service),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: isMobile ? 11 : 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected
+                                      ? const Color(0xFF1B2B3E)
+                                      : Colors.grey[700],
+                                  height: 1.2,
                                 ),
                               ),
                             ),
-                          );
-                        },
+                            
+                            // Check mark
+                            if (isSelected) ...[
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF1B2B3E),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.check,
+                                  color: Color(0xFFF0CD97),
+                                  size: 10,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   );
                 },
               ),
               
-              SizedBox(height: isMobile ? 24 : 32),
+              SizedBox(height: isMobile ? 16 : 20),
               
               // Information section
               Container(
-                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.blue[50]!.withOpacity(0.5),
-                      Colors.blue[50]!.withOpacity(0.3),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.blue[50]?.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: Colors.blue[100]!,
-                    width: 1,
                   ),
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[600],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.lightbulb_rounded,
-                        size: isMobile ? 18 : 20,
-                        color: Colors.white,
-                      ),
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: Colors.blue[700],
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Adding services helps customers find your salon and improves your visibility in search results.',
+                        'Select services that apply to your salon to help customers find you.',
                         style: GoogleFonts.inter(
-                          fontSize: isMobile ? 13 : 14,
+                          fontSize: 11,
                           color: Colors.grey[700],
-                          height: 1.5,
+                          height: 1.3,
                         ),
                       ),
                     ),

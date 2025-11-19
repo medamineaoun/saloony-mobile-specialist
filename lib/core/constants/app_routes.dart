@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:saloony/features/Dashboard/views/DashboardView.dart';
+import 'package:saloony/features/Salon/AppointmentsScreen.dart';
 import 'package:saloony/features/Salon/TeamMembersScreen.dart';
 import 'package:saloony/features/Salon/team_members_list_view.dart';
 import 'package:saloony/features/auth/views/VerifyEmailWidget.dart';
@@ -44,6 +45,7 @@ class AppRoutes {
   static const String createsalon = '/createsalon';
   static const String teamMembers = '/teamMembers';
   static const String Disponibilite = '/Disponibilite';
+  static const String Appointments = '/Appointments';
   static Map<String, WidgetBuilder> routes = {
   signIn: (_) => const SignInWidget(),
   splash: (_) => const SaloonySplashPage(),
@@ -64,6 +66,7 @@ class AppRoutes {
   home: (_) => DashboardView(), 
   createsalon: (_) => const SalonCreationFlow(),
    PrivacyPolicy: (_) => const PrivacyPolicyScreen(),
+   Appointments: (_) => const AppointmentsScreen(),
 
 
 };

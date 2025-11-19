@@ -65,7 +65,7 @@ class SalonCreationViewModel extends ChangeNotifier {
   final ImagePicker _picker = ImagePicker();
   
   // Controllers
-  final TextEditingController businessNameController = TextEditingController();
+  final TextEditingController salonNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController additionalAddressController = TextEditingController();
 
@@ -76,8 +76,9 @@ class SalonCreationViewModel extends ChangeNotifier {
   int _currentStep = 0;
 
   // Salon information
-  SalonCategory? selectedCategory;
-  String? _businessImagePath;
+  SalonCategory? selectedCategory = SalonCategory.hairSalon;
+
+  String? _salonImagePath;
   LocationResult? _location;
   SalonGenderType? _selectedGenderType;
   List<AdditionalService> selectedAdditionalServices = [];
@@ -100,7 +101,7 @@ class SalonCreationViewModel extends ChangeNotifier {
   bool get isCreatingSalon => _isCreatingSalon;
   int get currentStep => _currentStep;
   AccountType? get accountType => _accountType;
-  String? get businessImagePath => _businessImagePath;
+  String? get salonImagePath => _salonImagePath;
   LocationResult? get location => _location;
   Map<String, DayAvailabilityWithSlots> get weeklyAvailability => _weeklyAvailability;
   List<TeamMember> get teamMembers => _teamMembers;
@@ -145,12 +146,12 @@ class SalonCreationViewModel extends ChangeNotifier {
   bool get canContinue {
     switch (_currentStep) {
       case 0: 
-        return businessNameController.text.trim().isNotEmpty &&
+        return salonNameController.text.trim().isNotEmpty &&
                selectedCategory != null;
       case 1: 
         return descriptionController.text.trim().isNotEmpty &&
                _location != null &&
-               _businessImagePath != null &&
+               _salonImagePath != null &&
                _selectedGenderType != null;
       case 2: 
         return true;
@@ -175,7 +176,7 @@ class SalonCreationViewModel extends ChangeNotifier {
   }
 
   void _setupControllerListeners() {
-    businessNameController.addListener(notifyListeners);
+    salonNameController.addListener(notifyListeners);
     descriptionController.addListener(notifyListeners);
     additionalAddressController.addListener(notifyListeners);
   }
@@ -246,14 +247,9 @@ class SalonCreationViewModel extends ChangeNotifier {
     }
   }
 
-  void previousStep() {
-    if (_currentStep > 0) {
-      _currentStep--;
-      notifyListeners();
-    }
-  }
+ 
 
-  // Business methods
+  // salon methods
   void setCategory(SalonCategory category) {
     selectedCategory = category;
     notifyListeners();
@@ -277,7 +273,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       );
       
       if (image != null) {
-        _businessImagePath = image.path;
+        _salonImagePath = image.path;
         notifyListeners();
       }
     } catch (e) {
@@ -471,7 +467,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       final List<String> additionalServicesStrings = additionalServicesForApi;
 
       debugPrint('📤 Création du salon...');
-      debugPrint('Nom: ${businessNameController.text}');
+      debugPrint('Nom: ${salonNameController.text}');
       debugPrint('Catégorie (API): $salonCategoryForApi');
       debugPrint('Gender Type (API): $genderTypeForApi');
       debugPrint('Services additionnels: $additionalServicesStrings');
@@ -529,7 +525,7 @@ class SalonCreationViewModel extends ChangeNotifier {
       final availabilityForApi = _prepareAvailabilityForApi();
 
       final createResult = await _salonService.createSalon(
-        salonName: businessNameController.text.trim(),
+        salonName: salonNameController.text.trim(),
         salonDescription: descriptionController.text.trim(),
         salonCategory: salonCategoryForApi,
         additionalServices: additionalServicesStrings,
@@ -557,11 +553,11 @@ class SalonCreationViewModel extends ChangeNotifier {
 
       debugPrint('✅ Salon créé: $salonId');
 
-      if (_businessImagePath != null) {
+      if (_salonImagePath != null) {
         debugPrint('📷 Upload de la photo...');
         final photoResult = await _salonService.addSalonPhoto(
           salonId: salonId,
-          imagePath: _businessImagePath!,
+          imagePath: _salonImagePath!,
         );
         
         if (photoResult['success']) {
@@ -809,7 +805,13 @@ String _mapTreatmentCategoryToBackend(String frontendCategory) {
         return 'MIXED';
     }
   }
-
+// Dans SalonCreationViewModel
+void previousStep() {
+  if (_currentStep > 0) {
+    _currentStep--;
+    notifyListeners();
+  }
+}
   // ✅ FIXED: Validate UUID when adding team members
   void showAddTeamMemberDialog(BuildContext context) {
     final nameController = TextEditingController();
@@ -1055,7 +1057,7 @@ String _mapTreatmentCategoryToBackend(String frontendCategory) {
 
   @override
   void dispose() {
-    businessNameController.dispose();
+    salonNameController.dispose();
     descriptionController.dispose();
     additionalAddressController.dispose();
     super.dispose();

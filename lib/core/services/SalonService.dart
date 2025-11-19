@@ -577,7 +577,25 @@ Future<Map<String, dynamic>> addCustomServices({
       };
     }
   }
+Future<Map<String, dynamic>> getSalonById(String salonId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('${Config.baseUrl}/api/salon/retrieve-salon/$salonId'),
+      headers: {
+        'Content-Type': 'application/json',
+        // Ajoutez vos headers d'authentification si nécessaire
+      },
+    );
 
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Échec de récupération du salon: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Erreur lors de la récupération du salon: $e');
+  }
+}
   /// Obtenir tous les salons
   Future<Map<String, dynamic>> getAllSalons() async {
     try {

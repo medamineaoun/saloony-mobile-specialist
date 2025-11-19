@@ -15,7 +15,7 @@ class MenuViewModel extends ChangeNotifier {
   List<MenuItem> _menuItems = [
     MenuItem(title: 'Create Salon', icon: Icons.store_rounded, route: '/createsalon'),
     MenuItem(title: 'Appointments', icon: Icons.calendar_today_rounded, route: '/appointments'),
-    MenuItem(title: 'Requests', icon: Icons.description_outlined, route: '/requests'),
+    //MenuItem(title: 'Requests', icon: Icons.description_outlined, route: '/requests'),
    
  
   ];
