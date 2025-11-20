@@ -11,7 +11,7 @@ class ProfileEditView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProfileEditViewModel(),
+      create: (_) => ProfileEditViewModel(context),
       child: const _ProfileEditContent(),
     );
   }
@@ -341,9 +341,9 @@ class _ProfileEditContent extends StatelessWidget {
 
   String _formatGender(String gender) {
     switch (gender.toUpperCase()) {
-      case 'MAN':
+      case 'MEN':
         return 'Homme';
-      case 'WOMAN':
+      case 'WOMEN':
         return 'Femme';
       default:
         return gender;
@@ -387,29 +387,7 @@ class _ProfileEditContent extends StatelessWidget {
               : () async {
                   final result = await viewModel.saveChanges();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          result['message'] ?? 
-                              (result['success'] == true 
-                                  ? 'Profil mis à jour avec succès' 
-                                  : 'Erreur lors de la mise à jour'),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        backgroundColor: result['success'] == true 
-                            ? SaloonyColors.success 
-                            : SaloonyColors.error,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        margin: const EdgeInsets.all(16),
-                      ),
-                    );
-                    
+                   
                     if (result['success'] == true) {
                       await Future.delayed(const Duration(milliseconds: 500));
                       if (context.mounted) {

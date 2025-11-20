@@ -13,7 +13,7 @@ class VerifyEmailWidget extends StatelessWidget {
     final email = ModalRoute.of(context)!.settings.arguments as String;
 
     return ChangeNotifierProvider(
-      create: (_) => VerifyEmailViewModel(email),
+      create: (_) => VerifyEmailViewModel(email, context),
       child: Consumer<VerifyEmailViewModel>(
         builder: (context, vm, child) {
           return GestureDetector(

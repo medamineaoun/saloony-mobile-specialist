@@ -57,7 +57,7 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
     final code = _controllers.map((c) => c.text).join();
     
     if (code.length != 6) {
-      _showSnackBar('Veuillez entrer le code complet', isError: true);
+      _showSnackBar('Please enter the complete code', isError: true);
       return;
     }
 
@@ -84,7 +84,7 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
           );
         } else {
           _showSnackBar(
-            result['message'] ?? 'Code invalide ou expiré',
+            result['message'] ?? 'Invalid or expired code',
             isError: true,
           );
           _clearFields();
@@ -93,7 +93,7 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar('Erreur de connexion', isError: true);
+        _showSnackBar('Connection error', isError: true);
       }
     }
   }
@@ -112,14 +112,14 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
         _startTimer();
         
         _showSnackBar(
-          result['message'] ?? 'Code renvoyé',
+          result['message'] ?? 'Code resent successfully',
           isError: result['success'] != true,
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar('Erreur de connexion', isError: true);
+        _showSnackBar('Connection error', isError: true);
       }
     }
   }
@@ -152,7 +152,7 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Réinitialiser le mot de passe',
+          'Reset Password',
           style: TextStyle(
             color: SaloonyColors.primary,
             fontSize: 18,
@@ -168,7 +168,6 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
             children: [
               const SizedBox(height: 20),
               
-              // Logo
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -184,9 +183,8 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
               
               const SizedBox(height: 24),
               
-              // Title
               const Text(
-                'Le code de vérification',
+                'Verification Code',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -197,9 +195,8 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
               
               const SizedBox(height: 12),
               
-              // Description
               Text(
-                'Saisissez le code de vérification à 6 chiffres envoyé à votre adresse e-mail pour confirmer votre identité.',
+                'Enter the 6-digit verification code sent to your email address to confirm your identity.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -210,7 +207,6 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
               
               const SizedBox(height: 40),
               
-              // Code Input Fields - 6 chiffres
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(6, (index) {
@@ -250,7 +246,6 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
                           _focusNodes[index - 1].requestFocus();
                         }
                         
-                        // Auto-submit when all fields are filled
                         if (index == 5 && value.isNotEmpty) {
                           _verifyCode();
                         }
@@ -260,28 +255,8 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
                 }),
               ),
               
-              const SizedBox(height: 24),
-              
-              // Resend Code Timer
-              TextButton(
-                onPressed: _resendTimer == 0 && !_isLoading ? _resendCode : null,
-                child: Text(
-                  _resendTimer > 0
-                      ? 'Renvoyer le code dans ${_resendTimer}s'
-                      : 'Renvoyer le code',
-                  style: TextStyle(
-                    color: _resendTimer == 0
-                        ? SaloonyColors.secondary
-                        : SaloonyColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              
               const SizedBox(height: 32),
               
-              // Continue Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -308,7 +283,7 @@ class _VerifyResetCodeViewState extends State<VerifyResetCodeView> {
                           ),
                         )
                       : const Text(
-                          'Continuer',
+                          'Continue',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

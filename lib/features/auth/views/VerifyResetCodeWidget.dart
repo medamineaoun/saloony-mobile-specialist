@@ -12,7 +12,7 @@ class VerifyResetCodeWidget extends StatelessWidget {
     final String email = ModalRoute.of(context)!.settings.arguments as String;
 
     return ChangeNotifierProvider(
-      create: (_) => VerifyResetCodeViewModel(),
+      create: (_) => VerifyResetCodeViewModel(context),
       child: Consumer<VerifyResetCodeViewModel>(
         builder: (context, vm, child) {
           return GestureDetector(
@@ -186,7 +186,7 @@ class VerifyResetCodeWidget extends StatelessWidget {
                               child: ElevatedButton(
                                 onPressed: vm.isLoading
                                     ? null
-                                    : () => vm.verifyCode(context, email),
+                                    : () => vm.verifyCode( email),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   shadowColor: Colors.transparent,
@@ -222,7 +222,7 @@ class VerifyResetCodeWidget extends StatelessWidget {
                               child: TextButton(
                                 onPressed: vm.isLoading
                                     ? null
-                                    : () => vm.resendCode(context, email),
+                                    : () => vm.resendCode( email),
                                 child: RichText(
                                   text: TextSpan(
                                     children: [

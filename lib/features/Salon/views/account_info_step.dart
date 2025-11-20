@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
+import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
 import 'package:saloony/features/Salon/widgets/StepHeader.dart';
 
 class AccountInfoStep extends StatelessWidget {

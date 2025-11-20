@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/constants/SaloonyColors.dart';
-import 'package:saloony/features/Salon/location_result.dart';
+import 'package:saloony/features/Salon/views/location_result.dart';
 import 'package:geolocator/geolocator.dart';
 
 class MapPickerPage extends StatefulWidget {

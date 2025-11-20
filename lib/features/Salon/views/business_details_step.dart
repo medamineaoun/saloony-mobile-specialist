@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'package:saloony/features/Salon/LocalisationPage.dart';
-import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
-import 'package:saloony/features/Salon/location_result.dart';
+import 'package:saloony/features/Salon/views/LocalisationPage.dart';
+import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:saloony/features/Salon/views/location_result.dart';
 import 'package:saloony/features/Salon/widgets/StepHeader.dart';
 
 class BusinessDetailsStep extends StatelessWidget {

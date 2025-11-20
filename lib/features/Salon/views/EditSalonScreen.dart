@@ -8,6 +8,7 @@ import 'package:saloony/core/enum/SalonCategory.dart';
 import 'package:saloony/core/enum/SalonGenderType.dart';
 import 'package:saloony/core/enum/additional_service.dart';
 import 'package:saloony/core/services/SalonService.dart';
+import 'package:saloony/core/services/ToastService.dart';
 
 class EditSalonScreen extends StatefulWidget {
   final Map<String, dynamic> salonData;
@@ -22,23 +23,19 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   final SalonService _salonService = SalonService();
   final _formKey = GlobalKey<FormState>();
 
-  // Contrôleurs
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
 
-  // États
   SalonCategory _selectedCategory = SalonCategory.barbershop;
   SalonGenderType _selectedGenderType = SalonGenderType.mixed;
   List<AdditionalService> _selectedAdditionalServices = [];
   
-  // Image unique
   String? _currentPhotoUrl;
   File? _newPhoto;
   bool _isLoading = false;
   
-  // Données du salon original pour conserver les traitements
   late Map<String, dynamic> _originalSalonData;
 
   @override
@@ -63,7 +60,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
         ?.map((e) => AdditionalService.fromString(e.toString()))
         .toList() ?? [];
     
-    // Récupérer la première photo ou null
     final photos = (salon['salonPhotosPaths'] as List<dynamic>?)
         ?.map((e) => e.toString())
         .where((path) => path.isNotEmpty)
@@ -578,16 +574,7 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
       _currentPhotoUrl = null;
     });
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Photo supprimée',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: Colors.orange,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    ToastService.showInfo(context, 'Photo supprimée');
   }
 
   Future<void> _saveChanges() async {
@@ -596,114 +583,53 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Récupérer d'abord les données complètes du salon depuis le backend
       print('📥 Récupération des données complètes du salon...');
       final fullSalonData = await _salonService.getSalonById(_originalSalonData['salonId']);
       
       print('📋 Données complètes reçues: ${fullSalonData.keys}');
       
-      // 2. Vérifier si des traitements existent (utiliser salonTreatmentsIds)
       final treatmentIds = fullSalonData['salonTreatmentsIds'] as List<dynamic>? ?? [];
       print('💊 Traitements IDs trouvés: ${treatmentIds.length}');
-      print('💊 IDs: $treatmentIds');
       
       if (treatmentIds.isEmpty) {
-        // Avertir l'utilisateur qu'il faut d'abord ajouter des traitements
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Vous devez d\'abord ajouter au moins un traitement à votre salon',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
+          ToastService.showWarning(
+            context,
+            'Vous devez d\'abord ajouter au moins un traitement',
           );
         }
         setState(() => _isLoading = false);
         return;
       }
       
-      // 2b. Récupérer aussi les specialists IDs
       final specialistIds = fullSalonData['salonSpecialistsIds'] as List<dynamic>? ?? [];
       print('👥 Spécialistes IDs trouvés: ${specialistIds.length}');
       
       if (specialistIds.isEmpty) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Vous devez d\'abord ajouter au moins un spécialiste à votre salon',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
+          ToastService.showWarning(
+            context,
+            'Vous devez d\'abord ajouter au moins un spécialiste',
           );
         }
         setState(() => _isLoading = false);
         return;
       }
       
-      // 2c. Récupérer les availabilities
       final availabilities = fullSalonData['salonAvailabilities'] as List<dynamic>? ?? [];
       print('📅 Disponibilités trouvées: ${availabilities.length}');
       
       if (availabilities.length != 7) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Le salon doit avoir exactement 7 disponibilités (Lundi à Dimanche)',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
+          ToastService.showWarning(
+            context,
+            'Le salon doit avoir 7 disponibilités (Lundi-Dimanche)',
           );
         }
         setState(() => _isLoading = false);
         return;
       }
       
-      // 3. Construire les données de mise à jour avec les IDs des traitements et spécialistes
       final updateData = {
         'salonId': fullSalonData['salonId'],
         'salonName': _nameController.text.trim(),
@@ -717,23 +643,12 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
             fullSalonData['salonLatitude'],
         'salonLongitude': double.tryParse(_longitudeController.text) ?? 
             fullSalonData['salonLongitude'],
-        
-        // CRITIQUE: Envoyer les IDs des traitements (pas les objets)
         'salonTreatmentsIds': treatmentIds,
-        
-        // CRITIQUE: Envoyer les IDs des spécialistes (pas les objets)
         'salonSpecialistsIds': specialistIds,
-        
-        // CRITIQUE: Envoyer les disponibilités
         'salonAvailabilities': availabilities,
       };
 
       print('📤 Envoi des données de mise à jour...');
-      print('   - Nom: ${updateData['salonName']}');
-      print('   - Catégorie: ${updateData['salonCategory']}');
-      print('   - Traitements IDs: ${(updateData['salonTreatmentsIds'] as List).length}');
-      print('   - Spécialistes IDs: ${(updateData['salonSpecialistsIds'] as List).length}');
-      print('   - Disponibilités: ${(updateData['salonAvailabilities'] as List).length}');
 
       final result = await _salonService.updateSalon(
         salonId: fullSalonData['salonId'],
@@ -741,7 +656,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
       );
 
       if (result['success'] == true) {
-        // Upload nouvelle photo si elle existe
         if (_newPhoto != null) {
           try {
             await _salonService.addSalonPhoto(
@@ -751,81 +665,25 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
             print('✅ Photo uploadée avec succès');
           } catch (photoError) {
             print('⚠️ Erreur lors de l\'upload de la photo: $photoError');
-            // Continue même si l'upload de la photo échoue
           }
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Salon modifié avec succès',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
+          ToastService.showSuccess(context, 'Salon modifié avec succès');
           Navigator.pop(context, true);
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      result['message'] ?? 'Erreur lors de la modification',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+          ToastService.showError(
+            context,
+            result['message'] ?? 'Erreur lors de la modification',
           );
         }
       }
     } catch (e) {
-      print('❌ Erreur lors de la sauvegarde: $e'); // Debug
+      print('❌ Erreur lors de la sauvegarde: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.warning, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Erreur: $e',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        ToastService.showError(context, 'Erreur: $e');
       }
     } finally {
       if (mounted) {
@@ -843,7 +701,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     super.dispose();
   }
 
-  // Méthodes de mapping pour l'API Backend
   String _mapSalonCategoryToBackend(SalonCategory category) {
     switch (category) {
       case SalonCategory.hairSalon:

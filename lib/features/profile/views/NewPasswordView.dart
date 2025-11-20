@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/constants/SaloonyColors.dart';
 import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/ToastService.dart';
 
 class NewPasswordView extends StatefulWidget {
   final String email;
@@ -27,7 +28,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
   
-  // Validation du mot de passe en temps réel
+  // Real-time password validation
   bool _hasMinLength = false;
   bool _hasUpperCase = false;
   bool _hasLowerCase = false;
@@ -37,6 +38,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   void initState() {
     super.initState();
     _newPasswordController.addListener(_validatePassword);
+    _confirmPasswordController.addListener(() => setState(() {}));
   }
   
   void _validatePassword() {
@@ -47,6 +49,19 @@ class _NewPasswordViewState extends State<NewPasswordView> {
       _hasLowerCase = password.contains(RegExp(r'[a-z]'));
       _hasNumber = password.contains(RegExp(r'[0-9]'));
     });
+  }
+  
+  bool _isPasswordValid() {
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    
+    return _hasMinLength &&
+        _hasUpperCase &&
+        _hasLowerCase &&
+        _hasNumber &&
+        newPassword.isNotEmpty &&
+        confirmPassword.isNotEmpty &&
+        newPassword == confirmPassword;
   }
   
   @override
@@ -60,19 +75,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
     final newPassword = _newPasswordController.text;
     final confirmPassword = _confirmPasswordController.text;
     
-    // Validation
-    if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      _showSnackBar('Veuillez remplir tous les champs', isError: true);
-      return;
-    }
-    
-    if (newPassword != confirmPassword) {
-      _showSnackBar('Les mots de passe ne correspondent pas', isError: true);
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      _showSnackBar('Le mot de passe doit contenir au moins 8 caractères', isError: true);
+    if (!_isPasswordValid()) {
+      ToastService.showError(context, 'Please meet all password requirements');
       return;
     }
     
@@ -89,9 +93,9 @@ class _NewPasswordViewState extends State<NewPasswordView> {
         setState(() => _isLoading = false);
        
         if (result['success'] == true) {
-          _showSnackBar('Mot de passe modifié avec succès');
+          ToastService.showSuccess(context, 'Password changed successfully');
          
-          // Retour à la page de profil après 2 secondes
+          // Navigate back to profile after 2 seconds
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
               Navigator.pushNamedAndRemoveUntil(
@@ -102,38 +106,18 @@ class _NewPasswordViewState extends State<NewPasswordView> {
             }
           });
         } else {
-          _showSnackBar(
-            result['message'] ?? 'Erreur lors de la réinitialisation',
-            isError: true,
+          ToastService.showError(
+            context,
+            result['message'] ?? 'Error resetting password',
           );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar('Erreur de connexion', isError: true);
+        ToastService.showError(context, 'Connection error');
       }
     }
-  }
-  
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        backgroundColor: isError ? SaloonyColors.error : SaloonyColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
   }
   
   Widget _buildPasswordCriteria(String text, bool isMet) {
@@ -162,6 +146,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   
   @override
   Widget build(BuildContext context) {
+    final isButtonEnabled = _isPasswordValid() && !_isLoading;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -172,7 +158,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Nouveau mot de passe',
+          'New Password',
           style: GoogleFonts.poppins(
             color: SaloonyColors.primary,
             fontSize: 18,
@@ -192,7 +178,6 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 children: [
                   const SizedBox(height: 20),
                   
-                  // Icône avec design moderne
                   Center(
                     child: Container(
                       width: 120,
@@ -225,9 +210,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                   
                   const SizedBox(height: 32),
                   
-                  // Titre
                   Text(
-                    'Créer un nouveau\nmot de passe',
+                    'Create a new\npassword',
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -239,9 +223,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                   
                   const SizedBox(height: 12),
                   
-                  // Description
                   Text(
-                    'Votre nouveau mot de passe doit être différent des mots de passe précédents',
+                    'Your new password must be different from previous passwords',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       color: SaloonyColors.textSecondary,
@@ -252,12 +235,11 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                   
                   const SizedBox(height: 40),
                   
-                  // Champ nouveau mot de passe
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Nouveau mot de passe',
+                        'New Password',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -269,7 +251,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                         controller: _newPasswordController,
                         obscureText: _obscureNewPassword,
                         decoration: InputDecoration(
-                          hintText: 'Entrez votre nouveau mot de passe',
+                          hintText: 'Enter your new password',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey[400],
                             fontSize: 15,
@@ -321,12 +303,11 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                   
                   const SizedBox(height: 24),
                   
-                  // Champ confirmation mot de passe
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Confirmer le mot de passe',
+                        'Confirm Password',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -338,7 +319,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
                         decoration: InputDecoration(
-                          hintText: 'Confirmez votre nouveau mot de passe',
+                          hintText: 'Confirm your new password',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey[400],
                             fontSize: 15,
@@ -390,7 +371,6 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                   
                   const SizedBox(height: 24),
                   
-                  // Critères de sécurité du mot de passe
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -413,7 +393,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Exigences du mot de passe',
+                              'Password Requirements',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -423,39 +403,47 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildPasswordCriteria('Au moins 8 caractères', _hasMinLength),
-                        _buildPasswordCriteria('Une lettre majuscule', _hasUpperCase),
-                        _buildPasswordCriteria('Une lettre minuscule', _hasLowerCase),
-                        _buildPasswordCriteria('Un chiffre', _hasNumber),
+                        _buildPasswordCriteria('At least 8 characters', _hasMinLength),
+                        _buildPasswordCriteria('One uppercase letter', _hasUpperCase),
+                        _buildPasswordCriteria('One lowercase letter', _hasLowerCase),
+                        _buildPasswordCriteria('One number', _hasNumber),
                       ],
                     ),
                   ),
                   
                   const SizedBox(height: 32),
                   
-                  // Bouton de réinitialisation avec gradient
                   Container(
                     height: 56,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          SaloonyColors.secondary,
-                          SaloonyColors.gold,
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
+                      gradient: isButtonEnabled
+                          ? LinearGradient(
+                              colors: [
+                                SaloonyColors.secondary,
+                                SaloonyColors.gold,
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            )
+                          : LinearGradient(
+                              colors: [
+                                Colors.grey[400]!,
+                                Colors.grey[300]!,
+                              ],
+                            ),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: SaloonyColors.secondary.withOpacity(0.4),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                      boxShadow: isButtonEnabled
+                          ? [
+                              BoxShadow(
+                                color: SaloonyColors.secondary.withOpacity(0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ]
+                          : [],
                     ),
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _resetPassword,
+                      onPressed: isButtonEnabled ? _resetPassword : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -476,11 +464,13 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                               ),
                             )
                           : Text(
-                              'Réinitialiser le mot de passe',
+                              'Reset Password',
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: SaloonyColors.primary,
+                                color: isButtonEnabled
+                                    ? SaloonyColors.primary
+                                    : Colors.grey[600],
                                 letterSpacing: 0.3,
                               ),
                             ),

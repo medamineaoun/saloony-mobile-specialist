@@ -3,8 +3,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/constants/SaloonyColors.dart';
-import 'package:saloony/features/Salon/location_result.dart';
-import 'package:saloony/features/Salon/MapPickerPage.dart';
+import 'package:saloony/features/Salon/views/location_result.dart';
+import 'package:saloony/features/Salon/views/MapPickerPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalisationPage extends StatefulWidget {

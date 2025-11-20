@@ -1,4 +1,3 @@
-// salon_creation_viewmodel.dart - VERSION CORRIGÉE
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/enum/SalonCategory.dart';
@@ -12,8 +11,8 @@ import 'package:saloony/core/models/User.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:saloony/core/services/SalonService.dart';
 import 'package:saloony/core/services/TreatmentService.dart';
-import 'package:saloony/features/Salon/location_result.dart';
-import 'package:saloony/core/services/ToastService.dart'; // ✅ AJOUT IMPORT
+import 'package:saloony/features/Salon/views/location_result.dart';
+import 'package:saloony/core/services/ToastService.dart';
 
 enum AccountType { solo, team }
 
@@ -38,7 +37,7 @@ class DayAvailabilityWithSlots {
 
 class CustomService {
   String id;
-  final double? duration; // en minutes
+  final double? duration; 
   String name;
   String description;
   double price;

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/ToastService.dart';
 import 'package:saloony/core/constants/app_routes.dart';
 
 class VerifyResetCodeViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final BuildContext context;
   
   // Controller unique pour le code de vérification
   final TextEditingController codeController = TextEditingController();
@@ -11,16 +13,21 @@ class VerifyResetCodeViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  VerifyResetCodeViewModel(this.context) {
+    ToastService.init(context);
+  }
+
   /// Vérifie le code de réinitialisation
-  Future<void> verifyCode(BuildContext context, String email) async {
+  Future<void> verifyCode(String email) async {
     final verificationCode = codeController.text.trim();
 
+    if (verificationCode.isEmpty) {
+      ToastService.showError(context, 'Veuillez entrer le code de vérification');
+      return;
+    }
+
     if (verificationCode.length != 6) {
-      _showSnackBar(
-        context,
-        'Please enter the complete 6-digit code',
-        Colors.red,
-      );
+      ToastService.showError(context, 'Veuillez entrer le code complet à 6 chiffres');
       return;
     }
 
@@ -37,17 +44,22 @@ class VerifyResetCodeViewModel extends ChangeNotifier {
       notifyListeners();
 
       if (result['success'] == true && context.mounted) {
+        ToastService.showSuccess(context, 'Code vérifié avec succès');
+        
         // Navigate to reset password screen with email and code
-        Navigator.pushNamed(
-          context,
-          '/resetPassword',
-          arguments: {'email': email, 'code': verificationCode},
-        );
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (context.mounted) {
+            Navigator.pushNamed(
+              context,
+              '/resetPassword',
+              arguments: {'email': email, 'code': verificationCode},
+            );
+          }
+        });
       } else if (context.mounted) {
-        _showSnackBar(
+        ToastService.showError(
           context,
-          result['message'] ?? 'Invalid or expired code',
-          Colors.red,
+          result['message'] ?? 'Code invalide ou expiré',
         );
       }
     } catch (e) {
@@ -55,17 +67,16 @@ class VerifyResetCodeViewModel extends ChangeNotifier {
       notifyListeners();
       
       if (context.mounted) {
-        _showSnackBar(
+        ToastService.showError(
           context,
-          'An error occurred. Please try again.',
-          Colors.red,
+          'Une erreur est survenue. Veuillez réessayer.',
         );
       }
     }
   }
 
   /// Redemande un code de vérification
-  Future<void> resendCode(BuildContext context, String email) async {
+  Future<void> resendCode(String email) async {
     _isLoading = true;
     notifyListeners();
 
@@ -76,18 +87,16 @@ class VerifyResetCodeViewModel extends ChangeNotifier {
       notifyListeners();
 
       if (result['success'] == true && context.mounted) {
-        _showSnackBar(
+        ToastService.showSuccess(
           context,
-          'Code resent to your email',
-          Colors.green,
+          'Code de réinitialisation renvoyé à $email',
         );
         // Clear le code précédent
         codeController.clear();
       } else if (context.mounted) {
-        _showSnackBar(
+        ToastService.showError(
           context,
-          result['message'] ?? 'Error resending code',
-          Colors.red,
+          result['message'] ?? 'Erreur lors du renvoi du code',
         );
       }
     } catch (e) {
@@ -95,32 +104,18 @@ class VerifyResetCodeViewModel extends ChangeNotifier {
       notifyListeners();
       
       if (context.mounted) {
-        _showSnackBar(
+        ToastService.showError(
           context,
-          'An error occurred. Please try again.',
-          Colors.red,
+          'Une erreur est survenue. Veuillez réessayer.',
         );
       }
     }
   }
 
-  void _showSnackBar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     codeController.dispose();
+    ToastService.cancelAll();
     super.dispose();
   }
 }

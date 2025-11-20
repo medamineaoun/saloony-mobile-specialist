@@ -5,12 +5,12 @@ import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
 import 'package:saloony/core/services/AuthService.dart';
 import 'package:saloony/core/services/SalonService.dart';
-import 'package:saloony/features/Salon/AppThemeScreen.dart';
-import 'package:saloony/features/Salon/AppointmentsScreen.dart';
-import 'package:saloony/features/Salon/ClientsScreen.dart';
-import 'package:saloony/features/Salon/EditSalonScreen.dart';
-import 'package:saloony/features/Salon/ServicesManagementScreen.dart';
-import 'package:saloony/features/Salon/TeamMembersScreen.dart';
+import 'package:saloony/features/Salon/views/AppThemeScreen.dart';
+import 'package:saloony/features/Salon/views/AppointmentsScreen.dart';
+import 'package:saloony/features/Salon/views/ClientsScreen.dart';
+import 'package:saloony/features/Salon/views/EditSalonScreen.dart';
+import 'package:saloony/features/Salon/views/ServicesManagementScreen.dart';
+import 'package:saloony/features/Salon/views/TeamMembersScreen.dart';
 import 'package:saloony/features/profile/views/LanguageScreen.dart';
 import 'package:saloony/features/profile/views/LogoutButton.dart';
 import 'package:saloony/core/Config/ProviderSetup.dart';
@@ -32,6 +32,7 @@ class _ProfileViewState extends State<ProfileView> {
   Map<String, dynamic>? _userSalon;
   Map<String, dynamic>? _currentUser;
   String _userRole = 'CUSTOMER';
+  bool _isSalonOwner = false; // ✅ Nouveau champ
 
   @override
   void initState() {
@@ -49,12 +50,27 @@ class _ProfileViewState extends State<ProfileView> {
         _currentUser = userResult['user'];
         _userRole = _currentUser!['appRole'] ?? 'CUSTOMER';
         
+        // ✅ Récupérer isSalonOwner depuis les données utilisateur
+        _isSalonOwner = _currentUser!['isSalonOwner'] == true;
+        
+        debugPrint('👤 User role: $_userRole');
+        debugPrint('👑 Is salon owner from user data: $_isSalonOwner');
+        debugPrint('📋 Current user data: $_currentUser');
+        
         if (_userRole == 'SPECIALIST') {
           final userId = _currentUser!['userId'];
           final salonResult = await _salonService.getSpecialistSalon(userId);
           
           if (salonResult['success'] == true && salonResult['salon'] != null) {
             _userSalon = salonResult['salon'];
+            
+            // ✅ SOLUTION: Vérifier si l'utilisateur est le propriétaire en comparant les IDs
+            final salonOwnerId = _userSalon!['salonOwnerId'];
+            _isSalonOwner = (salonOwnerId != null && salonOwnerId == userId);
+            
+            debugPrint('🏢 Salon owner ID: $salonOwnerId');
+            debugPrint('👤 Current user ID: $userId');
+            debugPrint('👑 Is salon owner (calculated): $_isSalonOwner');
           }
         }
       }
@@ -75,24 +91,19 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // Navigation directe vers les différentes sections du salon
   void _navigateToAppointments() {
-    // Navigator.pushNamed(context, AppRoutes.appointments);
     debugPrint('Navigate to Appointments');
   }
 
   void _navigateToEditSalon() {
-    // Navigator.pushNamed(context, AppRoutes.editSalon);
     debugPrint('Navigate to Edit Salon');
   }
 
   void _navigateToServices() {
-    // Navigator.pushNamed(context, AppRoutes.services);
     debugPrint('Navigate to Services');
   }
 
   void _navigateToClients() {
-    // Navigator.pushNamed(context, AppRoutes.clients);
     debugPrint('Navigate to Clients');
   }
 
@@ -200,11 +211,11 @@ class _ProfileViewState extends State<ProfileView> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Section Salon Settings affichée directement
-                      if (_userRole == 'SPECIALIST' && _userSalon != null)
+                      // ✅ Section Salon Settings - Affichée uniquement si isSalonOwner = true
+                      if (_userRole == 'SPECIALIST' && _userSalon != null && _isSalonOwner)
                         _buildSalonSettingsSection(),
                       
-                      if (_userRole == 'SPECIALIST' && _userSalon != null)
+                      if (_userRole == 'SPECIALIST' && _userSalon != null && _isSalonOwner)
                         const SizedBox(height: 24),
                       
                       _buildSection(
@@ -232,27 +243,26 @@ class _ProfileViewState extends State<ProfileView> {
                         title: 'Other',
                         items: [
                          _MenuItem(
-  icon: Icons.dark_mode_outlined,
-  title: 'App Theme',
-  trailing: 'Light',
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AppThemeScreen()),
-    );
-  },
-),
-
+                            icon: Icons.dark_mode_outlined,
+                            title: 'App Theme',
+                            trailing: 'Light',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => AppThemeScreen()),
+                              );
+                            },
+                          ),
                           _MenuItem(
                             icon: Icons.language_outlined,
                             title: 'Language',
                             trailing: 'English',
-                             onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LanguageScreen()),
-    );
-  },
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => LanguageScreen()),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -271,7 +281,6 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // Section Salon Settings affichée directement
   Widget _buildSalonSettingsSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -312,61 +321,57 @@ class _ProfileViewState extends State<ProfileView> {
               ],
             ),
           ),
-             _buildSalonSettingsMenuItem(
+          _buildSalonSettingsMenuItem(
             icon: Icons.edit_outlined,
             title: 'Edit Salon',
-    onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditSalonScreen(salonData: _userSalon!)
-
-    ),
-  );
-},
-
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditSalonScreen(salonData: _userSalon!)
+                ),
+              );
+            },
           ),
           _buildSalonSettingsMenuItem(
             icon: Icons.calendar_today_outlined,
             title: 'Appointments',
-                                                                 onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AppointmentsScreen()),
-    );
-  },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AppointmentsScreen()),
+              );
+            },
           ),
-       
           _buildSalonSettingsMenuItem(
-             icon: Icons.cut,
+            icon: Icons.cut,
             title: 'Services',
-                                                      onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ServicesManagementScreen()),
-    );
-  },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TreatmentsManagementScreen()),
+              );
+            },
           ),
           _buildSalonSettingsMenuItem(
             icon: Icons.people_outlined,
             title: 'Clients',
-                                             onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ClientsScreen()),
-    );
-  },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ClientsScreen()),
+              );
+            },
           ),
-          
           _buildSalonSettingsMenuItem(
             icon: Icons.group_outlined,
             title: 'Team',
-                                  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => TeamMembersScreen()),
-    );
-  },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TeamMembersScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -593,31 +598,33 @@ class _ProfileViewState extends State<ProfileView> {
                 else
                   _buildPlaceholderImage(),
                 
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: InkWell(
-                    onTap: _navigateToEditSalon,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.edit_outlined,
-                        size: 20,
-                        color: Color(0xFF1B2B3E),
+                // ✅ Bouton Edit visible uniquement pour le propriétaire
+                if (_isSalonOwner)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: InkWell(
+                      onTap: _navigateToEditSalon,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: Color(0xFF1B2B3E),
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

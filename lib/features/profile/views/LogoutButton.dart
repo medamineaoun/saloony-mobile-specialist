@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:saloony/core/constants/SaloonyColors.dart';
 import 'package:saloony/core/constants/app_routes.dart';
 import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/ToastService.dart';
 
 class LogoutButtonWidget extends StatelessWidget {
   const LogoutButtonWidget({Key? key}) : super(key: key);
@@ -143,15 +144,9 @@ class LogoutButtonWidget extends StatelessWidget {
         Navigator.of(context).pop();
       }
 
-      // Afficher un message d'erreur
+      // Afficher un message d'erreur avec ToastService
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la déconnexion: $e'),
-            backgroundColor: SaloonyColors.error,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        ToastService.showError(context, 'Erreur lors de la déconnexion: $e');
       }
     }
   }
@@ -319,14 +314,9 @@ class LogoutListTile extends StatelessWidget {
         Navigator.of(context).pop();
       }
 
+      // Utiliser ToastService au lieu de SnackBar
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la déconnexion: $e'),
-            backgroundColor: SaloonyColors.error,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        ToastService.showError(context, 'Erreur lors de la déconnexion: $e');
       }
     }
   }

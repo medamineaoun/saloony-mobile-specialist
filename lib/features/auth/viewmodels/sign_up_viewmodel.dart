@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/ToastService.dart';
 
 class SignUpViewModel extends ChangeNotifier {
   final formKey = GlobalKey<FormState>();
@@ -30,7 +31,7 @@ class SignUpViewModel extends ChangeNotifier {
   String? _termsError;
   String? get termsError => _termsError;
 
-  
+  // Toggle password
   void togglePasswordVisibility() {
     _passwordVisible = !_passwordVisible;
     notifyListeners();
@@ -42,32 +43,13 @@ class SignUpViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setGenderError(String error) {
-    _genderError = error;
-    notifyListeners();
-  }
-
-  void clearGenderError() {
-    _genderError = null;
-    notifyListeners();
-  }
-
   void setTermsAccepted(bool value) {
     _termsAccepted = value;
     _termsError = null;
     notifyListeners();
   }
 
-  void setTermsError(String error) {
-    _termsError = error;
-    notifyListeners();
-  }
-
-  void clearTermsError() {
-    _termsError = null;
-    notifyListeners();
-  }
-
+  // ---------------- VALIDATORS ----------------
 
   String? validateFirstName(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -101,12 +83,8 @@ class SignUpViewModel extends ChangeNotifier {
   }
 
   String? validatePhone(String? value) {
-    // Si le champ est vide, c'est OK (optionnel)
-    if (value == null || value.trim().isEmpty) {
-      return null;
-    }
-    
-    // Si rempli, on valide le format
+    if (value == null || value.trim().isEmpty) return null;
+
     if (!RegExp(r'^\+?[\d\s-]{8,}$').hasMatch(value)) {
       return 'Please enter a valid phone number';
     }
@@ -114,53 +92,46 @@ class SignUpViewModel extends ChangeNotifier {
   }
 
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a password';
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-    
+    if (value == null || value.isEmpty) return 'Please enter a password';
+    if (value.length < 8) return 'Password must be at least 8 characters';
+
     List<String> missing = [];
-    
-    if (!RegExp(r'[A-Z]').hasMatch(value)) {
-      missing.add('uppercase letter');
-    }
-    if (!RegExp(r'[a-z]').hasMatch(value)) {
-      missing.add('lowercase letter');
-    }
-    if (!RegExp(r'[0-9]').hasMatch(value)) {
-      missing.add('number');
-    }
+
+    if (!RegExp(r'[A-Z]').hasMatch(value)) missing.add('uppercase letter');
+    if (!RegExp(r'[a-z]').hasMatch(value)) missing.add('lowercase letter');
+    if (!RegExp(r'[0-9]').hasMatch(value)) missing.add('number');
     if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
       missing.add('special character (!@#\$&*~)');
     }
-    
-    if (missing.isNotEmpty) {
-      return 'Missing: ${missing.join(', ')}';
-    }
-    
+
+    if (missing.isNotEmpty) return 'Missing: ${missing.join(', ')}';
+
     return null;
   }
 
+  // ---------------- SIGN UP ----------------
+
   Future<void> signUp(BuildContext context) async {
-    // 1️⃣ Vérification du formulaire
+    // 1️⃣ Validate form
     if (!formKey.currentState!.validate()) {
-      _showErrorSnackBar(context, 'Please fill in all required fields correctly');
+      ToastService.showError(context, 'Please fill all required fields');
       return;
     }
 
-    // 2️⃣ Vérification du genre
+    // 2️⃣ Validate gender
     if (_selectedGender.isEmpty) {
-      setGenderError('Please select your gender');
-      _showErrorSnackBar(context, 'Please select your gender');
+      _genderError = 'Please select your gender';
+      notifyListeners();
+      ToastService.showError(context, 'Please select your gender');
       return;
     }
 
-    // 3️⃣ Vérification de la case à cocher
+    // 3️⃣ Validate terms
     if (!_termsAccepted) {
-      setTermsError('You must accept the Terms & Conditions and Privacy Policy');
-      _showErrorSnackBar(context, 'Please accept the Terms & Conditions');
+      _termsError =
+          'You must accept the Terms & Conditions and Privacy Policy';
+      notifyListeners();
+      ToastService.showError(context, 'Please accept the terms');
       return;
     }
 
@@ -168,9 +139,9 @@ class SignUpViewModel extends ChangeNotifier {
     final lastName = lastNameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    
-    final phone = phoneController.text.trim().isEmpty 
-        ? "" 
+
+    final phone = phoneController.text.trim().isEmpty
+        ? ""
         : phoneController.text.trim();
 
     _isLoading = true;
@@ -183,96 +154,49 @@ class SignUpViewModel extends ChangeNotifier {
         email: email,
         password: password,
         phoneNumber: phone,
-        gender: _selectedGender, 
-        role: "SPECIALIST", 
+        gender: _selectedGender,
+        role: "SPECIALIST",
       );
 
       _isLoading = false;
       notifyListeners();
 
-      final message = result['message'] ?? 'Registration completed successfully.';
+      final message =
+          result['message'] ?? 'Registration completed successfully.';
 
       if (result['success']) {
         clearFields();
-        _showSuccessSnackBar(context, message);
+        ToastService.showSuccess(context, message);
+
         await Future.delayed(const Duration(milliseconds: 500));
         Navigator.pushNamed(context, "/verifyEmail", arguments: email);
       } else {
-        _showErrorSnackBar(context, message);
+        ToastService.showError(context, message);
       }
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      _showErrorSnackBar(context, "Unexpected error: $e");
+      ToastService.showError(context, "Unexpected error: $e");
     }
   }
 
-
+  // ---------------- RESET FORM ----------------
   void clearFields() {
     firstNameController.clear();
     lastNameController.clear();
     emailController.clear();
     passwordController.clear();
     phoneController.clear();
+
     _selectedGender = '';
     _genderError = null;
     _termsAccepted = false;
     _termsError = null;
+
     notifyListeners();
   }
 
-  void _showSuccessSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        duration: const Duration(seconds: 3),
-        margin: const EdgeInsets.only(bottom: 50, left: 10, right: 10),
-      ),
-    );
-  }
-
-
+  // ---------------- DISPOSE ----------------
   @override
   void dispose() {
     firstNameController.dispose();

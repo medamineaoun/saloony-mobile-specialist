@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:saloony/features/Salon/AdditionalServicesPage.dart';
-import 'package:saloony/features/Salon/DisponibiliteView.dart';
-import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
-import 'package:saloony/features/Salon/ServicesManagementPage.dart';
-import 'package:saloony/features/Salon/account_info_step.dart';
-import 'package:saloony/features/Salon/business_details_step.dart';
-import 'package:saloony/features/Salon/confirmation_step.dart';
-import 'package:saloony/features/Salon/team_members_list_view.dart';
+import 'package:saloony/features/Salon/views/AdditionalServicesPage.dart';
+import 'package:saloony/features/Salon/views/DisponibiliteView.dart';
+import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:saloony/features/Salon/views/ServicesManagementPage.dart';
+import 'package:saloony/features/Salon/views/account_info_step.dart';
+import 'package:saloony/features/Salon/views/business_details_step.dart';
+import 'package:saloony/features/Salon/views/confirmation_step.dart';
+import 'package:saloony/features/Salon/views/team_members_list_view.dart';
 import 'package:saloony/features/Salon/widgets/bottom_button.dart';
 import 'package:saloony/features/Salon/widgets/progress_bar.dart';
 

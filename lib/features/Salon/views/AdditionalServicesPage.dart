@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:saloony/core/enum/additional_service.dart';
-import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
+import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
 import 'package:saloony/features/Salon/widgets/StepHeader.dart';
 
 class AdditionalServicesStep extends StatefulWidget {
