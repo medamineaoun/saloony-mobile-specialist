@@ -24,68 +24,20 @@ class ConfirmationStep extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           
-          // Success Banner
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1B2B3E), Color(0xFF2A3F54)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1B2B3E).withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 64,
-                    color: Color(0xFFF0CD97),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Almost Done!',
-                  style: GoogleFonts.inter(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Your salon is ready to be created',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
+         
           
-          // Basic Info
           _buildSummaryCard([
             _SummaryItem(
               icon: Icons.business_outlined,
               label: 'Salon Name',
               value: vm.salonNameController.text,
+            ),
+            _SummaryItem(
+              icon: Icons.description_outlined,
+              label: 'Description',
+              value: vm.descriptionController .text.isNotEmpty 
+                  ? vm.descriptionController .text
+                  : 'No description',
             ),
             _SummaryItem(
               icon: Icons.category_outlined,
@@ -103,12 +55,7 @@ class ConfirmationStep extends StatelessWidget {
           
           // Location & Availability
           _buildSummaryCard([
-            _SummaryItem(
-              icon: Icons.location_on_outlined,
-              label: 'Location',
-              value: vm.location?.address ?? 'Not set',
-              highlight: vm.location != null,
-            ),
+          
             _SummaryItem(
               icon: Icons.calendar_today_outlined,
               label: 'Working Days',
@@ -118,6 +65,8 @@ class ConfirmationStep extends StatelessWidget {
           ]),
           
           const SizedBox(height: 12),
+          
+        
           
           // ✅ Additional Services Section
           if (vm.selectedAdditionalServices.isNotEmpty) ...[
@@ -151,22 +100,6 @@ class ConfirmationStep extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           
-          // Summary Stats
-          _buildSummaryCard([
-            _SummaryItem(
-              icon: Icons.spa_outlined,
-              label: 'Total Services',
-              value: '${vm.selectedTreatmentIds.length + vm.customServices.length}',
-              highlight: (vm.selectedTreatmentIds.length + vm.customServices.length) > 0,
-            ),
-            _SummaryItem(
-              icon: Icons.group_outlined,
-              label: 'Team Size',
-              value: '${vm.teamMembers.length + 1} ${vm.teamMembers.isEmpty ? 'specialist' : 'specialists'}',
-              highlight: true,
-            ),
-          ]),
-          
           const SizedBox(height: 40),
         ],
       ),
@@ -199,6 +132,45 @@ class ConfirmationStep extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  // ✅ Salon Photos Card
+  Widget _buildSalonPhotosCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+            
+              const SizedBox(width: 8),
+              Text(
+                'photos',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+         
+        ],
+      ),
     );
   }
 
@@ -398,7 +370,7 @@ class ConfirmationStep extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '\$${treatment.treatmentPrice!.toStringAsFixed(2)}',
+                        '${treatment.treatmentPrice!.toStringAsFixed(2)}dt',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -521,7 +493,7 @@ class ConfirmationStep extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'CUSTOM',
+                                'TIME',
                                 style: GoogleFonts.inter(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
@@ -557,7 +529,7 @@ class ConfirmationStep extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '\$${service.price.toStringAsFixed(2)}',
+                      '${service.price.toStringAsFixed(2)}dt',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -658,13 +630,7 @@ class ConfirmationStep extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          member.specialty,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
+                       
                       ],
                     ),
                   ),

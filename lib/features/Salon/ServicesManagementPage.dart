@@ -128,7 +128,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         Container(
           margin: const EdgeInsets.only(bottom: 8),
           child: Material(
-            color: Colors.transparent,
+            color: const Color.fromARGB(0, 0, 0, 0),
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(12),
@@ -189,10 +189,11 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.add_circle_outline, color: (categoryData['gradient'] as List<Color>)[0]),
-                      onPressed: onAdd,
-                    ),
+                 IconButton(
+  icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+  onPressed: onAdd,
+),
+
                     Icon(
                       isSelected ? Icons.expand_less : Icons.expand_more,
                       color: Colors.grey[600],
@@ -241,27 +242,28 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
   }
 
   Map<String, dynamic> _getCategoryVisualData(TreatmentCategory category) {
-    switch (category) {
-      case TreatmentCategory.HAIRCUT:
-        return {'gradient': [const Color(0xFF8B5CF6), const Color(0xFF6366F1)]};
-      case TreatmentCategory.COLORING:
-        return {'gradient': [const Color(0xFFF59E0B), const Color(0xFFEF4444)]};
-      case TreatmentCategory.BEARD:
-        return {'gradient': [const Color(0xFF78716C), const Color(0xFF57534E)]};
-      case TreatmentCategory.FACIAL:
-        return {'gradient': [const Color(0xFF14B8A6), const Color(0xFF06B6D4)]};
-      case TreatmentCategory.MASSAGE:
-        return {'gradient': [const Color(0xFF3B82F6), const Color(0xFF06B6D4)]};
-      case TreatmentCategory.NAILS:
-        return {'gradient': [const Color(0xFFEC4899), const Color(0xFFF43F5E)]};
-      case TreatmentCategory.WAXING:
-        return {'gradient': [const Color(0xFFEF4444), const Color(0xFFF97316)]};
-      case TreatmentCategory.MAKEUP:
-        return {'gradient': [const Color(0xFFF59E0B), const Color(0xFFEC4899)]};
-      default:
-        return {'gradient': [const Color(0xFF64748B), const Color(0xFF475569)]};
-    }
+  switch (category) {
+    case TreatmentCategory.HAIRCUT:
+      return {'gradient': [const Color(0x00FDFDFE), const Color(0x006366F1)]};
+    case TreatmentCategory.COLORING:
+      return {'gradient': [const Color(0x00F59E0B), const Color(0x00EF4444)]};
+    case TreatmentCategory.BEARD:
+      return {'gradient': [const Color(0x0078716C), const Color(0x0057534E)]};
+    case TreatmentCategory.FACIAL:
+      return {'gradient': [const Color(0x0014B8A6), const Color(0x0006B6D4)]};
+    case TreatmentCategory.MASSAGE:
+      return {'gradient': [const Color(0x003B82F6), const Color(0x0006B6D4)]};
+    case TreatmentCategory.NAILS:
+      return {'gradient': [const Color(0x00EC4899), const Color(0x00F43F5E)]};
+    case TreatmentCategory.WAXING:
+      return {'gradient': [const Color(0x00EF4444), const Color(0x00F97316)]};
+    case TreatmentCategory.MAKEUP:
+      return {'gradient': [const Color(0x00F59E0B), const Color(0x00EC4899)]};
+    default:
+      return {'gradient': [const Color(0x0064748B), const Color(0x00475569)]};
   }
+}
+
 
   int _getServiceCountForCategory(SalonCreationViewModel vm, TreatmentCategory category) {
     final apiCount = vm.availableTreatments.where((t) => t.treatmentCategory.toUpperCase() == category.value).length;

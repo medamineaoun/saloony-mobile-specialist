@@ -97,72 +97,72 @@ class SideMenuDialog extends StatelessWidget {
     );
   }
 
-Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
-  return ListView(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    children: [
-      // Dashboard
-      Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1B2B3E), Color(0xFF243441)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1B2B3E).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+  Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [
+        // Dashboard
+        Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1B2B3E), Color(0xFF243441)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
             ),
-          ],
-        ),
-        child: ListTile(
-          leading: const Icon(
-            Icons.dashboard_rounded,
-            color: Color(0xFFF0CD97),
-            size: 22,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1B2B3E).withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          title: Text(
-            'Dashboard',
-            style: GoogleFonts.poppins(
-              color: const Color(0xFFF0CD97),
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
+          child: ListTile(
+            leading: const Icon(
+              Icons.dashboard_rounded,
+              color: Color(0xFFF0CD97),
+              size: 22,
             ),
+            title: Text(
+              'Dashboard',
+              style: GoogleFonts.poppins(
+                color: const Color(0xFFF0CD97),
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+            onTap: () {
+              viewModel.selectMenuItem('/home');
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/home');
+            },
           ),
-          onTap: () {
-            viewModel.selectMenuItem('/home');
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/home');
-          },
         ),
-      ),
 
-      // autres items
-      for (var item in viewModel.menuItems.where((item) {
-        if (item.title == 'Create Salon') {
-          return !viewModel.hasSalon; // cacher si user a déjà un salon
-        }
-        return true;
-      }))
-        _MenuItemTile(
-          icon: item.icon,
-          title: item.title,
-          isSelected: viewModel.selectedRoute == item.route,
-          onTap: () {
-            viewModel.selectMenuItem(item.route!);
-            Navigator.pop(context);
-            if (item.route != null) {
-              Navigator. pushNamed(context, item.route!);
-            }
-          },
-        ),
-    ],
-  );
-}
+        // autres items
+        for (var item in viewModel.menuItems.where((item) {
+          if (item.title == 'Create Salon') {
+            return !viewModel.hasSalon; 
+          }
+          return true;
+        }))
+          _MenuItemTile(
+            icon: item.icon,
+            title: item.title,
+            isSelected: viewModel.selectedRoute == item.route,
+            onTap: () {
+              viewModel.selectMenuItem(item.route!);
+              Navigator.pop(context);
+              if (item.route != null) {
+                Navigator.pushNamed(context, item.route!);
+              }
+            },
+          ),
+      ],
+    );
+  }
 
   Widget _buildUserProfile(MenuViewModel viewModel, BuildContext context) {
     // Afficher un loader pendant le chargement
@@ -209,20 +209,7 @@ Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
                     width: 2,
                   ),
                 ),
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: const Color(0xFFF8F9FA),
-                  backgroundImage: viewModel.currentUser?.profilePhotoPath != null
-                      ? NetworkImage(viewModel.currentUser!.profilePhotoPath!)
-                      : null,
-                  child: viewModel.currentUser?.profilePhotoPath == null
-                      ? const Icon(
-                          Icons.person,
-                          color: Color(0xFF1B2B3E),
-                          size: 24,
-                        )
-                      : null,
-                ),
+                child: _buildUserAvatar(viewModel),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -271,6 +258,50 @@ Widget _buildMenuItems(MenuViewModel viewModel, BuildContext context) {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildUserAvatar(MenuViewModel viewModel) {
+    final String? photoPath = viewModel.currentUser?.profilePhotoPath;
+    
+    // Si une photo de profil existe
+    if (photoPath != null && photoPath.isNotEmpty) {
+      return CircleAvatar(
+        radius: 22,
+        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundImage: NetworkImage(
+          photoPath,
+        ),
+        onBackgroundImageError: (exception, stackTrace) {
+          // Log l'erreur
+          debugPrint('❌ Erreur de chargement image profil: $exception');
+        },
+        child: _buildImageLoadingIndicator(),
+      );
+    }
+    
+    // Photo par défaut si aucune photo n'est disponible
+    return _buildDefaultAvatar();
+  }
+
+  Widget _buildImageLoadingIndicator() {
+    return const Center(
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
+      ),
+    );
+  }
+
+  Widget _buildDefaultAvatar() {
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: const Color(0xFFF8F9FA),
+      child: Icon(
+        Icons.person,
+        color: const Color(0xFF1B2B3E).withOpacity(0.6),
+        size: 24,
       ),
     );
   }

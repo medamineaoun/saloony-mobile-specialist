@@ -10,7 +10,6 @@ class VerifyEmailViewModel extends ChangeNotifier {
 
   VerifyEmailViewModel(this.email);
 
-  /// Vérifie le code entré par l’utilisateur
   Future<bool> verifyCode() async {
     isLoading = true;
     notifyListeners();

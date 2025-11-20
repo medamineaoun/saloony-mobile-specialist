@@ -2,20 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:saloony/core/services/AuthService.dart';
 
 class SignUpViewModel extends ChangeNotifier {
-  // 🔹 Form key
   final formKey = GlobalKey<FormState>();
 
-  // 🔹 Controllers
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final phoneController = TextEditingController();
 
-  // 🔹 Services
   final AuthService _authService = AuthService();
 
-  // 🔹 UI states
   bool _passwordVisible = false;
   bool get passwordVisible => _passwordVisible;
 
@@ -28,9 +24,13 @@ class SignUpViewModel extends ChangeNotifier {
   String? _genderError;
   String? get genderError => _genderError;
 
-  // =====================
-  // 🔹 UI Actions
-  // =====================
+  bool _termsAccepted = false;
+  bool get termsAccepted => _termsAccepted;
+
+  String? _termsError;
+  String? get termsError => _termsError;
+
+  
   void togglePasswordVisibility() {
     _passwordVisible = !_passwordVisible;
     notifyListeners();
@@ -52,9 +52,22 @@ class SignUpViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // =====================
-  // 🔹 Validations
-  // =====================
+  void setTermsAccepted(bool value) {
+    _termsAccepted = value;
+    _termsError = null;
+    notifyListeners();
+  }
+
+  void setTermsError(String error) {
+    _termsError = error;
+    notifyListeners();
+  }
+
+  void clearTermsError() {
+    _termsError = null;
+    notifyListeners();
+  }
+
 
   String? validateFirstName(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -87,7 +100,6 @@ class SignUpViewModel extends ChangeNotifier {
     return null;
   }
 
-  // ✅ Phone est maintenant OPTIONNEL
   String? validatePhone(String? value) {
     // Si le champ est vide, c'est OK (optionnel)
     if (value == null || value.trim().isEmpty) {
@@ -109,7 +121,6 @@ class SignUpViewModel extends ChangeNotifier {
       return 'Password must be at least 8 characters';
     }
     
-    // Liste des exigences manquantes
     List<String> missing = [];
     
     if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -132,9 +143,6 @@ class SignUpViewModel extends ChangeNotifier {
     return null;
   }
 
-  // =====================
-  // 🔹 Sign Up Logic
-  // =====================
   Future<void> signUp(BuildContext context) async {
     // 1️⃣ Vérification du formulaire
     if (!formKey.currentState!.validate()) {
@@ -149,15 +157,20 @@ class SignUpViewModel extends ChangeNotifier {
       return;
     }
 
-    // 3️⃣ Récupération des champs
+    // 3️⃣ Vérification de la case à cocher
+    if (!_termsAccepted) {
+      setTermsError('You must accept the Terms & Conditions and Privacy Policy');
+      _showErrorSnackBar(context, 'Please accept the Terms & Conditions');
+      return;
+    }
+
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     
-    // ✅ Si phone est vide, on envoie "00000000" au backend
     final phone = phoneController.text.trim().isEmpty 
-        ? "00000000" 
+        ? "" 
         : phoneController.text.trim();
 
     _isLoading = true;
@@ -170,8 +183,8 @@ class SignUpViewModel extends ChangeNotifier {
         email: email,
         password: password,
         phoneNumber: phone,
-        gender: _selectedGender, // "MEN" ou "WOMEN"
-        role: "SPECIALIST",       // rôle par défaut
+        gender: _selectedGender, 
+        role: "SPECIALIST", 
       );
 
       _isLoading = false;
@@ -194,9 +207,7 @@ class SignUpViewModel extends ChangeNotifier {
     }
   }
 
-  // =====================
-  // 🔹 Helpers
-  // =====================
+
   void clearFields() {
     firstNameController.clear();
     lastNameController.clear();
@@ -205,6 +216,8 @@ class SignUpViewModel extends ChangeNotifier {
     phoneController.clear();
     _selectedGender = '';
     _genderError = null;
+    _termsAccepted = false;
+    _termsError = null;
     notifyListeners();
   }
 
@@ -259,9 +272,7 @@ class SignUpViewModel extends ChangeNotifier {
     );
   }
 
-  // =====================
-  // 🔹 Dispose
-  // =====================
+
   @override
   void dispose() {
     firstNameController.dispose();

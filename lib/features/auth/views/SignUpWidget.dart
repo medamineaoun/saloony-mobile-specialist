@@ -159,7 +159,6 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Phone - OBLIGATOIRE
                       _buildValidatedTextField(
                         controller: vm.phoneController,
                         enabled: !vm.isLoading,
@@ -171,7 +170,6 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // --- GENRE ---
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -236,7 +234,6 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Password avec validation
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -336,7 +333,80 @@ class SignUpWidget extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: vm.termsError != null 
+                                ? Colors.red 
+                                : Colors.grey[300]!,
+                            width: vm.termsError != null ? 2 : 1,
+                          ),
+                        ),
+                        child: Theme(
+                          data: ThemeData(
+                            unselectedWidgetColor: Colors.grey[400],
+                          ),
+                          child: CheckboxListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            dense: true,
+                            title: Text.rich(
+                              TextSpan(
+                                text: "I agree to the ",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: const Color(0xFF1B2B3E),
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: "Terms & Conditions",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: const Color(0xFF1B2B3E),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const TextSpan(text: " and "),
+                                  TextSpan(
+                                    text: "Privacy Policy",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: const Color(0xFF1B2B3E),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            value: vm.termsAccepted,
+                            onChanged: vm.isLoading 
+                                ? null 
+                                : (value) => vm.setTermsAccepted(value ?? false),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            activeColor: const Color(0xFF1B2B3E),
+                            checkColor: const Color(0xFFF0CD97),
+                          ),
+                        ),
+                      ),
+                      if (vm.termsError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, left: 12),
+                          child: Text(
+                            vm.termsError!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.red,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
 
                       // Sign Up Button
                       Container(
@@ -391,32 +461,6 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Terms & Conditions
-                      Center(
-                        child: Text.rich(
-                          TextSpan(
-                            text: "By continuing, you agree to our ",
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                            children: [
-                              TextSpan(
-                                text: "Terms & Conditions",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: const Color(0xFF1B2B3E),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Already have an account
                       Center(
                         child: InkWell(
                           onTap: vm.isLoading
@@ -567,7 +611,7 @@ class SignUpWidget extends StatelessWidget {
   }
 }
 
-// Widget pour la sélection du genre
+// Widget pour la sélection du genre avec images
 class GenderOption extends StatelessWidget {
   final String label;
   final String value;
@@ -605,10 +649,24 @@ class GenderOption extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              value == "MEN" ? Icons.male : Icons.female,
-              color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[600],
-              size: 22,
+            // Utilisation d'images au lieu d'icônes
+            Container(
+              width: 24,
+              height: 24,
+              child: Image.asset(
+                value == "MEN" 
+                    ? 'images/iconss/homme.png'
+                    : 'images/iconss/woman.png',
+                color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[600],
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback si l'image n'est pas trouvée
+                  return Icon(
+                    value == "MEN" ? Icons.boy : Icons.girl,
+                    color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[600],
+                    size: 30,
+                  );
+                },
+              ),
             ),
             const SizedBox(width: 8),
             Text(
