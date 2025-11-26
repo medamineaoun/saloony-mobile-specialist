@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:saloony/core/services/TokenHelper.dart';
-import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
-import 'package:saloony/core/models/TeamMember.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/services/TokenHelper.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/core/models/TeamMember.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 class TeamManagementPage extends StatefulWidget {
   final SalonCreationViewModel vm;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 class ResetPasswordViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();

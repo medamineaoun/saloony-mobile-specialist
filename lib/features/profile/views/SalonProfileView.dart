@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart' as AppConfig;
-import 'package:saloony/core/constants/app_routes.dart';
-import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/SalonService.dart';
-import 'package:saloony/features/Salon/views/AppThemeScreen.dart';
-import 'package:saloony/features/Salon/views/AppointmentsScreen.dart';
-import 'package:saloony/features/Salon/views/ClientsScreen.dart';
-import 'package:saloony/features/Salon/views/EditSalonScreen.dart';
-import 'package:saloony/features/Salon/views/ServicesManagementScreen.dart';
-import 'package:saloony/features/Salon/views/TeamMembersScreen.dart';
-import 'package:saloony/features/profile/views/LanguageScreen.dart';
-import 'package:saloony/features/profile/views/LogoutButton.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart' as AppConfig;
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
+import 'package:SaloonySpecialist/features/Menu/views/SideMenuDialog.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/SalonService.dart';
+import 'package:SaloonySpecialist/features/Salon/views/AppThemeScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/AppointmentsScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/ClientsScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/EditSalonScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/ServicesManagementScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/TeamMembersScreen.dart';
+import 'package:SaloonySpecialist/features/profile/views/ChangePhoneWidget.dart';
+import 'package:SaloonySpecialist/features/profile/views/LanguageScreen.dart';
+import 'package:SaloonySpecialist/features/profile/views/LogoutButton.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 bool notificationsEnabled = true;
 
@@ -39,6 +41,23 @@ class _ProfileViewState extends State<ProfileView> {
     super.initState();
     _loadUserData();
   }
+void _openWhatsApp() async {
+  const phoneNumber = "+21626320130";
+  const message = "Hello, I need support please.";
+
+  final url = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}");
+
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Cannot open WhatsApp."),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
 
   Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
@@ -90,7 +109,160 @@ class _ProfileViewState extends State<ProfileView> {
       builder: (context) => const SideMenuDialog(),
     );
   }
+ void _showDeactivateDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange[700],
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Deactivate Account',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1B2B3E),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to deactivate your account?',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: const Color(0xFF1B2B3E),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'This action will:',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red[900],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildWarningItem('• Deactivate your account'),
+                    _buildWarningItem('• Remove access to your profile'),
+                    _buildWarningItem('• Require reactivation to use again'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => _confirmDeactivation(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[600],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Deactivate',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+ Future<void> _confirmDeactivation() async {
+    Navigator.of(context).pop(); // Fermer le dialogue
+    
+    // Afficher un indicateur de chargement
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                color: Color(0xFF1B2B3E),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Deactivating account...',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: const Color(0xFF1B2B3E),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
 
+ 
+  }
+  Widget _buildWarningItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          color: Colors.red[800],
+          height: 1.4,
+        ),
+      ),
+    );
+  }
   void _navigateToAppointments() {
     debugPrint('Navigate to Appointments');
   }
@@ -207,7 +379,24 @@ class _ProfileViewState extends State<ProfileView> {
                               Navigator.pushNamed(context, AppRoutes.ChangeEmail);
                             },
                           ),
-                        ],
+                          _MenuItem(
+  icon: Icons.phone_android_outlined,
+  title: 'Change Phone',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ChangePhoneWidget(),
+      ),
+    );
+  },
+),
+_MenuItem(
+  icon: Icons.cancel_presentation_outlined,
+  title: 'Deactivate Account',
+  onTap: _showDeactivateDialog,
+),
+ ],
                       ),
                       const SizedBox(height: 24),
                       
@@ -238,7 +427,26 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      
+                         _buildSection(
+                        title: 'Help & Support',
+                        items: [
+                          _MenuItem(
+                            icon: Icons.description_outlined,
+                            title: 'Help center',
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
+                            },
+                          ),
+                          _MenuItem(
+  icon: Icons.privacy_tip_outlined,
+  title: 'Customer Support',
+  onTap: _openWhatsApp,
+),
+
+                        ],
+                      ),
+                                           const SizedBox(height: 24),
+
                       _buildSection(
                         title: 'Other',
                         items: [

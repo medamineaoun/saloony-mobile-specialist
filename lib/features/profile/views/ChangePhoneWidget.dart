@@ -7,17 +7,17 @@ import 'package:SaloonySpecialist/core/services/UserService.dart';
 import 'package:SaloonySpecialist/core/services/ToastService.dart';
 import 'package:SaloonySpecialist/core/models/User.dart';
 
-class VerifyEmailChangeView extends StatefulWidget {
-  const VerifyEmailChangeView({Key? key}) : super(key: key);
+class ChangePhoneWidget extends StatefulWidget {
+  const ChangePhoneWidget({Key? key}) : super(key: key);
 
   @override
-  State<VerifyEmailChangeView> createState() => _VerifyEmailChangeViewState();
+  State<ChangePhoneWidget> createState() => _ChangePhoneWidgetState();
 }
 
-class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
+class _ChangePhoneWidgetState extends State<ChangePhoneWidget> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
-  final TextEditingController _newEmailController = TextEditingController();
+  final TextEditingController _newPhoneController = TextEditingController();
   
   // 6 controllers pour les 6 cases du code PIN
   final List<TextEditingController> _pinControllers = List.generate(
@@ -32,6 +32,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
   bool _isLoading = false;
   bool _codeSent = false;
   String _currentEmail = '';
+  String _selectedCountryCode = '+216';
   User? _currentUser;
 
   @override
@@ -63,7 +64,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
 
   @override
   void dispose() {
-    _newEmailController.dispose();
+    _newPhoneController.dispose();
     for (var controller in _pinControllers) {
       controller.dispose();
     }
@@ -119,27 +120,22 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
     }
   }
 
-  Future<void> _verifyAndUpdateEmail() async {
+  Future<void> _verifyAndUpdatePhone() async {
     final code = _getPinCode();
-    final newEmail = _newEmailController.text.trim();
+    final newPhone = _newPhoneController.text.trim();
 
     if (code.length != 6) {
       ToastService.showError(context, 'Veuillez entrer le code complet');
       return;
     }
 
-    if (newEmail.isEmpty) {
-      ToastService.showError(context, 'Veuillez entrer le nouvel email');
+    if (newPhone.isEmpty) {
+      ToastService.showError(context, 'Veuillez entrer le nouveau numéro');
       return;
     }
 
-    if (!_isValidEmail(newEmail)) {
-      ToastService.showError(context, 'Format d\'email invalide');
-      return;
-    }
-
-    if (newEmail == _currentEmail) {
-      ToastService.showError(context, 'Le nouvel email doit être différent');
+    if (newPhone.length < 8) {
+      ToastService.showError(context, 'Numéro de téléphone invalide');
       return;
     }
 
@@ -163,9 +159,11 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         return;
       }
 
-      final updateResult = await _userService.updateEmail(
+      final fullPhoneNumber = _selectedCountryCode + newPhone;
+      
+      final updateResult = await _userService.updatePhoneNumber(
         code: code,
-        newEmail: newEmail,
+        newPhoneNumber: fullPhoneNumber,
       );
 
       if (mounted) {
@@ -174,18 +172,12 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         if (updateResult['success'] == true) {
           ToastService.showSuccess(
             context,
-            'Email mis à jour avec succès ! Reconnexion requise',
+            'Numéro de téléphone mis à jour avec succès !',
           );
 
-          await _authService.signOut();
-
-          Future.delayed(const Duration(seconds: 2), () {
+          Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/signIn', 
-                (route) => false,
-              );
+              Navigator.pop(context, true);
             }
           });
         } else {
@@ -201,11 +193,6 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         ToastService.showError(context, 'Erreur de connexion');
       }
     }
-  }
-
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email);
   }
 
   Future<void> _resendCode() async {
@@ -309,7 +296,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Changer l\'email',
+          'Changer le numéro',
           style: GoogleFonts.poppins(
             color: SaloonyColors.primary,
             fontSize: 18,
@@ -353,7 +340,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                         ],
                       ),
                       child: const Icon(
-                        Icons.mark_email_read_outlined,
+                        Icons.phone_android,
                         size: 56,
                         color: SaloonyColors.secondary,
                       ),
@@ -364,7 +351,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                   
                   // Titre
                   Text(
-                    'Changez votre\nadresse e-mail',
+                    'Changez votre\nnuméro de téléphone',
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -376,7 +363,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                   
                   const SizedBox(height: 12),
                   
-                  // Email actuel
+                  // Email actuel (pour vérification)
                   if (_currentEmail.isNotEmpty) ...[
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -398,7 +385,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Email actuel',
+                                  'Code envoyé à',
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     color: Colors.grey[600],
@@ -425,8 +412,8 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                   // Description
                   Text(
                     _codeSent 
-                      ? 'Entrez le code reçu sur votre email actuel et votre nouvel email'
-                      : 'Un code de vérification sera envoyé à votre email actuel',
+                      ? 'Entrez le code reçu par email et votre nouveau numéro'
+                      : 'Un code de vérification sera envoyé à votre email',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       color: SaloonyColors.textSecondary,
@@ -529,12 +516,55 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                     
                     const SizedBox(height: 24),
                     
-                    // Champ nouvel email
+                    // Sélection du code pays
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Nouvel email',
+                          'Code pays',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: SaloonyColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedCountryCode,
+                              isExpanded: true,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: SaloonyColors.primary,
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: "+216", child: Text("🇹🇳 Tunisie (+216)")),
+                                DropdownMenuItem(value: "+33", child: Text("🇫🇷 France (+33)")),
+                                DropdownMenuItem(value: "+1", child: Text("🇺🇸 USA (+1)")),
+                                DropdownMenuItem(value: "+44", child: Text("🇬🇧 UK (+44)")),
+                              ],
+                              onChanged: (v) => setState(() => _selectedCountryCode = v!),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Champ nouveau numéro
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nouveau numéro',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -543,18 +573,19 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          controller: _newEmailController,
-                          keyboardType: TextInputType.emailAddress,
+                          controller: _newPhoneController,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'nouveau@email.com',
+                            hintText: '12345678',
                             hintStyle: GoogleFonts.poppins(
                               color: Colors.grey[400],
                             ),
                             prefixIcon: const Icon(
-                              Icons.email_outlined,
+                              Icons.phone,
                               color: SaloonyColors.secondary,
                             ),
                             filled: true,
@@ -631,7 +662,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _verifyAndUpdateEmail,
+                        onPressed: _isLoading ? null : _verifyAndUpdatePhone,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -655,7 +686,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'Mettre à jour l\'email',
+                                    'Mettre à jour le numéro',
                                     style: GoogleFonts.poppins(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,

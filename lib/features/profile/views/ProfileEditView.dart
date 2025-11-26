@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:saloony/core/constants/SaloonyColors.dart';
-import 'package:saloony/features/profile/view_models/ProfileEditViewModel.dart';
+import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
+import 'package:SaloonySpecialist/features/profile/view_models/ProfileEditViewModel.dart';
 
 class ProfileEditView extends StatelessWidget {
   const ProfileEditView({Key? key}) : super(key: key);

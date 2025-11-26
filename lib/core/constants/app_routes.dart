@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/features/Dashboard/views/DashboardView.dart';
-import 'package:saloony/features/Salon/views/AppointmentsScreen.dart';
-import 'package:saloony/features/Salon/views/TeamMembersScreen.dart';
-import 'package:saloony/features/Salon/views/team_members_list_view.dart';
-import 'package:saloony/features/auth/views/VerifyEmailWidget.dart';
-import 'package:saloony/features/auth/views/VerifyResetCodeWidget.dart';
-import 'package:saloony/features/Salon/views/DisponibiliteView.dart';
-import 'package:saloony/features/profile/views/ChangeEmailView.dart';
-import 'package:saloony/features/profile/views/HelpCenterScreen.dart';
-import 'package:saloony/features/profile/views/PrivacyPolicyScreen.dart';
-import 'package:saloony/features/profile/views/ProfileEditView.dart';
-import 'package:saloony/features/profile/views/ResetPasswordView.dart';
-import 'package:saloony/features/profile/views/SalonProfileView.dart';
-import 'package:saloony/features/splash/splash_page.dart';
-import 'package:saloony/features/Salon/views/salon_creation_pages.dart';
+import 'package:SaloonySpecialist/features/Dashboard/views/DashboardView.dart';
+import 'package:SaloonySpecialist/features/Salon/views/AppointmentsScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/TeamMembersScreen.dart';
+import 'package:SaloonySpecialist/features/Salon/views/team_members_list_view.dart';
+import 'package:SaloonySpecialist/features/auth/views/VerifyEmailWidget.dart';
+import 'package:SaloonySpecialist/features/auth/views/VerifyResetCodeWidget.dart';
+import 'package:SaloonySpecialist/features/Salon/views/DisponibiliteView.dart';
+import 'package:SaloonySpecialist/features/profile/views/ChangeEmailView.dart';
+import 'package:SaloonySpecialist/features/profile/views/HelpCenterScreen.dart';
+import 'package:SaloonySpecialist/features/profile/views/PrivacyPolicyScreen.dart';
+import 'package:SaloonySpecialist/features/profile/views/ProfileEditView.dart';
+import 'package:SaloonySpecialist/features/profile/views/ResetPasswordView.dart';
+import 'package:SaloonySpecialist/features/profile/views/SalonProfileView.dart';
+import 'package:SaloonySpecialist/features/splash/splash_page.dart';
+import 'package:SaloonySpecialist/features/Salon/views/salon_creation_pages.dart';
 import '../../data/models/user_model.dart';
 import '../../features/auth/views/ForgotPasswordWidget.dart';
 import '../../features/auth/views/LinkSentWidget.dart';
@@ -46,6 +46,8 @@ class AppRoutes {
   static const String teamMembers = '/teamMembers';
   static const String Disponibilite = '/Disponibilite';
   static const String Appointments = '/Appointments';
+    static const String ChangePhone = '/ChangePhone';
+
   static Map<String, WidgetBuilder> routes = {
   signIn: (_) => const SignInWidget(),
   splash: (_) => const SaloonySplashPage(),

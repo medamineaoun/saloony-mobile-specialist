@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/features/auth/viewmodels/sign_up_viewmodel.dart';
-import 'package:saloony/core/constants/app_routes.dart';
+import 'package:SaloonySpecialist/features/auth/viewmodels/sign_up_viewmodel.dart';
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
 
 class SignUpWidget extends StatelessWidget {
   const SignUpWidget({super.key});
@@ -234,6 +234,7 @@ class SignUpWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
+                      // Password Field avec validation en temps réel
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -329,6 +330,55 @@ class SignUpWidget extends StatelessWidget {
                                 ),
                                 onPressed: vm.togglePasswordVisibility,
                               ),
+                            ),
+                          ),
+                          
+                          // Indicateurs de validation du mot de passe
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Password must contain:",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1B2B3E),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildPasswordCriteria(
+                                  "At least 8 characters",
+                                  vm.hasMinLength,
+                                ),
+                                const SizedBox(height: 8),
+                                _buildPasswordCriteria(
+                                  "One uppercase letter (A-Z)",
+                                  vm.hasUppercase,
+                                ),
+                                const SizedBox(height: 8),
+                                _buildPasswordCriteria(
+                                  "One lowercase letter (a-z)",
+                                  vm.hasLowercase,
+                                ),
+                                const SizedBox(height: 8),
+                                _buildPasswordCriteria(
+                                  "One number (0-9)",
+                                  vm.hasNumber,
+                                ),
+                                const SizedBox(height: 8),
+                                _buildPasswordCriteria(
+                                  "One special character (!@#\$&*~)",
+                                  vm.hasSpecialChar,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -505,6 +555,38 @@ class SignUpWidget extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  // Widget pour chaque critère de validation du mot de passe
+  Widget _buildPasswordCriteria(String text, bool isValid) {
+    return Row(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isValid ? const Color(0xFF4CAF50) : Colors.grey[300],
+          ),
+          child: Icon(
+            Icons.check,
+            size: 14,
+            color: isValid ? Colors.white : Colors.grey[500],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: isValid ? const Color(0xFF4CAF50) : Colors.grey[600],
+              fontWeight: isValid ? FontWeight.w500 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

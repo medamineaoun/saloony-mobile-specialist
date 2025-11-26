@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
 
 class ProgressBar extends StatelessWidget {
   final SalonCreationViewModel vm;

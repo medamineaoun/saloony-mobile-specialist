@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart';
-import 'package:saloony/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
 
 class TreatmentService {
   final AuthService _authService = AuthService();

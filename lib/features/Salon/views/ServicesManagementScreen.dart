@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/services/TreatmentService.dart';
+import 'package:SaloonySpecialist/core/services/TreatmentService.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 

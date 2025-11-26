@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:saloony/core/enum/TreatmentCategory.dart';
-import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/core/enum/TreatmentCategory.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
 
 class ServicesManagementPage extends StatefulWidget {
   final SalonCreationViewModel vm;

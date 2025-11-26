@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 class SignUpViewModel extends ChangeNotifier {
   final formKey = GlobalKey<FormState>();
@@ -30,6 +30,40 @@ class SignUpViewModel extends ChangeNotifier {
 
   String? _termsError;
   String? get termsError => _termsError;
+
+  // Password validation states
+  bool _hasMinLength = false;
+  bool get hasMinLength => _hasMinLength;
+
+  bool _hasUppercase = false;
+  bool get hasUppercase => _hasUppercase;
+
+  bool _hasLowercase = false;
+  bool get hasLowercase => _hasLowercase;
+
+  bool _hasNumber = false;
+  bool get hasNumber => _hasNumber;
+
+  bool _hasSpecialChar = false;
+  bool get hasSpecialChar => _hasSpecialChar;
+
+  SignUpViewModel() {
+    // Écouter les changements du mot de passe
+    passwordController.addListener(_validatePasswordRealtime);
+  }
+
+  // Validation en temps réel du mot de passe
+  void _validatePasswordRealtime() {
+    final password = passwordController.text;
+
+    _hasMinLength = password.length >= 8;
+    _hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
+    _hasLowercase = RegExp(r'[a-z]').hasMatch(password);
+    _hasNumber = RegExp(r'[0-9]').hasMatch(password);
+    _hasSpecialChar = RegExp(r'[!@#\$&*~]').hasMatch(password);
+
+    notifyListeners();
+  }
 
   // Toggle password
   void togglePasswordVisibility() {
@@ -193,12 +227,20 @@ class SignUpViewModel extends ChangeNotifier {
     _termsAccepted = false;
     _termsError = null;
 
+    // Reset password validation states
+    _hasMinLength = false;
+    _hasUppercase = false;
+    _hasLowercase = false;
+    _hasNumber = false;
+    _hasSpecialChar = false;
+
     notifyListeners();
   }
 
   // ---------------- DISPOSE ----------------
   @override
   void dispose() {
+    passwordController.removeListener(_validatePasswordRealtime);
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();

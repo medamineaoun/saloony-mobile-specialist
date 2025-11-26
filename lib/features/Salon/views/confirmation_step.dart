@@ -2,9 +2,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/enum/additional_service.dart';
-import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
-import 'package:saloony/features/Salon/widgets/StepHeader.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/features/Salon/widgets/StepHeader.dart';
 
 class ConfirmationStep extends StatelessWidget {
   final SalonCreationViewModel vm;

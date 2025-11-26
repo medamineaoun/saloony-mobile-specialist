@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:saloony/core/constants/SaloonyColors.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/features/profile/views/NewPasswordView.dart';
+import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/features/profile/views/NewPasswordView.dart';
 
 class VerifyResetCodeView extends StatefulWidget {
   final String email;

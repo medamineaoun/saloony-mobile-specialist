@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/core/models/User.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/UserService.dart';
+import 'package:SaloonySpecialist/core/models/User.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/UserService.dart';
 
 class MenuViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();

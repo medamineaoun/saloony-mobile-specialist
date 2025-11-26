@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/constants/SaloonyColors.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/ToastService.dart';
-import 'package:saloony/features/profile/views/VerifyResetCodeView.dart';
+import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/features/profile/views/VerifyResetCodeView.dart';
 
 class ResetPasswordView extends StatefulWidget {
   const ResetPasswordView({Key? key}) : super(key: key);

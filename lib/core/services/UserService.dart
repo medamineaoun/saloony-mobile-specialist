@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
-import 'package:saloony/core/Config/ProviderSetup.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/models/User.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/models/User.dart';
 import 'package:http_parser/http_parser.dart';
 
 class UserService {
@@ -38,7 +38,6 @@ class UserService {
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
-
 
   Future<Map<String, dynamic>> requestEmailUpdate({
     required String currentEmail,
@@ -93,7 +92,60 @@ class UserService {
     }
   }
 
- 
+  /// Demander la mise à jour du numéro de téléphone (envoie le code SMS)
+  Future<Map<String, dynamic>> requestPhoneUpdate({
+    required String newPhoneNumber,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Config.authBaseUrl}/send-verification-sms?phoneNumber=$newPhoneNumber'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Code de vérification envoyé par SMS'
+        };
+      } else {
+        String errorMessage = 'Erreur lors de l\'envoi du code';
+        try {
+          final error = jsonDecode(response.body);
+          errorMessage = error['message'] ?? errorMessage;
+        } catch (_) {}
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Erreur de connexion: $e'};
+    }
+  }
+
+  /// Mettre à jour le numéro de téléphone avec le code de vérification
+  Future<Map<String, dynamic>> updatePhoneNumber({
+    required String code,
+    required String newPhoneNumber,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Config.userBaseUrl}/update-phone-number?code=$code&newPhoneNumber=$newPhoneNumber'),
+        headers: await _getAuthHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Numéro de téléphone mis à jour avec succès'};
+      } else {
+        String errorMessage = 'Code invalide ou expiré';
+        try {
+          final error = jsonDecode(response.body);
+          errorMessage = error['message'] ?? errorMessage;
+        } catch (_) {}
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Erreur de connexion: $e'};
+    }
+  }
+
   Future<Map<String, dynamic>> updateUser({
     required String userId,
     String? firstName,
@@ -151,7 +203,6 @@ class UserService {
     }
   }
 
- 
   Future<Map<String, dynamic>> changePassword({
     required String email,
     required String oldPassword,
@@ -173,7 +224,6 @@ class UserService {
     }
   }
 
- 
   Future<http.MultipartFile> _createMultipartFile(File imageFile, String fieldName) async {
     if (kIsWeb) {
       final bytes = await imageFile.readAsBytes();
@@ -285,7 +335,6 @@ class UserService {
     }
   }
 
-
   Future<Map<String, dynamic>> getUsersByRole(String role) async {
     try {
       final response = await http.get(
@@ -322,6 +371,23 @@ class UserService {
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
+  Future<Map<String, dynamic>> deactivateAccount() async {
+  try {
+    final response = await http.put(
+      Uri.parse('${Config.userBaseUrl}/deactivate'),
+      headers: await _getAuthHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return {'success': true, 'message': 'Compte désactivé avec succès'};
+    } else {
+      return {'success': false, 'message': 'Impossible de désactiver le compte'};
+    }
+  } catch (e) {
+    return {'success': false, 'message': 'Erreur: $e'};
+  }
+}
+
 }
 
 void debugPrint(String message) {

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:saloony/core/models/Appointment.dart';
+import 'package:SaloonySpecialist/core/models/Appointment.dart';
 
 
 

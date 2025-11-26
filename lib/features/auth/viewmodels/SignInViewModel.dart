@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/ToastService.dart';
-import 'package:saloony/core/constants/app_routes.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
 
 class SignInViewModel extends ChangeNotifier {
   final emailController = TextEditingController();
@@ -18,11 +18,46 @@ class SignInViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Vérifie si le compte nécessite une vérification email
+  bool _isPendingVerification(Map<String, dynamic> result) {
+    final status = result['status']?.toString().toLowerCase() ?? '';
+    final message = result['message']?.toString().toLowerCase() ?? '';
+    
+    // Liste des mots-clés indiquant un compte non vérifié
+    const verificationKeywords = [
+      'pending',
+      'verify',
+      'vérif',
+      'verification',
+      'confirm',
+      'activate',
+      'activation',
+      'email not verified',
+      'email non vérifié',
+      'account not verified',
+      'compte non vérifié',
+    ];
+    
+    // Vérification du statut exact
+    if (status == 'pending') {
+      return true;
+    }
+    
+    // Vérification des mots-clés dans le message
+    for (var keyword in verificationKeywords) {
+      if (message.contains(keyword)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   Future<void> signIn(BuildContext context) async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
-    // Validation des champs
+    // Validation des champs vides
     if (email.isEmpty || password.isEmpty) {
       ToastService.showError(
         context,
@@ -54,28 +89,24 @@ class SignInViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      if (result['success']) {
+      if (result['success'] == true) {
         // ✅ Connexion réussie
         ToastService.showSuccess(context, 'Welcome back!');
         
-        // Petit délai pour afficher le message de succès
+        // Petit délai pour que l'utilisateur voie le message de succès
         await Future.delayed(const Duration(milliseconds: 300));
         
-        // Navigation vers l'accueil
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        if (context.mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
         
       } else {
         // ❌ Échec de connexion
         final message = result['message'] ?? 'Login failed';
-        final status = result['status'];
         
-        // 🔔 Vérification si le compte est en attente de vérification
-        if (status == 'PENDING' || 
-            message.toLowerCase().contains('verify') || 
-            message.toLowerCase().contains('verification') ||
-            message.toLowerCase().contains('pending')) {
-          
-          // Redirection vers la page de vérification d'email
+        // 🔔 Vérification si le compte nécessite une validation email
+        if (_isPendingVerification(result)) {
+          // Compte en attente de vérification
           ToastService.showInfo(
             context,
             'Please verify your email to continue',
@@ -83,14 +114,16 @@ class SignInViewModel extends ChangeNotifier {
           
           await Future.delayed(const Duration(milliseconds: 500));
           
-          Navigator.pushNamed(
-            context,
-            AppRoutes.verifyEmail,
-            arguments: email,
-          );
+          if (context.mounted) {
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.verifyEmail,
+              arguments: email,
+            );
+          }
           
         } else {
-          // Autre erreur (mauvais mot de passe, compte inexistant, etc.)
+          // Autres erreurs (mauvais mot de passe, compte inexistant, compte bloqué, etc.)
           ToastService.showError(context, message);
         }
       }
@@ -103,7 +136,6 @@ class SignInViewModel extends ChangeNotifier {
         'Connection error. Please try again.',
       );
       
-      // Log de l'erreur pour le debug
       debugPrint('Sign In Error: $e');
     }
   }

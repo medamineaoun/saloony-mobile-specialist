@@ -128,7 +128,7 @@ class HelpCenterScreenP extends StatelessWidget {
               icon: FontAwesomeIcons.whatsapp,
               title: 'WhatsApp',
               subtitle: 'Instant messaging',
-              onTap: () => _launchWhatsApp('21612345678'),
+              onTap: () => _launchWhatsApp('+21626320130'),
             ),
 
             _buildContactCard(

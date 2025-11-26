@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:saloony/features/Menu/viewmodels/MenuViewModel.dart';
+import 'package:SaloonySpecialist/features/Menu/viewmodels/MenuViewModel.dart';
 
 class SideMenuDialog extends StatelessWidget {
   const SideMenuDialog({super.key});

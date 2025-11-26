@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/core/enum/SalonGenderType.dart';
-import 'package:saloony/core/enum/additional_service.dart';
-import 'package:saloony/core/models/DayAvailability.dart';
-import 'package:saloony/core/models/TeamMember.dart';
-import 'package:saloony/core/models/Treatment.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/models/User.dart';
+import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
+import 'package:SaloonySpecialist/core/enum/SalonGenderType.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/core/models/DayAvailability.dart';
+import 'package:SaloonySpecialist/core/models/TeamMember.dart';
+import 'package:SaloonySpecialist/core/models/Treatment.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/models/User.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:saloony/core/services/SalonService.dart';
-import 'package:saloony/core/services/TreatmentService.dart';
-import 'package:saloony/features/Salon/views/location_result.dart';
-import 'package:saloony/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/services/SalonService.dart';
+import 'package:SaloonySpecialist/core/services/TreatmentService.dart';
+import 'package:SaloonySpecialist/features/Salon/views/location_result.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 enum AccountType { solo, team }
 

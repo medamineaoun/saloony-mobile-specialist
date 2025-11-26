@@ -1,10 +1,10 @@
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
-import 'package:saloony/features/auth/viewmodels/ForgotPasswordViewModel.dart';
-import 'package:saloony/features/auth/viewmodels/ResetPasswordViewModel.dart';
-import 'package:saloony/features/auth/viewmodels/SignInViewModel.dart';
-import 'package:saloony/features/auth/viewmodels/sign_up_viewmodel.dart';
-import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/features/auth/viewmodels/ForgotPasswordViewModel.dart';
+import 'package:SaloonySpecialist/features/auth/viewmodels/ResetPasswordViewModel.dart';
+import 'package:SaloonySpecialist/features/auth/viewmodels/SignInViewModel.dart';
+import 'package:SaloonySpecialist/features/auth/viewmodels/sign_up_viewmodel.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
 
 class ProviderSetup {
   static List<SingleChildWidget> providers = [
@@ -19,7 +19,7 @@ class ProviderSetup {
 
 class Config {
   
-  static const String ipAddressAndPort ='localhost:8081';
+  static const String ipAddressAndPort ='10.249.114.26:8081';
   static const String baseUrl = 'http://$ipAddressAndPort';
   static const String authBaseUrl = '$baseUrl/api/v1/auth';
   static const String userBaseUrl = '$baseUrl/api/v1/auth/user';

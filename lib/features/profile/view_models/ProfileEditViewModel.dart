@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/UserService.dart' hide debugPrint;
-import 'package:saloony/core/services/ToastService.dart';
-import 'package:saloony/core/models/User.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/UserService.dart' hide debugPrint;
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/models/User.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
 
 class ProfileEditViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();

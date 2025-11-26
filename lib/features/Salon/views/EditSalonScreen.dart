@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart' hide Config;
 import 'package:image_picker/image_picker.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart';
-import 'package:saloony/core/constants/SalonConstants.dart';
-import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/core/enum/SalonGenderType.dart';
-import 'package:saloony/core/enum/additional_service.dart';
-import 'package:saloony/core/services/SalonService.dart';
-import 'package:saloony/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:SaloonySpecialist/core/constants/SalonConstants.dart';
+import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
+import 'package:SaloonySpecialist/core/enum/SalonGenderType.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/core/services/SalonService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 class EditSalonScreen extends StatefulWidget {
   final Map<String, dynamic> salonData;

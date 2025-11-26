@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/services/ToastService.dart';
-import 'package:saloony/core/constants/app_routes.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
 
 class VerifyResetCodeViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();

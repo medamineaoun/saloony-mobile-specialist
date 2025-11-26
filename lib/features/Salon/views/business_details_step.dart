@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'package:saloony/features/Salon/views/LocalisationPage.dart';
-import 'package:saloony/features/Salon/view_models/SalonCreationViewModel.dart';
-import 'package:saloony/features/Salon/views/location_result.dart';
-import 'package:saloony/features/Salon/widgets/StepHeader.dart';
+import 'package:SaloonySpecialist/features/Salon/views/LocalisationPage.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/features/Salon/views/location_result.dart';
+import 'package:SaloonySpecialist/features/Salon/widgets/StepHeader.dart';
 
 class BusinessDetailsStep extends StatelessWidget {
   final SalonCreationViewModel vm;

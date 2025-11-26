@@ -1,7 +1,7 @@
-import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/core/enum/SalonGenderType.dart';
-import 'package:saloony/core/enum/TreatmentCategory.dart';
-import 'package:saloony/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
+import 'package:SaloonySpecialist/core/enum/SalonGenderType.dart';
+import 'package:SaloonySpecialist/core/enum/TreatmentCategory.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
 
 class SalonConstants {
  

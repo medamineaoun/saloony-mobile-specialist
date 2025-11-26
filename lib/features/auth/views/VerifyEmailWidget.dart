@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/constants/app_routes.dart';
-import 'package:saloony/features/auth/viewmodels/VerifyEmailViewModel.dart';
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
+import 'package:SaloonySpecialist/features/auth/viewmodels/VerifyEmailViewModel.dart';
 
 class VerifyEmailWidget extends StatelessWidget {
   const VerifyEmailWidget({super.key});
@@ -242,15 +242,7 @@ class VerifyEmailWidget extends StatelessWidget {
                                     : () async {
                                         final success = await vm.resendCode();
                                         if (success && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                "New code sent!",
-                                                style: GoogleFonts.poppins(),
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
+                                       
                                           vm.codeController.clear();
                                         } else if (!success && context.mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
