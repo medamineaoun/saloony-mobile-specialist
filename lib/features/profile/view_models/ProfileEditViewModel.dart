@@ -133,7 +133,7 @@ class ProfileEditViewModel extends ChangeNotifier {
         _gender = 'MEN';
         break;
       case 'Femme':
-        _gender = 'WOMAN';
+        _gender = 'WOMEN';
         break;
       default:
         _gender = value;
