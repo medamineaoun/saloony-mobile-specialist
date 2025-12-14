@@ -358,7 +358,6 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
   }
 
   void _addNewMember() {
-    // TODO: Implement add new member functionality
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

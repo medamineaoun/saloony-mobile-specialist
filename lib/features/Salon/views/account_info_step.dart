@@ -1,4 +1,3 @@
-// views/account_info_step.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';

@@ -46,7 +46,6 @@ class VerifyResetCodeViewModel extends ChangeNotifier {
       if (result['success'] == true && context.mounted) {
         ToastService.showSuccess(context, 'Code vérifié avec succès');
         
-        // Navigate to reset password screen with email and code
         Future.delayed(const Duration(milliseconds: 500), () {
           if (context.mounted) {
             Navigator.pushNamed(

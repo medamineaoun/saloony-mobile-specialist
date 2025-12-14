@@ -14,7 +14,6 @@ import 'package:SaloonySpecialist/features/profile/views/ResetPasswordView.dart'
 import 'package:SaloonySpecialist/features/profile/views/SalonProfileView.dart';
 import 'package:SaloonySpecialist/features/splash/splash_page.dart';
 import 'package:SaloonySpecialist/features/Salon/views/salon_creation_pages.dart';
-import '../../data/models/user_model.dart';
 import '../../features/auth/views/ForgotPasswordWidget.dart';
 import '../../features/auth/views/LinkSentWidget.dart';
 import '../../features/auth/views/ResetPasswordWidget.dart';
@@ -26,7 +25,6 @@ class AppRoutes {
   static const String signIn = '/signIn';
   static const String splash = '/splash';
   static const String TeamMembersScreen = '/teamMembers';
-
   static const String signUp = '/signUp';
   static const String forgotPassword = '/forgotPassword';
   static const String linkSent = '/linkSent';
@@ -44,10 +42,7 @@ class AppRoutes {
   static const String verifyResetCode = '/verifyResetCode';
   static const String createsalon = '/createsalon';
   static const String teamMembers = '/teamMembers';
-  static const String Disponibilite = '/Disponibilite';
   static const String Appointments = '/Appointments';
-    static const String ChangePhone = '/ChangePhone';
-
   static Map<String, WidgetBuilder> routes = {
   signIn: (_) => const SignInWidget(),
   splash: (_) => const SaloonySplashPage(),
@@ -60,11 +55,9 @@ class AppRoutes {
   verifyEmail: (_) => const VerifyEmailWidget(),
    ResetPasswordP: (_) => const ResetPasswordView(),
   HelpCenterScreen: (_) => const HelpCenterScreenP(),
-
   ChangeEmail: (_) => const VerifyEmailChangeView(),
-
   verifyResetCode: (_) => const VerifyResetCodeWidget(),
- editProfile : (_) => const ProfileEditView(),
+  editProfile : (_) => const ProfileEditView(),
   home: (_) => DashboardView(), 
   createsalon: (_) => const SalonCreationFlow(),
    PrivacyPolicy: (_) => const PrivacyPolicyScreen(),

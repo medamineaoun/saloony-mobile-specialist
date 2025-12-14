@@ -1,7 +1,6 @@
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 class TokenHelper {
-  /// Décoder un JWT token
   static Map<String, dynamic>? decodeToken(String? token) {
     if (token == null || token.isEmpty) return null;
     try {
@@ -11,7 +10,6 @@ class TokenHelper {
     }
   }
 
-  /// Vérifier si le token est expiré
   static bool isTokenExpired(String? token) {
     if (token == null || token.isEmpty) return true;
     try {
@@ -21,7 +19,6 @@ class TokenHelper {
     }
   }
 
-  /// Récupérer la date d'expiration du token
   static DateTime? getExpirationDate(String? token) {
     if (token == null || token.isEmpty) return null;
     try {

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:SaloonySpecialist/core/providers/ThemeProvider.dart';
+import 'package:SaloonySpecialist/core/widgets/SaloonyCommonWidgets.dart';
+import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
+import 'package:SaloonySpecialist/core/constants/SaloonyTextStyles.dart';
 
 class AppThemeScreen extends StatefulWidget {
   const AppThemeScreen({super.key});
@@ -9,28 +14,53 @@ class AppThemeScreen extends StatefulWidget {
 }
 
 class _AppThemeScreenState extends State<AppThemeScreen> {
-  String _selectedTheme = 'Light';
+  late String _selectedTheme;
 
   final List<ThemeOption> _themeOptions = [
     ThemeOption(
       title: 'Light',
       description: 'Bright and clean appearance',
       icon: Icons.light_mode_outlined,
-      color: const Color(0xFFF0CD97),
+      color: SaloonyColors.secondary,
+      themeValue: 'light',
     ),
     ThemeOption(
       title: 'Dark',
       description: 'Easy on the eyes in low light',
       icon: Icons.dark_mode_outlined,
-      color: const Color(0xFF1B2B3E),
+      color: SaloonyColors.primary,
+      themeValue: 'dark',
     ),
     ThemeOption(
       title: 'System Default',
       description: 'Follow your device theme',
       icon: Icons.phone_iphone_outlined,
-      color: const Color(0xFF4CAF50),
+      color: Color(0xFF4CAF50),
+      themeValue: 'system',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTheme = context.read<ThemeProvider>().currentTheme;
+    _mapThemeToSelection();
+  }
+
+  /// Map le thème du provider à notre sélection locale
+  void _mapThemeToSelection() {
+    final provider = context.read<ThemeProvider>();
+    switch (provider.currentTheme) {
+      case 'dark':
+        _selectedTheme = 'Dark';
+        break;
+      case 'system':
+        _selectedTheme = 'System Default';
+        break;
+      default:
+        _selectedTheme = 'Light';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,16 +70,12 @@ class _AppThemeScreenState extends State<AppThemeScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1B2B3E)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: SaloonyColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'App Theme',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1B2B3E),
-          ),
+          style: SaloonyTextStyles.heading3,
         ),
         centerTitle: true,
       ),
@@ -61,18 +87,12 @@ class _AppThemeScreenState extends State<AppThemeScreen> {
             children: [
               Text(
                 'Choose your preferred theme',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: const Color(0xFF1B2B3E).withOpacity(0.7),
-                ),
+                style: SaloonyTextStyles.bodyLarge.copyWith(color: SaloonyColors.textSecondary),
               ),
               const SizedBox(height: 8),
               Text(
                 'The theme will change the appearance of the app',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: const Color(0xFF1B2B3E).withOpacity(0.5),
-                ),
+                style: SaloonyTextStyles.bodySmall,
               ),
               const SizedBox(height: 32),
               
@@ -104,7 +124,7 @@ class _AppThemeScreenState extends State<AppThemeScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: isSelected 
-            ? Border.all(color: const Color(0xFF1B2B3E), width: 2)
+            ? Border.all(color: SaloonyColors.primary, width: 2)
             : Border.all(color: Colors.grey[300]!, width: 1),
         boxShadow: [
           BoxShadow(
@@ -135,25 +155,18 @@ class _AppThemeScreenState extends State<AppThemeScreen> {
         ),
         title: Text(
           theme.title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B2B3E),
-          ),
+          style: SaloonyTextStyles.heading4,
         ),
         subtitle: Text(
           theme.description,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: const Color(0xFF1B2B3E).withOpacity(0.6),
-          ),
+          style: SaloonyTextStyles.bodySmall,
         ),
         trailing: isSelected
             ? Container(
                 width: 24,
                 height: 24,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1B2B3E),
+                decoration: const BoxDecoration(
+                  color: SaloonyColors.primary,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -176,59 +189,51 @@ class _AppThemeScreenState extends State<AppThemeScreen> {
   }
 
   Widget _buildApplyButton() {
-    return ElevatedButton(
-      onPressed: () {
-        _applyTheme();
-        _showSuccessMessage();
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1B2B3E),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        minimumSize: const Size(double.infinity, 56),
-        elevation: 0,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.palette_outlined, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            'Apply Theme',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
+    return SaloonyPrimaryButton(
+      label: 'Apply Theme',
+      onPressed: _applyTheme,
+      isFullWidth: true,
+      height: 56,
+      icon: Icons.palette_outlined,
     );
   }
 
-  void _applyTheme() {
-    // TODO: Implement theme change logic
-    debugPrint('Applying theme: $_selectedTheme');
+  Future<void> _applyTheme() async {
+    final provider = context.read<ThemeProvider>();
+    final themeValue = _getThemeValue(_selectedTheme);
+    
+    debugPrint('Applying theme: $_selectedTheme (value: $themeValue)');
+    
+    // Appliquer le thème via le provider
+    await provider.setTheme(themeValue);
+    
+    if (mounted) {
+      _showSuccessMessage();
+    }
+  }
+
+  /// Convertir le titre du thème à la valeur utilisée par le provider
+  String _getThemeValue(String title) {
+    switch (title) {
+      case 'Dark':
+        return 'dark';
+      case 'System Default':
+        return 'system';
+      default:
+        return 'light';
+    }
   }
 
   void _showSuccessMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Theme changed to $_selectedTheme',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: const Color(0xFF1B2B3E),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+    SaloonySnackBar.show(
+      context,
+      message: 'Theme changed to $_selectedTheme',
+      type: SnackBarType.success,
+      duration: const Duration(milliseconds: 1500),
     );
     
     // Navigate back after a short delay
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    Future.delayed(const Duration(milliseconds: 1800), () {
       if (mounted) {
         Navigator.pop(context);
       }
@@ -241,11 +246,13 @@ class ThemeOption {
   final String description;
   final IconData icon;
   final Color color;
+  final String themeValue;
 
   ThemeOption({
     required this.title,
     required this.description,
     required this.icon,
     required this.color,
+    required this.themeValue,
   });
 }

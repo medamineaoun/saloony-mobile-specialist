@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
 import 'package:SaloonySpecialist/core/services/AuthService.dart';
@@ -36,6 +36,24 @@ class UserService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Erreur de connexion: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserByEmailPublic(String email) async {
+    try {
+      final uri = Uri.parse('$baseUrl/retrieve-user-by-email/$email');
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final userData = jsonDecode(response.body);
+        return {'success': true, 'user': User.fromJson(userData)};
+      } else if (response.statusCode == 404) {
+        return {'success': false, 'message': 'User not found'};
+      } else {
+        return {'success': false, 'message': 'Failed to retrieve user'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 
@@ -92,7 +110,6 @@ class UserService {
     }
   }
 
-  /// Demander la mise à jour du numéro de téléphone (envoie le code SMS)
   Future<Map<String, dynamic>> requestPhoneUpdate({
     required String newPhoneNumber,
   }) async {
@@ -120,7 +137,6 @@ class UserService {
     }
   }
 
-  /// Mettre à jour le numéro de téléphone avec le code de vérification
   Future<Map<String, dynamic>> updatePhoneNumber({
     required String code,
     required String newPhoneNumber,
@@ -224,27 +240,25 @@ class UserService {
     }
   }
 
-  Future<http.MultipartFile> _createMultipartFile(File imageFile, String fieldName) async {
-    if (kIsWeb) {
-      final bytes = await imageFile.readAsBytes();
-      return http.MultipartFile.fromBytes(
-        fieldName,
-        bytes,
-        filename: 'profile_image.jpg',
-        contentType: MediaType('image', 'jpeg'),
-      );
-    } else {
-      return await http.MultipartFile.fromPath(
-        fieldName,
-        imageFile.path,
-        contentType: MediaType('image', 'jpeg'),
-      );
-    }
+  /// ✅ MÉTHODE UNIVERSELLE pour créer un MultipartFile (Web & Mobile)
+  Future<http.MultipartFile> _createMultipartFile(
+    Uint8List bytes,
+    String fieldName,
+    String filename,
+  ) async {
+    return http.MultipartFile.fromBytes(
+      fieldName,
+      bytes,
+      filename: filename,
+      contentType: MediaType('image', 'jpeg'),
+    );
   }
 
+  /// ✅ AJOUT de photo de profil (Web & Mobile compatible)
   Future<Map<String, dynamic>> addProfilePhoto({
     required String userId,
-    required File imageFile,
+    required Uint8List imageBytes,
+    String filename = 'profile_image.jpg',
   }) async {
     try {
       final url = '$baseUrl/$userId/profile-photo';
@@ -255,9 +269,14 @@ class UserService {
 
       request.headers['Authorization'] = 'Bearer ${token ?? ''}';
 
-      var multipartFile = await _createMultipartFile(imageFile, 'file');
+      var multipartFile = await _createMultipartFile(
+        imageBytes,
+        'file',
+        filename,
+      );
       request.files.add(multipartFile);
 
+      debugPrint('📤 Sending request...');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
@@ -272,7 +291,10 @@ class UserService {
           'message': 'Photo de profil ajoutée avec succès'
         };
       } else {
-        return {'success': false, 'message': 'Erreur lors de l\'ajout de la photo'};
+        return {
+          'success': false,
+          'message': 'Erreur lors de l\'ajout de la photo (${response.statusCode})'
+        };
       }
     } catch (e) {
       debugPrint('❌ Error adding profile photo: $e');
@@ -280,9 +302,11 @@ class UserService {
     }
   }
 
+  /// ✅ MISE À JOUR de photo de profil (Web & Mobile compatible)
   Future<Map<String, dynamic>> updateProfilePhoto({
     required String userId,
-    required File imageFile,
+    required Uint8List imageBytes,
+    String filename = 'profile_image.jpg',
   }) async {
     try {
       final url = '$baseUrl/$userId/profile-photo';
@@ -293,9 +317,14 @@ class UserService {
 
       request.headers['Authorization'] = 'Bearer ${token ?? ''}';
 
-      var multipartFile = await _createMultipartFile(imageFile, 'file');
+      var multipartFile = await _createMultipartFile(
+        imageBytes,
+        'file',
+        filename,
+      );
       request.files.add(multipartFile);
 
+      debugPrint('📤 Sending request...');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
@@ -310,7 +339,10 @@ class UserService {
           'message': 'Photo de profil mise à jour avec succès'
         };
       } else {
-        return {'success': false, 'message': 'Erreur lors de la mise à jour de la photo'};
+        return {
+          'success': false,
+          'message': 'Erreur lors de la mise à jour de la photo (${response.statusCode})'
+        };
       }
     } catch (e) {
       debugPrint('❌ Error updating profile photo: $e');
@@ -371,25 +403,58 @@ class UserService {
       return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
+
   Future<Map<String, dynamic>> deactivateAccount() async {
-  try {
-    final response = await http.put(
-      Uri.parse('${Config.userBaseUrl}/deactivate'),
-      headers: await _getAuthHeaders(),
-    );
+    try {
+      final response = await http.put(
+        Uri.parse('${Config.userBaseUrl}/deactivate'),
+        headers: await _getAuthHeaders(),
+      );
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Compte désactivé avec succès'};
-    } else {
-      return {'success': false, 'message': 'Impossible de désactiver le compte'};
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Account deactivated successfully'};
+      } else {
+        return {'success': false, 'message': 'Failed to deactivate account'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
     }
-  } catch (e) {
-    return {'success': false, 'message': 'Erreur: $e'};
   }
-}
 
-}
+  Future<Map<String, dynamic>> activateAccount() async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Config.userBaseUrl}/activate'),
+        headers: await _getAuthHeaders(),
+      );
 
-void debugPrint(String message) {
-  print(message);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Account activated successfully'};
+      } else {
+        String errorMessage = 'Failed to activate account';
+        try {
+          if (response.body.isNotEmpty) {
+            final decoded = jsonDecode(response.body);
+            if (decoded is Map && decoded['message'] != null) {
+              errorMessage = decoded['message'].toString();
+            } else if (decoded is String && decoded.isNotEmpty) {
+              errorMessage = decoded;
+            } else {
+              errorMessage = response.body;
+            }
+          }
+        } catch (_) {
+          if (response.body.isNotEmpty) errorMessage = response.body;
+        }
+
+        return {
+          'success': false,
+          'message': errorMessage,
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
 }

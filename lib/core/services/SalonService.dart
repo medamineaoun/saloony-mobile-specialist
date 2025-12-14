@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
 import 'package:SaloonySpecialist/core/services/AuthService.dart';
@@ -116,17 +119,61 @@ class SalonService {
       );
 
       debugPrint('💆 Récupération traitements: ${response.statusCode}');
+      debugPrint('💆 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> treatments = jsonDecode(response.body);
+        final decoded = jsonDecode(response.body);
+
+        // Plusieurs formats possibles: un array directement, ou un objet enveloppant
+        if (decoded is List) {
+          return {
+            'success': true,
+            'treatments': decoded,
+          };
+        }
+
+        if (decoded is Map<String, dynamic>) {
+          // cas: { treatments: [...] } ou { data: [...] } ou { payload: [...] }
+          if (decoded['treatments'] is List) {
+            return {'success': true, 'treatments': decoded['treatments']};
+          }
+          if (decoded['data'] is List) {
+            return {'success': true, 'treatments': decoded['data']};
+          }
+          if (decoded['payload'] is List) {
+            return {'success': true, 'treatments': decoded['payload']};
+          }
+
+          // Some APIs return { success: true, treatments: [...] }
+          if (decoded['success'] == true && decoded['treatments'] is List) {
+            return {'success': true, 'treatments': decoded['treatments']};
+          }
+
+          // If object but doesn't contain a list, try to find first list value
+          for (final entry in decoded.entries) {
+            if (entry.value is List) {
+              return {'success': true, 'treatments': entry.value};
+            }
+          }
+
+          // Nothing found
+          return {
+            'success': false,
+            'message': 'Réponse inattendue du serveur pour les traitements',
+            'body': decoded,
+          };
+        }
+
         return {
-          'success': true,
-          'treatments': treatments,
+          'success': false,
+          'message': 'Format de réponse inconnu',
         };
       } else {
         return {
           'success': false,
           'message': 'Erreur lors de la récupération des traitements',
+          'statusCode': response.statusCode,
+          'body': response.body,
         };
       }
     } catch (e) {
@@ -248,6 +295,7 @@ class SalonService {
     required List<String> treatmentIds,
     required List<String> specialistIds,
     required Map<String, dynamic> availability,
+    List<Map<String, dynamic>>? customServices,
     String? salonOwnerId, // ✅ Paramètre optionnel pour l'owner ID
   }) async {
     try {
@@ -269,6 +317,10 @@ class SalonService {
         "salonAvailabilities": _formatAvailabilitiesForApi(availability),
         "salonOwnerId": ownerId, // ✅ AJOUT CRITIQUE
       };
+
+      if (customServices != null && customServices.isNotEmpty) {
+        salonData['customServices'] = customServices;
+      }
 
       debugPrint('📤 Données salon complètes: ${jsonEncode(salonData)}');
 
@@ -481,6 +533,60 @@ class SalonService {
       }
     } catch (e) {
       debugPrint('❌ Erreur upload photo salon: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// AJOUTER UNE PHOTO DE SALON À PARTIR DE BYTES (Web & Mobile)
+  Future<Map<String, dynamic>> addSalonPhotoBytes({
+    required String salonId,
+    required Uint8List imageBytes,
+    String filename = 'salon_image.jpg',
+  }) async {
+    try {
+      final token = await _getAuthToken();
+
+      final uri = Uri.parse('${Config.salonBaseUrl}/$salonId/photos');
+
+      var request = http.MultipartRequest('POST', uri);
+
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // Create multipart file from bytes (works on web and mobile)
+      final multipartFile = http.MultipartFile.fromBytes(
+        'file',
+        imageBytes,
+        filename: filename,
+        contentType: MediaType('image', 'jpeg'),
+      );
+
+      request.files.add(multipartFile);
+
+      final streamed = await request.send();
+      final responseBody = await streamed.stream.bytesToString();
+
+      debugPrint('📷 Upload photo salon (bytes): ${streamed.statusCode}');
+
+      if (streamed.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Photo uploadée avec succès',
+          'data': jsonDecode(responseBody),
+        };
+      } else {
+        debugPrint('📷 Upload failed body: $responseBody');
+        return {
+          'success': false,
+          'message': 'Erreur lors de l\'upload de la photo',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur upload photo salon (bytes): $e');
       return {
         'success': false,
         'message': 'Erreur: $e',

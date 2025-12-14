@@ -119,12 +119,24 @@ class AuthService {
 
         return {'success': true, ...tokens};
       } else {
-        String errorMessage = 'Email ou mot de passe incorrect';
+        // Try to extract a useful error message from the server response.
+        String errorMessage = 'Email or password incorrect';
+        String rawBody = response.body ?? '';
         try {
           final error = jsonDecode(response.body);
           errorMessage = error['message'] ?? errorMessage;
-        } catch (_) {}
-        return {'success': false, 'message': errorMessage};
+        } catch (_) {
+          // If response isn't JSON, use raw body when available
+          if (rawBody.isNotEmpty) errorMessage = rawBody;
+        }
+
+        // Include statusCode and rawBody so callers can inspect server responses
+        return {
+          'success': false,
+          'message': errorMessage,
+          'statusCode': response.statusCode,
+          'rawBody': rawBody,
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Erreur de connexion: $e'};

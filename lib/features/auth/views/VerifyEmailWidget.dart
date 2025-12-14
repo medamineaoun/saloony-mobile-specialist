@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:SaloonySpecialist/core/constants/app_routes.dart';
+import '../../../core/constants/app_routes.dart';
+import '../../../core/constants/SaloonyColors.dart';
+import '../../../core/constants/SaloonyTextStyles.dart';
+import '../../../core/widgets/SaloonyButtons.dart';
+import '../../../core/widgets/SaloonyInputFields.dart';
 import 'package:SaloonySpecialist/features/auth/viewmodels/VerifyEmailViewModel.dart';
 
 class VerifyEmailWidget extends StatelessWidget {
@@ -19,18 +22,14 @@ class VerifyEmailWidget extends StatelessWidget {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              backgroundColor: const Color(0xFFF8F9FA),
+              backgroundColor: SaloonyColors.backgroundSecondary,
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
                 title: Text(
                   "Verify Email",
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B2B3E),
-                  ),
+                  style: SaloonyTextStyles.labelLarge.copyWith(color: SaloonyColors.textPrimary),
                 ),
                 leading: IconButton(
                   icon: Container(
@@ -38,7 +37,7 @@ class VerifyEmailWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE1E2E2)),
+                      border: Border.all(color: SaloonyColors.borderLight),
                     ),
                     child: const Icon(
                       Icons.arrow_back_ios_new,
@@ -60,7 +59,6 @@ class VerifyEmailWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 40),
-                            
                             // Image de vérification email
                             Center(
                               child: Container(
@@ -104,136 +102,60 @@ class VerifyEmailWidget extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            
                             const SizedBox(height: 32),
-                            
                             // Titre
                             Text(
                               'Check Your Email',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1B2B3E),
-                              ),
+                              style: SaloonyTextStyles.heading1,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'A verification code has been sent to',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                color: Colors.grey[600],
-                                height: 1.5,
-                              ),
+                              style: SaloonyTextStyles.subtitle,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               email,
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1B2B3E),
-                              ),
+                              style: SaloonyTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                             ),
-
                             const SizedBox(height: 48),
-
                             // Code input avec 6 cases
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Verification Code',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1B2B3E),
-                                  ),
-                                ),
+                                Text('Verification Code', style: SaloonyTextStyles.labelLarge),
                                 const SizedBox(height: 12),
-                                CodeInputField(
-                                  controller: vm.codeController,
-                                  enabled: !vm.isLoading,
-                                ),
+                                CodeInputField(controller: vm.codeController, enabled: !vm.isLoading),
                               ],
                             ),
-
                             const SizedBox(height: 32),
-
                             // Verify button
-                            Container(
-                              height: 56,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: vm.isLoading
-                                      ? [Colors.grey[400]!, Colors.grey[400]!]
-                                      : [const Color(0xFF1B2B3E), const Color(0xFF243441)],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: vm.isLoading
-                                    ? []
-                                    : [
-                                        BoxShadow(
-                                          color: const Color(0xFF1B2B3E).withOpacity(0.4),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 8),
-                                        ),
-                                      ],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: vm.isLoading
-                                    ? null
-                                    : () async {
-                                        final success = await vm.verifyCode();
-                                        if (success && context.mounted) {
-                                          Navigator.pushReplacementNamed(
-                                              context, AppRoutes.home);
-                                        } else if (!success && context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                "Invalid or expired code",
-                                                style: GoogleFonts.poppins(),
-                                              ),
-                                              backgroundColor: Colors.red,
+                            SaloonyPrimaryButton(
+                              label: 'Verify Code',
+                              isLoading: vm.isLoading,
+                              onPressed: vm.isLoading
+                                  ? () {}
+                                  : () async {
+                                      final success = await vm.verifyCode();
+                                      if (success && context.mounted) {
+                                        Navigator.pushReplacementNamed(context, AppRoutes.home);
+                                      } else if (!success && context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Invalid or expired code",
+                                              style: SaloonyTextStyles.bodyMedium,
                                             ),
-                                          );
-                                        }
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: vm.isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
-                                        ),
-                                      )
-                                    : Text(
-                                        'Verify Code',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFFF0CD97),
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                              ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    },
                             ),
-
                             const SizedBox(height: 24),
-
                             // Resend code
                             Center(
                               child: TextButton(
@@ -242,14 +164,13 @@ class VerifyEmailWidget extends StatelessWidget {
                                     : () async {
                                         final success = await vm.resendCode();
                                         if (success && context.mounted) {
-                                       
                                           vm.codeController.clear();
                                         } else if (!success && context.mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
                                               content: Text(
                                                 "Error sending code",
-                                                style: GoogleFonts.poppins(),
+                                                style: SaloonyTextStyles.bodyMedium,
                                               ),
                                               backgroundColor: Colors.red,
                                             ),
@@ -261,19 +182,13 @@ class VerifyEmailWidget extends StatelessWidget {
                                     children: [
                                       TextSpan(
                                         text: "Didn't receive the code? ",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
+                                        style: SaloonyTextStyles.bodySmall.copyWith(color: SaloonyColors.textSecondary),
                                       ),
                                       TextSpan(
                                         text: "Resend",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
+                                        style: SaloonyTextStyles.bodySmall.copyWith(
                                           fontWeight: FontWeight.w600,
-                                          color: vm.isLoading
-                                              ? Colors.grey
-                                              : const Color(0xFF1B2B3E),
+                                          color: vm.isLoading ? SaloonyColors.textTertiary : SaloonyColors.textPrimary,
                                         ),
                                       ),
                                     ],
@@ -281,7 +196,6 @@ class VerifyEmailWidget extends StatelessWidget {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -386,36 +300,36 @@ class _CodeInputFieldState extends State<CodeInputField> {
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               maxLength: 1,
-              style: GoogleFonts.poppins(
+              style: SaloonyTextStyles.bodyLarge.copyWith(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1B2B3E),
+                color: SaloonyColors.textPrimary,
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
               ],
-              decoration: InputDecoration(
+                decoration: InputDecoration(
                 counterText: '',
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(color: SaloonyColors.borderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1.5),
+                  borderSide: BorderSide(color: SaloonyColors.borderLight, width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
-                    color: Color(0xFF1B2B3E),
+                    color: SaloonyColors.primary,
                     width: 2,
                   ),
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[200]!),
+                  borderSide: BorderSide(color: SaloonyColors.tertiaryLight),
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 16),
               ),
