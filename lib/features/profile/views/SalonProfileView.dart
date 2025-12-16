@@ -282,12 +282,9 @@ class _ProfileViewState extends State<ProfileView> {
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      
                       if (_userRole == 'SPECIALIST')
                         _userSalon != null ? _buildSalonCard() : _buildCreateSalonCard(),
-                      
                       if (_userRole == 'SPECIALIST') const SizedBox(height: 24),
-                      
                       _buildSection(
                         title: 'Application',
                         items: [
@@ -319,13 +316,10 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      
                       if (_userRole == 'SPECIALIST' && _userSalon != null && _isSalonOwner)
                         _buildSalonSettingsSection(),
-                      
                       if (_userRole == 'SPECIALIST' && _userSalon != null && _isSalonOwner)
                         const SizedBox(height: 24),
-                      
                       _buildSection(
                         title: 'About',
                         items: [
@@ -342,7 +336,6 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      
                       _buildSection(
                         title: 'Help & Support',
                         items: [
@@ -359,7 +352,6 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                       const SizedBox(height: 24),
-
                       _buildSection(
                         title: 'Preferences',
                         items: [
@@ -378,7 +370,6 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: LogoutButtonWidget(),
@@ -429,7 +420,17 @@ class _ProfileViewState extends State<ProfileView> {
           _buildSalonSettingsMenuItem(
             icon: Icons.edit_outlined,
             title: 'Edit Salon',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EditSalonScreen(salonData: _userSalon!))),
+            onTap: () async {
+              final updated = await Navigator.push<Map<String, dynamic>>(
+                context,
+                MaterialPageRoute(builder: (context) => EditSalonScreen(salonData: _userSalon!)),
+              );
+              if (updated != null && mounted) {
+                setState(() {
+                  _userSalon = Map<String, dynamic>.from(updated);
+                });
+              }
+            },
           ),
           _buildSalonSettingsMenuItem(
             icon: Icons.calendar_today_outlined,
@@ -583,6 +584,14 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _buildSalonCard() {
     final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotosPaths']);
     final salonAddress = _getSalonAddress(_userSalon);
+    final String? salonStatus = _userSalon?['salonStatus']?.toString().toUpperCase();
+    final Color verifiedIconColor = (salonStatus == 'ACTIVE')
+      ? SaloonyColors.success
+      : (salonStatus == 'PENDING')
+        ? SaloonyColors.gold
+        : (salonStatus == 'BLOCKED')
+          ? SaloonyColors.error
+          : SaloonyColors.gold;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -632,27 +641,37 @@ class _ProfileViewState extends State<ProfileView> {
                   _buildPlaceholderImage(),
                 
                 if (_isSalonOwner)
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: InkWell(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EditSalonScreen(salonData: _userSalon!))),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: SaloonyColors.background,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 12,
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: InkWell(
+                          onTap: () async {
+                            final updated = await Navigator.push<Map<String, dynamic>>(
+                              context,
+                              MaterialPageRoute(builder: (context) => EditSalonScreen(salonData: _userSalon!)),
+                            );
+                            if (updated != null && mounted) {
+                              setState(() {
+                                _userSalon = Map<String, dynamic>.from(updated);
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: SaloonyColors.background,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 12,
+                                ),
+                              ],
                             ),
-                          ],
+                            child: const Icon(Icons.edit_outlined, size: 20, color: SaloonyColors.primary),
+                          ),
                         ),
-                        child: const Icon(Icons.edit_outlined, size: 20, color: SaloonyColors.primary),
                       ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -670,13 +689,37 @@ class _ProfileViewState extends State<ProfileView> {
                         style: SaloonyTextStyles.heading2,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: SaloonyColors.secondaryLight,
-                        shape: BoxShape.circle,
+                    // Status badge
+                    if (salonStatus != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: (salonStatus == 'ACTIVE')
+                                ? SaloonyColors.successLight
+                                : (salonStatus == 'PENDING')
+                                    ? SaloonyColors.warningLight
+                                    : SaloonyColors.tertiaryLight,
+                            borderRadius: BorderRadius.circular(16),
+                           
+                          ),
+                       
+                        ),
                       ),
-                      child: const Icon(Icons.verified, size: 20, color: SaloonyColors.gold),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (salonStatus == 'ACTIVE')
+                            ? SaloonyColors.success.withOpacity(0.12)
+                            : SaloonyColors.secondaryLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: (salonStatus == 'ACTIVE') ? SaloonyColors.success : Colors.transparent,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Icon(Icons.verified, size: 20, color: verifiedIconColor),
                     ),
                   ],
                 ),

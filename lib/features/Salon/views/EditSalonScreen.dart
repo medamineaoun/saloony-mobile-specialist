@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:google_fonts/google_fonts.dart' hide Config;
 import 'package:image_picker/image_picker.dart';
 import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
@@ -33,7 +34,8 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   List<AdditionalService> _selectedAdditionalServices = [];
   
   String? _currentPhotoUrl;
-  File? _newPhoto;
+  XFile? _newPhoto;
+  Uint8List? _newPhotoBytes;
   bool _isLoading = false;
   
   late Map<String, dynamic> _originalSalonData;
@@ -168,39 +170,48 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: _newPhoto != null
-                            ? Image.file(
-                                _newPhoto!,
+                        child: _newPhotoBytes != null
+                            ? Image.memory(
+                                _newPhotoBytes!,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
                               )
-                            : Image.network(
-                                '${Config.baseUrl}/$_currentPhotoUrl',
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Center(
-                                    child: Icon(
-                                      Icons.broken_image,
-                                      size: 50,
-                                      color: Colors.grey[400],
-                                    ),
-                                  );
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded /
-                                              loadingProgress.expectedTotalBytes!
-                                          : null,
-                                    ),
-                                  );
-                                },
-                              ),
+                            : (_currentPhotoUrl != null
+                                ? Image.network(
+                                    '${Config.baseUrl}/$_currentPhotoUrl',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                          color: Colors.grey[400],
+                                        ),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                  loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.image_outlined, size: 50, color: Colors.grey[400]),
+                                      const SizedBox(height: 8),
+                                      Text('No photo', style: GoogleFonts.poppins(color: Colors.grey[500])),
+                                    ],
+                                  )),
                       ),
                       Positioned(
                         top: 8,
@@ -561,136 +572,137 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     );
     
     if (image != null) {
+      final bytes = await image.readAsBytes();
       setState(() {
-        _newPhoto = File(image.path);
+        _newPhoto = image;
+        _newPhotoBytes = bytes;
         _currentPhotoUrl = null;
       });
     }
   }
 
-  void _removePhoto() {
+  Future<void> _removePhoto() async {
+    // If the photo is already stored on the server, attempt to delete it there first
+    final salonId = _originalSalonData['salonId']?.toString();
+
+    if (salonId != null && _currentPhotoUrl != null) {
+      try {
+        final del = await _salonService.deleteSalonPhoto(salonId: salonId, index: 0);
+        if (del['success'] == true) {
+          ToastService.showSuccess(context, 'Photo supprimée du serveur');
+        } else {
+          ToastService.showWarning(context, 'Impossible de supprimer la photo sur le serveur');
+        }
+      } catch (e) {
+        ToastService.showWarning(context, 'Erreur suppression photo: $e');
+      }
+    }
+
+    // Clear local selection regardless
     setState(() {
       _newPhoto = null;
+      _newPhotoBytes = null;
       _currentPhotoUrl = null;
     });
-    
+
     ToastService.showInfo(context, 'Photo supprimée');
   }
 
-  Future<void> _saveChanges() async {
-    if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+Future<void> _saveChanges() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    try {
-      print('📥 Récupération des données complètes du salon...');
-      final fullSalonData = await _salonService.getSalonById(_originalSalonData['salonId']);
-      
-      print('📋 Données complètes reçues: ${fullSalonData.keys}');
-      
-      final treatmentIds = fullSalonData['salonTreatmentsIds'] as List<dynamic>? ?? [];
-      print('💊 Traitements IDs trouvés: ${treatmentIds.length}');
-      
-      if (treatmentIds.isEmpty) {
-        if (mounted) {
-          ToastService.showWarning(
-            context,
-            'Vous devez d\'abord ajouter au moins un traitement',
+  setState(() => _isLoading = true);
+
+  try {
+    print('📥 Récupération des données complètes du salon...');
+    final fullSalonData = await _salonService.getSalonById(_originalSalonData['salonId']);
+    
+    final treatmentIds = fullSalonData['salonTreatmentsIds'] as List<dynamic>? ?? [];
+    final specialistIds = fullSalonData['salonSpecialistsIds'] as List<dynamic>? ?? [];
+    final availabilities = fullSalonData['salonAvailabilities'] as List<dynamic>? ?? [];
+    
+    // Validations...
+    if (treatmentIds.isEmpty || specialistIds.isEmpty || availabilities.length != 7) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    final updateData = {
+      'salonId': fullSalonData['salonId'],
+      'salonName': _nameController.text.trim(),
+      'salonDescription': _descriptionController.text.trim(),
+      'salonCategory': _mapSalonCategoryToBackend(_selectedCategory),
+      'salonGenderType': _mapGenderTypeToBackend(_selectedGenderType),
+      'additionalService': _selectedAdditionalServices
+          .map((s) => _mapAdditionalServiceToBackend(s))
+          .toList(),
+      'salonLatitude': double.tryParse(_latitudeController.text) ?? 
+          fullSalonData['salonLatitude'],
+      'salonLongitude': double.tryParse(_longitudeController.text) ?? 
+          fullSalonData['salonLongitude'],
+      'salonTreatmentsIds': treatmentIds,
+      'salonSpecialistsIds': specialistIds,
+      'salonAvailabilities': availabilities,
+    };
+
+    print('📤 Envoi des données de mise à jour...');
+    final result = await _salonService.updateSalon(
+      salonId: fullSalonData['salonId'],
+      updateData: updateData,
+    );
+
+    if (result['success'] == true) {
+      // Upload photo si nécessaire
+      if (_newPhotoBytes != null) {
+        try {
+          await _salonService.addSalonPhotoBytes(
+            salonId: _originalSalonData['salonId'],
+            imageBytes: _newPhotoBytes!,
+            filename: _newPhoto?.name ?? 'salon.jpg',
           );
+          print('✅ Photo uploadée avec succès');
+        } catch (photoError) {
+          print('⚠️ Erreur upload photo: $photoError');
         }
-        setState(() => _isLoading = false);
-        return;
       }
-      
-      final specialistIds = fullSalonData['salonSpecialistsIds'] as List<dynamic>? ?? [];
-      print('👥 Spécialistes IDs trouvés: ${specialistIds.length}');
-      
-      if (specialistIds.isEmpty) {
-        if (mounted) {
-          ToastService.showWarning(
-            context,
-            'Vous devez d\'abord ajouter au moins un spécialiste',
-          );
-        }
-        setState(() => _isLoading = false);
-        return;
-      }
-      
-      final availabilities = fullSalonData['salonAvailabilities'] as List<dynamic>? ?? [];
-      print('📅 Disponibilités trouvées: ${availabilities.length}');
-      
-      if (availabilities.length != 7) {
-        if (mounted) {
-          ToastService.showWarning(
-            context,
-            'Le salon doit avoir 7 disponibilités (Lundi-Dimanche)',
-          );
-        }
-        setState(() => _isLoading = false);
-        return;
-      }
-      
-      final updateData = {
-        'salonId': fullSalonData['salonId'],
-        'salonName': _nameController.text.trim(),
-        'salonDescription': _descriptionController.text.trim(),
-        'salonCategory': _mapSalonCategoryToBackend(_selectedCategory),
-        'salonGenderType': _mapGenderTypeToBackend(_selectedGenderType),
-        'additionalService': _selectedAdditionalServices
-            .map((s) => _mapAdditionalServiceToBackend(s))
-            .toList(),
-        'salonLatitude': double.tryParse(_latitudeController.text) ?? 
-            fullSalonData['salonLatitude'],
-        'salonLongitude': double.tryParse(_longitudeController.text) ?? 
-            fullSalonData['salonLongitude'],
-        'salonTreatmentsIds': treatmentIds,
-        'salonSpecialistsIds': specialistIds,
-        'salonAvailabilities': availabilities,
-      };
 
-      print('📤 Envoi des données de mise à jour...');
-
-      final result = await _salonService.updateSalon(
-        salonId: fullSalonData['salonId'],
-        updateData: updateData,
+      // ✅ SOLUTION: Récupérer les données mises à jour depuis le backend
+      print('🔄 Récupération des données mises à jour...');
+      final updatedSalonData = await _salonService.getSalonById(
+        _originalSalonData['salonId']
       );
+      
+      print('✅ Données fraîches récupérées');
+      print('📋 Nouveau nom: ${updatedSalonData['salonName']}');
+      print('📋 Nouvelle description: ${updatedSalonData['salonDescription']}');
 
-      if (result['success'] == true) {
-        if (_newPhoto != null) {
-          try {
-            await _salonService.addSalonPhoto(
-              salonId: _originalSalonData['salonId'],
-              imagePath: _newPhoto!.path,
-            );
-            print('✅ Photo uploadée avec succès');
-          } catch (photoError) {
-            print('⚠️ Erreur lors de l\'upload de la photo: $photoError');
-          }
-        }
-
-        if (mounted) {
-          ToastService.showSuccess(context, 'Salon modifié avec succès');
-          Navigator.pop(context, true);
-        }
-      } else {
-        if (mounted) {
-          ToastService.showError(
-            context,
-            result['message'] ?? 'Erreur lors de la modification',
-          );
-        }
-      }
-    } catch (e) {
-      print('❌ Erreur lors de la sauvegarde: $e');
       if (mounted) {
-        ToastService.showError(context, 'Erreur: $e');
+        ToastService.showSuccess(context, 'Salon modifié avec succès');
+        
+        // ✅ CRITIQUE: Retourner les données mises à jour
+        Navigator.pop(context, updatedSalonData); // ← Au lieu de true
       }
-    } finally {
+    } else {
       if (mounted) {
-        setState(() => _isLoading = false);
+        ToastService.showError(
+          context,
+          result['message'] ?? 'Erreur lors de la modification',
+        );
       }
     }
+  } catch (e) {
+    print('❌ Erreur lors de la sauvegarde: $e');
+    if (mounted) {
+      ToastService.showError(context, 'Erreur: $e');
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
+}
+
 
   @override
   void dispose() {

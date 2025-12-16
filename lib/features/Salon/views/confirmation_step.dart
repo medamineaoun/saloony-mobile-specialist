@@ -1,5 +1,4 @@
 // views/confirmation_step.dart
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:SaloonySpecialist/core/enum/additional_service.dart';
@@ -451,9 +450,9 @@ class ConfirmationStep extends StatelessWidget {
                               colors: [Color(0xFF1B2B3E), Color(0xFF2A3F54)],
                             )
                           : null,
-                      image: service.photoPath != null
+                      image: service.photoPath != null && service.photoPath!.startsWith('http')
                           ? DecorationImage(
-                              image: FileImage(File(service.photoPath!)),
+                              image: NetworkImage(service.photoPath!),
                               fit: BoxFit.cover,
                             )
                           : null,

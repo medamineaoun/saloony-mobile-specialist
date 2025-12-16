@@ -24,16 +24,7 @@ class MenuViewModel extends ChangeNotifier {
       icon: Icons.calendar_today_rounded,
       route: '/appointments',
     ),
-    MenuItem(
-      title: 'Services',
-      icon: Icons.design_services_rounded,
-      route: '/services',
-    ),
-    MenuItem(
-      title: 'Analytics',
-      icon: Icons.analytics_rounded,
-      route: '/analytics',
-    ),
+    
   ];
 
   // === GETTERS ===

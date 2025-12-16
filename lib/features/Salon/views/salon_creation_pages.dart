@@ -148,7 +148,7 @@ class SalonCreationScreen extends StatelessWidget {
       case 3:
         return AvailabilityPage(vm: vm);
       case 4:
-        return ServicesManagementPage(vm: vm);
+        return ServicesManagementPage(vm: vm, salonId: null);
       case 5:
         return TeamManagementPage(vm: vm);
       case 6:

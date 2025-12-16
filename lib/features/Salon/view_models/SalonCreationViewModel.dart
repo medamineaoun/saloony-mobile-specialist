@@ -14,6 +14,7 @@ import 'dart:typed_data';
 import 'package:SaloonySpecialist/core/services/TreatmentService.dart';
 import 'package:SaloonySpecialist/features/Salon/views/location_result.dart';
 import 'package:SaloonySpecialist/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
 
 
 class TimeRange {
@@ -61,6 +62,53 @@ class SalonCreationViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
   final TreatmentService _treatmentService = TreatmentService();
+  // Allowed global services (must match backend `GlobalService` enum values)
+  static const Set<String> _allowedGlobalServices = <String>{
+    'HOMME_COUP_DEGRADEE','HOMME_COUP_CLASSIQUE','HOMME_COUP_TONDEUSE','HOMME_BRUSHING','HOMME_COLORATION','HOMME_MECHES','HOMME_LISSAGE','HOMME_PERMANENTE','HOMME_TAILLE_BARBE','HOMME_RASAGE_TRADITIONNEL','HOMME_SOIN_BARBE','HOMME_SOIN_CUIR_CHEVELU',
+    'BARBE_TAILLE_CLASSIQUE','BARBE_RASAGE_COUTEAU','BARBE_COLORATION','BARBE_SOIN_PROFOND',
+    'FEMME_COUP_CHEVEUX','FEMME_BRUSHING','FEMME_COLORATION','FEMME_MECHES','FEMME_BALAYAGE','FEMME_LISSAGE','FEMME_PERMANENTE','FEMME_CHIGNON','FEMME_COIFFURE_SOIREE','FEMME_SOIN_PROFOND','FEMME_SOIN_KERATINE','FEMME_BOTOX_CAPILLAIRE',
+    'MANUCURE_CLASSIQUE','MANUCURE_SEMIPERMANENTE','MANUCURE_GEL','MANUCURE_NAIL_ART','MANUCURE_SOIN_MAINS','PEDICURE_CLASSIQUE','PEDICURE_SPA','PEDICURE_GEL',
+    'MAKEUP_SOFT','MAKEUP_SOIREE','MAKEUP_BRIDE','MAKEUP_correction','EXTENSIONS_CILS','REHAUSSEMENT_CILS','TEINTURE_CILS','MICROBLADING','MICROSHADING',
+    'EPILATION_CIRE_VISAGE','EPILATION_CIRE_CORPS','EPILATION_JAMBES','EPILATION_BRAS','EPILATION_AISSLES','EPILATION_BRESILIENNE','EPILATION_INTEGRALE','EPILATION_LASER_VISAGE','EPILATION_LASER_CORPS','EPILATION_LASER_JAMBES','EPILATION_LASER_AISSLES','EPILATION_LASER_BIKINI',
+    'MASSAGE_RELAXANT','MASSAGE_TONIFIANT','MASSAGE_SPORTIF','MASSAGE_HUILES_ESSENTIELLES','MASSAGE_CALIFORNIEN','MASSAGE_SUEDE','MASSAGE_THERAPEUTIQUE','MASSAGE_PIERRES_CHAUDES','MASSAGE_DORSAL','MASSAGE_PIEDS','MASSAGE_CUIR_CHEVELU',
+    'SOIN_VISAGE_CLASSIQUE','SOIN_VISAGE_PROFOND','SOIN_HYDRATANT','SOIN_ANTI_AGE','SOIN_ACNE','MICRONEEDLING','PEELING_VISAGE','HYDRAFACIAL','DERMAPLANING',
+    'GOMMAGE_CORPS','ENVELOPPEMENT_CORPS','HAMMAM','SAUNA','SOIN_MINCEUR','PRESSOTHERAPIE',
+    'EXTENSIONS_KERATINE','EXTENSIONS_BANDE','EXTENSIONS_CLIP','RETRAIT_EXTENSIONS'
+  };
+
+  // Expose ordered list for dropdowns
+  List<String> get allowedGlobalServiceNames {
+    final list = _allowedGlobalServices.toList()..sort();
+    return list;
+  }
+
+  // Provide value/label pairs for UI dropdowns
+  List<Map<String, String>> get allowedGlobalServiceOptions {
+    return allowedGlobalServiceNames
+        .map((v) => {'value': v, 'label': _formatServiceLabel(v)})
+        .toList();
+  }
+
+  String _formatServiceLabel(String raw) {
+    final lower = raw.replaceAll('_', ' ').toLowerCase();
+    return lower.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+  }
+
+  // Map a user input (or selected label) to the canonical GlobalService name
+  String? _mapToGlobal(String? raw) {
+    if (raw == null) return null;
+    final s = raw.trim().toUpperCase()
+        .replaceAll(RegExp(r"[^A-Z0-9_]"), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_\$'), '');
+    if (_allowedGlobalServices.contains(s)) return s;
+    // Also allow mapping from formatted label back to value
+    final fromLabel = s.replaceAll('_', ' ');
+    for (final v in _allowedGlobalServices) {
+      if (_formatServiceLabel(v).toUpperCase() == fromLabel) return v;
+    }
+    return null;
+  }
   String? _currentUserId;
   String? get currentUserId => _currentUserId;
   final ImagePicker _picker = ImagePicker();
@@ -333,6 +381,63 @@ class SalonCreationViewModel extends ChangeNotifier {
     _showToastInfo(null, 'Service personnalisé supprimé');
   }
 
+
+  /// Upload image bytes to salon photo endpoint and try to extract the saved path from response
+  Future<String?> uploadSalonPhotoAndGetPath(String salonId, Uint8List imageBytes, {String filename = 'image.jpg'}) async {
+    try {
+      final result = await _salonService.addSalonPhotoBytes(
+        salonId: salonId,
+        imageBytes: imageBytes,
+        filename: filename,
+      );
+
+      if (result['success'] != true) {
+        debugPrint('⚠️ Upload returned success=false');
+        return null;
+      }
+
+      final data = result['data'];
+      debugPrint('📤 Upload response data: $data');
+
+      if (data == null) return null;
+
+      // Try common shapes: direct path string, map with path/photoPath/url, or salon dto with salonPhotosPaths
+      if (data is String) return data;
+
+      if (data is Map) {
+        if (data.containsKey('path')) return data['path'] as String?;
+        if (data.containsKey('photoPath')) return data['photoPath'] as String?;
+        if (data.containsKey('url')) return data['url'] as String?;
+        if (data.containsKey('salonPhotosPaths') && data['salonPhotosPaths'] is List && (data['salonPhotosPaths'] as List).isNotEmpty) {
+          final list = data['salonPhotosPaths'] as List;
+          return list.last as String?;
+        }
+        // If backend returned the created resource as a map containing 'data' inner
+        if (data.containsKey('data') && data['data'] is Map) {
+          final inner = data['data'] as Map;
+          if (inner.containsKey('path')) return inner['path'] as String?;
+        }
+      }
+
+      if (data is List && data.isNotEmpty) {
+        // maybe returned list of paths or objects
+        final first = data.last;
+        if (first is String) return first;
+        if (first is Map) {
+          if (first.containsKey('path')) return first['path'] as String?;
+          if (first.containsKey('treatmentPhotosPaths') && first['treatmentPhotosPaths'] is List && (first['treatmentPhotosPaths'] as List).isNotEmpty) {
+            return (first['treatmentPhotosPaths'] as List).last as String?;
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error uploading salon photo and extracting path: $e');
+      return null;
+    }
+  }
+
   // ✅ FIXED: Validate time range when setting
   void setDayTimeRange(String day, TimeOfDay startTime, TimeOfDay endTime) {
     if (_weeklyAvailability.containsKey(day)) {
@@ -555,55 +660,120 @@ Future<void> _finishCreation(BuildContext context) async {
 
     debugPrint('📋 Traitements finaux à envoyer: $finalTreatmentIds');
 
-    String? _tempCreatedTreatmentId;
+    List<String> _tempCreatedTreatmentIds = [];
 
-    // If there is no treatment id but we have custom services, prepare the
-    // `customServices` payload so the backend can create Treatment entities
-    // atomically when creating the salon. This avoids creating temporary
-    // treatments from the client and avoids enum-deserialization issues.
+    // If no existing treatment IDs selected but there are custom services,
+    // create the SALON first (so we have a salonId), then call the API that
+    // attaches custom services to that salon. This matches backend expectations
+    // which require a salonId when creating treatments.
     List<Map<String, dynamic>>? customServicesPayload;
+    bool createdSalonEarly = false;
+    Map<String, dynamic>? earlySalonData;
+
     if (finalTreatmentIds.isEmpty && _customServices.isNotEmpty) {
-      customServicesPayload = _customServices.map((cs) {
-        return {
-          'name': (cs.name ?? '').trim(),
-          'description': cs.description ?? '',
-          'price': cs.price ?? 0,
-          // backend expects hours (Double)
-          'treatmentTime': (cs.duration ?? 30) / 60.0,
+      debugPrint('ℹ️ Aucun traitement existant — création du salon d\'abord pour obtenir salonId');
+
+      // Prepare minimal salon payload and the customTreatments payload
+      final availabilityForApi = _prepareAvailabilityForApi();
+
+      // Build customTreatments payload expected by backend
+      final List<Map<String, dynamic>> builtCustomTreatments = [];
+      for (final cs in _customServices) {
+        final mappedName = _mapToGlobal(cs.name);
+        if (mappedName == null) {
+          _showToastError(savedContext, 'Nom de service invalide: ${cs.name}. Utilisez un nom valide provenant de la liste.');
+          _isCreatingSalon = false;
+          notifyListeners();
+          return;
+        }
+
+        final durationHours = (cs.duration ?? 30) / 60.0;
+
+        builtCustomTreatments.add({
+          'treatmentName': mappedName,
+          'treatmentDescription': cs.description ?? '',
+          'treatmentPrice': cs.price ?? 0,
+          'treatmentTime': durationHours,
           'treatmentCategory': _mapTreatmentCategoryToBackend(cs.category),
-        };
-      }).toList();
+          'treatmentPhotosPaths': cs.photoPath != null ? [cs.photoPath] : [],
+        });
+      }
+
+      final createResultEarly = await _salonService.createSalon(
+        salonName: salonNameController.text.trim(),
+        salonDescription: descriptionController.text.trim(),
+        salonCategory: salonCategoryForApi,
+        additionalServices: additionalServicesForApi,
+        genderType: genderTypeForApi,
+        latitude: _location!.latitude,
+        longitude: _location!.longitude,
+        treatmentIds: <String>[],
+        specialistIds: specialistIds,
+        availability: availabilityForApi,
+        customTreatments: builtCustomTreatments,
+      );
+
+      if (createResultEarly['success'] != true) {
+        final err = createResultEarly['message'] ?? 'Erreur création salon (préliminaire)';
+        _showError(savedContext, err);
+        _isCreatingSalon = false;
+        notifyListeners();
+        return;
+      }
+
+      earlySalonData = createResultEarly['salon'];
+      final salonIdEarly = earlySalonData?['salonId']?.toString();
+      if (salonIdEarly == null || salonIdEarly.isEmpty) {
+        _showError(savedContext, 'Erreur: salonId manquant après création');
+        _isCreatingSalon = false;
+        notifyListeners();
+        return;
+      }
+
+      createdSalonEarly = true;
+      debugPrint('✅ Salon créé temporairement (avant traitements): $salonIdEarly');
+
+      // We included custom treatments in the create call; mark payload as sent
+      customServicesPayload = builtCustomTreatments;
     }
 
     final availabilityForApi = _prepareAvailabilityForApi();
 
-    // Create the salon with validated treatment IDs
+    // Create the salon with validated treatment IDs (or reuse early-created)
     debugPrint('📤 Création du salon avec ${finalTreatmentIds.length} traitement(s)...');
-    
-    final createResult = await _salonService.createSalon(
-      salonName: salonNameController.text.trim(),
-      salonDescription: descriptionController.text.trim(),
-      salonCategory: salonCategoryForApi,
-      additionalServices: additionalServicesForApi,
-      genderType: genderTypeForApi,
-      latitude: _location!.latitude,
-      longitude: _location!.longitude,
-      treatmentIds: finalTreatmentIds,
-      specialistIds: specialistIds,
-      availability: availabilityForApi,
-      customServices: customServicesPayload,
-    );
+
+    Map<String, dynamic> createResult;
+    if (createdSalonEarly && earlySalonData != null) {
+      createResult = {'success': true, 'salon': earlySalonData};
+      debugPrint('ℹ️ Réutilisation du salon créé précédemment.');
+    } else {
+      createResult = await _salonService.createSalon(
+        salonName: salonNameController.text.trim(),
+        salonDescription: descriptionController.text.trim(),
+        salonCategory: salonCategoryForApi,
+        additionalServices: additionalServicesForApi,
+        genderType: genderTypeForApi,
+        latitude: _location!.latitude,
+        longitude: _location!.longitude,
+        treatmentIds: finalTreatmentIds,
+        specialistIds: specialistIds,
+        availability: availabilityForApi,
+        customTreatments: customServicesPayload,
+      );
+    }
 
     if (!createResult['success']) {
       final errorMessage = createResult['message'] ?? 'Erreur lors de la création';
       debugPrint('❌ Erreur création salon: $errorMessage');
-      // Cleanup: delete temporary treatment if we created one
-      if (_tempCreatedTreatmentId != null && _tempCreatedTreatmentId.isNotEmpty) {
-        try {
-          final del = await _treatmentService.deleteTreatment(_tempCreatedTreatmentId);
-          debugPrint('🧹 Suppression traitement temporaire ($_tempCreatedTreatmentId): $del');
-        } catch (e) {
-          debugPrint('⚠️ Erreur suppression traitement temporaire: $e');
+      // Cleanup: delete any temporary treatments we created
+      if (_tempCreatedTreatmentIds.isNotEmpty) {
+        for (final tId in _tempCreatedTreatmentIds) {
+          try {
+            final del = await _treatmentService.deleteTreatment(tId);
+            debugPrint('🧹 Suppression traitement temporaire ($tId): $del');
+          } catch (e) {
+            debugPrint('⚠️ Erreur suppression traitement temporaire: $e');
+          }
         }
       }
       _showError(savedContext, errorMessage);
@@ -674,13 +844,20 @@ Future<void> _finishCreation(BuildContext context) async {
 
     // Success!
     if (savedContext != null && savedContext.mounted) {
-      _showToastSuccess(savedContext, '✅ Salon créé avec succès !');
-      
-      Future.delayed(const Duration(seconds: 2), () {
-        if (savedContext.mounted) {
-          Navigator.of(savedContext).popUntil((route) => route.isFirst);
-        }
-      });
+      // Ensure the user sees immediate feedback even if FToast fails.
+      try {
+        ScaffoldMessenger.of(savedContext).showSnackBar(
+          const SnackBar(content: Text('✅ Salon créé avec succès !'), duration: Duration(seconds: 2)),
+        );
+      } catch (e) {
+        // ignore - fallback to ToastService
+        _showToastSuccess(savedContext, '✅ Salon créé avec succès !');
+      }
+
+      // Navigate to dashboard immediately so the user lands on the home screen.
+      if (savedContext.mounted) {
+        Navigator.of(savedContext).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      }
     }
 
   } catch (e) {
@@ -1139,6 +1316,121 @@ void clearImage() {
   _salonImagePath = null;
   _salonImageBytes = null;
   notifyListeners();
+}
+
+Future<void> syncCustomServicesToBackend(String salonId, {BuildContext? context}) async {
+  if (_customServices.isEmpty) {
+    debugPrint('ℹ️ Aucun service personnalisé à synchroniser');
+    return;
+  }
+
+  try {
+    debugPrint('📝 Synchronisation de ${_customServices.length} service(s) personnalisé(s)...');
+    
+    // 1. Créer les traitements sans photos d'abord
+    final customResult = await _salonService.addCustomServices(
+      salonId: salonId,
+      customServices: _customServices,
+    );
+
+    if (customResult['success'] != true) {
+      debugPrint('⚠️ Échec synchronisation services: ${customResult['message']}');
+      _showToastWarning(context, 'Erreur lors de la synchronisation des services');
+      return;
+    }
+
+    debugPrint('✅ Services personnalisés créés');
+
+    // 2. Récupérer les IDs des traitements créés
+    final List<dynamic>? createdTreatments = customResult['data'];
+    
+    if (createdTreatments == null || createdTreatments.isEmpty) {
+      debugPrint('⚠️ Aucun traitement retourné après création');
+      return;
+    }
+
+    // 3. Upload des photos pour chaque traitement qui en a
+    int photosUploaded = 0;
+    for (int i = 0; i < _customServices.length && i < createdTreatments.length; i++) {
+      final customService = _customServices[i];
+      final createdTreatment = createdTreatments[i];
+      
+      // Extraire l'ID du traitement créé
+      String? treatmentId;
+      if (createdTreatment is Map) {
+        treatmentId = createdTreatment['treatmentId']?.toString();
+      }
+      
+      if (treatmentId == null) {
+        debugPrint('⚠️ ID de traitement manquant pour le service: ${customService.name}');
+        continue;
+      }
+
+      // Upload de la photo si elle existe
+      if (customService.photoPath != null && customService.photoPath!.isNotEmpty) {
+        debugPrint('📤 Upload photo pour traitement: $treatmentId');
+        
+        try {
+          // Si c'est un chemin local (fichier)
+          if (!customService.photoPath!.startsWith('http') && 
+              !customService.photoPath!.startsWith('data:')) {
+            
+            final photoResult = await _treatmentService.uploadTreatmentPhoto(
+              treatmentId,
+              customService.photoPath!,
+            );
+            
+            if (photoResult['success'] == true) {
+              photosUploaded++;
+              debugPrint('✅ Photo uploadée pour: ${customService.name}');
+            } else {
+              debugPrint('⚠️ Échec upload photo pour: ${customService.name}');
+            }
+          }
+          // Si c'est déjà une URL ou base64, on skip (déjà stocké)
+          else {
+            debugPrint('ℹ️ Photo déjà stockée ou URL pour: ${customService.name}');
+          }
+        } catch (e) {
+          debugPrint('❌ Erreur upload photo pour ${customService.name}: $e');
+        }
+      }
+    }
+
+    if (photosUploaded > 0) {
+      debugPrint('✅ $photosUploaded photo(s) uploadée(s) avec succès');
+      _showToastSuccess(context, 'Services et photos synchronisés');
+    } else {
+      _showToastSuccess(context, 'Services synchronisés');
+    }
+
+  } catch (e) {
+    debugPrint('⚠️ Erreur synchronisation services: $e');
+    _showToastWarning(context, 'Erreur lors de la synchronisation');
+  }
+}
+
+// ✅ NOUVEAU: Méthode pour uploader une photo après création du traitement
+Future<bool> uploadPhotoForTreatment(String treatmentId, String photoPath) async {
+  try {
+    debugPrint('📤 Upload photo pour traitement: $treatmentId');
+    
+    final result = await _treatmentService.uploadTreatmentPhoto(
+      treatmentId,
+      photoPath,
+    );
+    
+    if (result['success'] == true) {
+      debugPrint('✅ Photo uploadée avec succès');
+      return true;
+    } else {
+      debugPrint('⚠️ Échec upload photo: ${result['message']}');
+      return false;
+    }
+  } catch (e) {
+    debugPrint('❌ Erreur upload photo: $e');
+    return false;
+  }
 }
   @override
   void dispose() {

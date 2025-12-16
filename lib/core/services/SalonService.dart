@@ -295,7 +295,7 @@ class SalonService {
     required List<String> treatmentIds,
     required List<String> specialistIds,
     required Map<String, dynamic> availability,
-    List<Map<String, dynamic>>? customServices,
+    List<Map<String, dynamic>>? customTreatments,
     String? salonOwnerId, // ✅ Paramètre optionnel pour l'owner ID
   }) async {
     try {
@@ -318,8 +318,8 @@ class SalonService {
         "salonOwnerId": ownerId, // ✅ AJOUT CRITIQUE
       };
 
-      if (customServices != null && customServices.isNotEmpty) {
-        salonData['customServices'] = customServices;
+      if (customTreatments != null && customTreatments.isNotEmpty) {
+        salonData['customTreatments'] = customTreatments;
       }
 
       debugPrint('📤 Données salon complètes: ${jsonEncode(salonData)}');
@@ -397,6 +397,30 @@ class SalonService {
     return availabilities;
   }
 
+  /// Map Dart TreatmentCategory to backend TreatmentCategory enum values
+  String _mapTreatmentCategoryToBackend(String dartCategory) {
+    switch (dartCategory.toUpperCase()) {
+      case 'HAIRCUT':
+        return 'HAIRDRESSING';
+      case 'COLORING':
+        return 'HAIRDRESSING';
+      case 'BEARD':
+        return 'BARBER';
+      case 'FACIAL':
+        return 'FACE_AND_BODY_TREATMENTS';
+      case 'MASSAGE':
+        return 'SPA_AND_MASSAGES';
+      case 'NAILS':
+        return 'NAILS';
+      case 'WAXING':
+        return 'FACE_AND_BODY_TREATMENTS';
+      case 'MAKEUP':
+        return 'MAKEUP_AND_EYELASHES';
+      default:
+        return 'HAIRDRESSING'; // Default fallback
+    }
+  }
+
   Future<Map<String, dynamic>> addCustomServices({
     required String salonId,
     required List<CustomService> customServices,
@@ -405,12 +429,19 @@ class SalonService {
       final token = await _getAuthToken();
 
       final customServicesData = customServices.map((service) => {
-        'serviceName': service.name,
-        'serviceDescription': service.description,
-        'servicePrice': service.price,
-        'specificGender': service.specificGender,
-        'serviceCategory': service.category,
+        'treatmentName': service.name,
+        'treatmentDescription': service.description,
+        'treatmentPrice': service.price,
+        'treatmentTime': service.duration ?? 60,
+        'treatmentCategory': _mapTreatmentCategoryToBackend(service.category),
+        'treatmentPhotosPaths': service.photoPath != null ? [service.photoPath] : [],
       }).toList();
+
+      debugPrint('📤 Sending ${customServices.length} custom services to backend');
+      debugPrint('📊 Custom services payload:');
+      for (final svc in customServicesData) {
+        debugPrint('  - name: ${svc['treatmentName']}, photoPath: ${svc['treatmentPhotosPaths']}');
+      }
 
       final response = await http.post(
         Uri.parse('${Config.salonBaseUrl}/$salonId/custom-services'),
@@ -418,10 +449,11 @@ class SalonService {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'services': customServicesData}),
+        body: jsonEncode(customServicesData),
       );
 
       debugPrint('➕ Ajout services personnalisés: ${response.statusCode}');
+      debugPrint('📋 Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return {
@@ -431,7 +463,7 @@ class SalonService {
       } else {
         return {
           'success': false,
-          'message': 'Erreur lors de l\'ajout des services',
+          'message': 'Erreur lors de l\'ajout des services: ${response.body}',
         };
       }
     } catch (e) {
@@ -495,7 +527,6 @@ class SalonService {
     }
   }
 
-  /// Ajouter une photo au salon
   Future<Map<String, dynamic>> addSalonPhoto({
     required String salonId,
     required String imagePath,
@@ -594,6 +625,83 @@ class SalonService {
     }
   }
 
+  /// Supprimer une photo spécifique du salon (par index)
+  Future<Map<String, dynamic>> deleteSalonPhoto({
+    required String salonId,
+    required int index,
+  }) async {
+    try {
+      final token = await _getAuthToken();
+
+      final response = await http.delete(
+        Uri.parse('${Config.salonBaseUrl}/$salonId/photos/$index'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('🗑️ Suppression photo salon: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': 'Photo supprimée avec succès',
+          'salon': data['salon'] ?? data,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de la suppression de la photo',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur suppression photo salon: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
+  /// Supprimer toutes les photos d'un salon
+  Future<Map<String, dynamic>> deleteAllSalonPhotos(String salonId) async {
+    try {
+      final token = await _getAuthToken();
+
+      final response = await http.delete(
+        Uri.parse('${Config.salonBaseUrl}/$salonId/photos'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('🗑️ Suppression toutes les photos salon: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': 'Toutes les photos supprimées avec succès',
+          'salon': data['salon'] ?? data,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Erreur lors de la suppression des photos',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur suppression toutes les photos salon: $e');
+      return {
+        'success': false,
+        'message': 'Erreur: $e',
+      };
+    }
+  }
+
   /// Obtenir les détails d'un salon par ID
   Future<Map<String, dynamic>> getSalonDetails(String salonId) async {
     try {
@@ -630,46 +738,94 @@ class SalonService {
     }
   }
 
-  /// Mettre à jour un salon
-  Future<Map<String, dynamic>> updateSalon({
-    required String salonId,
-    Map<String, dynamic>? updateData,
-  }) async {
-    try {
-      final token = await _getAuthToken();
-      
-      final response = await http.put(
-        Uri.parse('${Config.salonBaseUrl}/modify-salon'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(updateData),
-      );
+ Future<Map<String, dynamic>> updateSalon({
+  required String salonId,
+  Map<String, dynamic>? updateData,
+}) async {
+  try {
+    final token = await _getAuthToken();
+    
+    // ✅ AJOUT: Log des données envoyées
+    debugPrint('═══════════════════════════════════════');
+    debugPrint('🔄 MISE À JOUR SALON');
+    debugPrint('═══════════════════════════════════════');
+    debugPrint('📍 Salon ID: $salonId');
+    debugPrint('📤 Données envoyées:');
+    debugPrint(jsonEncode(updateData));
+    debugPrint('═══════════════════════════════════════');
+    
+    final response = await http.put(
+      Uri.parse('${Config.salonBaseUrl}/modify-salon'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(updateData),
+    );
 
-      debugPrint('✏️ Mise à jour salon: ${response.statusCode}');
+    debugPrint('✏️ Mise à jour salon - Status: ${response.statusCode}');
+    debugPrint('📥 Réponse brute: ${response.body}');
 
-      if (response.statusCode == 200) {
+    // ✅ CORRECTION: Gérer différents codes de succès
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      try {
         final data = jsonDecode(response.body);
+        
+        // ✅ AJOUT: Vérifier le contenu de la réponse
+        debugPrint('✅ Réponse décodée: $data');
+        
         return {
           'success': true,
           'salon': data,
+          'message': 'Salon mis à jour avec succès',
         };
-      } else {
+      } catch (e) {
+        // Si le body n'est pas du JSON valide
+        debugPrint('⚠️ Réponse non-JSON: ${response.body}');
         return {
-          'success': false,
-          'message': 'Erreur lors de la mise à jour',
+          'success': true,
+          'message': 'Salon mis à jour (réponse non-JSON)',
         };
       }
-    } catch (e) {
-      debugPrint('❌ Erreur mise à jour salon: $e');
+    } else if (response.statusCode == 204) {
+      // ✅ AJOUT: Gérer le code 204 (No Content)
+      debugPrint('✅ Mise à jour réussie (204 No Content)');
+      return {
+        'success': true,
+        'message': 'Salon mis à jour avec succès',
+      };
+    } else {
+      // ✅ AMÉLIORATION: Meilleure gestion des erreurs
+      debugPrint('❌ Erreur HTTP: ${response.statusCode}');
+      debugPrint('❌ Corps erreur: ${response.body}');
+      
+      String errorMessage = 'Erreur lors de la mise à jour';
+      try {
+        final errorData = jsonDecode(response.body);
+        errorMessage = errorData['message'] ?? 
+                      errorData['error'] ?? 
+                      errorMessage;
+      } catch (e) {
+        errorMessage = response.body.isNotEmpty 
+            ? response.body 
+            : 'Erreur HTTP ${response.statusCode}';
+      }
+      
       return {
         'success': false,
-        'message': 'Erreur: $e',
+        'message': errorMessage,
+        'statusCode': response.statusCode,
       };
     }
+  } catch (e) {
+    debugPrint('❌ Exception lors de la mise à jour: $e');
+    debugPrint('❌ Stack trace: ${StackTrace.current}');
+    return {
+      'success': false,
+      'message': 'Erreur de connexion: $e',
+    };
   }
-
+}
   /// Supprimer un salon
   Future<Map<String, dynamic>> deleteSalon(String salonId) async {
     try {
