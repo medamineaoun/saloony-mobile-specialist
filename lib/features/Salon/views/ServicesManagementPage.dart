@@ -131,7 +131,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         Container(
           margin: const EdgeInsets.only(bottom: 8),
           child: Material(
-            color: const Color.fromARGB(0, 0, 0, 0),
+            color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(12),
@@ -147,29 +147,32 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: categoryData['gradient'] as List<Color>,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: categoryData['gradient'] as List<Color>,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/treatment_categories/${category.imagePath}',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Text(
+                              categoryData['emoji'] ?? '📋',
+                              style: const TextStyle(fontSize: 20, color: Colors.white),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Image.asset(
-                      category.imagePath,
-                      width: 28,
-                      height: 28,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.spa, size: 24, color: Colors.white);
-                      },
-                    ),
-                  ),
-                ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -192,7 +195,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                      icon: Icon(Icons.add_circle_outline, color: (categoryData['gradient'] as List<Color>)[0]),
                       onPressed: onAdd,
                     ),
                     Icon(
@@ -243,28 +246,54 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
   }
 
   Map<String, dynamic> _getCategoryVisualData(TreatmentCategory category) {
-  switch (category) {
-    case TreatmentCategory.HAIRCUT:
-      return {'gradient': [const Color(0x00FDFDFE), const Color(0x006366F1)]};
-    case TreatmentCategory.COLORING:
-      return {'gradient': [const Color(0x00F59E0B), const Color(0x00EF4444)]};
-    case TreatmentCategory.BEARD:
-      return {'gradient': [const Color(0x0078716C), const Color(0x0057534E)]};
-    case TreatmentCategory.FACIAL:
-      return {'gradient': [const Color(0x0014B8A6), const Color(0x0006B6D4)]};
-    case TreatmentCategory.MASSAGE:
-      return {'gradient': [const Color(0x003B82F6), const Color(0x0006B6D4)]};
-    case TreatmentCategory.NAILS:
-      return {'gradient': [const Color(0x00EC4899), const Color(0x00F43F5E)]};
-    case TreatmentCategory.WAXING:
-      return {'gradient': [const Color(0x00EF4444), const Color(0x00F97316)]};
-    case TreatmentCategory.MAKEUP:
-      return {'gradient': [const Color(0x00F59E0B), const Color(0x00EC4899)]};
-    default:
-      return {'gradient': [const Color(0x0064748B), const Color(0x00475569)]};
+    switch (category) {
+      case TreatmentCategory.HAIRCUT:
+        return {
+          'gradient': [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+          'emoji': '✂️'
+        };
+      case TreatmentCategory.COLORING:
+        return {
+          'gradient': [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
+          'emoji': '🎨'
+        };
+      case TreatmentCategory.BEARD:
+        return {
+          'gradient': [const Color(0xFF78716C), const Color(0xFF57534E)],
+          'emoji': '🧔'
+        };
+      case TreatmentCategory.FACIAL:
+        return {
+          'gradient': [const Color(0xFF14B8A6), const Color(0xFF06B6D4)],
+          'emoji': '✨'
+        };
+      case TreatmentCategory.MASSAGE:
+        return {
+          'gradient': [const Color(0xFF3B82F6), const Color(0xFF06B6D4)],
+          'emoji': '💆'
+        };
+      case TreatmentCategory.NAILS:
+        return {
+          'gradient': [const Color(0xFFEC4899), const Color(0xFFF43F5E)],
+          'emoji': '💅'
+        };
+      case TreatmentCategory.WAXING:
+        return {
+          'gradient': [const Color(0xFFEF4444), const Color(0xFFF97316)],
+          'emoji': '🔥'
+        };
+      case TreatmentCategory.MAKEUP:
+        return {
+          'gradient': [const Color(0xFFF59E0B), const Color(0xFFEC4899)],
+          'emoji': '💄'
+        };
+      default:
+        return {
+          'gradient': [const Color(0xFF64748B), const Color(0xFF475569)],
+          'emoji': '📋'
+        };
+    }
   }
-}
-
 
   int _getServiceCountForCategory(SalonCreationViewModel vm, TreatmentCategory category) {
     final apiCount = vm.availableTreatments.where((t) => t.treatmentCategory.toUpperCase() == category.value).length;
@@ -383,7 +412,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     Uint8List? imageBytes;
     final categoryData = _getCategoryVisualData(category);
 
-    // Options de durée prédéfinies
     final durationOptions = [
       {'display': '30 min', 'value': '30'},
       {'display': '1h', 'value': '60'},
@@ -414,14 +442,16 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 6, offset: const Offset(0, 3))],
                         ),
-                        // Remplacé l'emoji par l'image
                         child: Image.asset(
-                          category.imagePath,
+                          'assets/images/treatment_categories/${category.imagePath}',
                           width: 28,
                           height: 28,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return Icon(Icons.spa, size: 24, color: Colors.white);
+                            return Text(
+                              categoryData['emoji'] ?? '📋',
+                              style: const TextStyle(fontSize: 20, color: Colors.white),
+                            );
                           },
                         ),
                       ),
@@ -440,7 +470,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   ),
                   const SizedBox(height: 20),
                   
-                  // Section image avec bouton amélioré
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -535,7 +564,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   ),
                   
                   const SizedBox(height: 20),
-                  // Replace free-text service name with dropdown from allowed global services
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -578,7 +606,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   const SizedBox(height: 16),
                   _buildDialogTextField(label: 'Description (optional)', hint: 'Describe your service...', controller: descriptionController, maxLines: 3),
                   
-                  // Sélecteur de durée amélioré
                   const SizedBox(height: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,7 +672,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                               if (uploadedPath != null && uploadedPath.isNotEmpty) {
                                 finalPhotoPath = uploadedPath;
                               } else {
-                                // fallback to embedding base64 if upload failed
                                 finalPhotoPath = 'data:image/png;base64,${base64Encode(imageBytes!)}';
                               }
                             } else if (imageBytes != null) {
@@ -664,7 +690,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
 
                             vm.addCustomService(service);
 
-                            // Sync to backend if salonId is available
                             if (widget.salonId != null && widget.salonId!.isNotEmpty) {
                               await vm.syncCustomServicesToBackend(widget.salonId!, context: context);
                             }
@@ -673,7 +698,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                               Navigator.pop(context);
                             }
                           } else {
-                            // simple feedback
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill required fields')));
                           }
                         },
@@ -718,7 +742,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     final category = TreatmentCategory.values.firstWhere((cat) => cat.value == service.category.toUpperCase(), orElse: () => TreatmentCategory.HAIRCUT);
     final categoryData = _getCategoryVisualData(category);
 
-    // Options de durée prédéfinies
     final durationOptions = [
       {'display': '30 min', 'value': '30'},
       {'display': '1h', 'value': '60'},
@@ -740,10 +763,12 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(gradient: LinearGradient(colors: categoryData['gradient'] as List<Color>), borderRadius: BorderRadius.circular(10)),
-                // Remplacé l'icône par l'image de la catégorie
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: categoryData['gradient'] as List<Color>),
+                  borderRadius: BorderRadius.circular(10)
+                ),
                 child: Image.asset(
-                  category.imagePath,
+                  'assets/images/treatment_categories/${category.imagePath}',
                   width: 24,
                   height: 24,
                   fit: BoxFit.contain,
@@ -761,7 +786,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Section image améliorée
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -852,7 +876,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: StatefulBuilder(
-                          builder: (context, setState) {
+                          builder: (context, setDropdownState) {
                             if (selectedServiceValue == null) {
                               for (final opt in vm.allowedGlobalServiceOptions) {
                                 if (opt['value'] == service.name) {
@@ -978,7 +1002,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   );
                   vm.updateCustomService(updatedService);
                   
-                  // Sync to backend if salonId is available
                   if (widget.salonId != null && widget.salonId!.isNotEmpty) {
                     await vm.syncCustomServicesToBackend(widget.salonId!, context: context);
                   }
@@ -1164,18 +1187,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                             child: Icon(Icons.broken_image, size: 32, color: Colors.grey[400]),
                           )))),
       ),
-    );
-  }
-
-  Widget _buildCategoryIcon(TreatmentCategory category, Map<String, dynamic> categoryData) {
-    return Image.asset(
-      category.imagePath,
-      width: 28,
-      height: 28,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(Icons.spa, size: 24, color: Colors.white);
-      },
     );
   }
 }
