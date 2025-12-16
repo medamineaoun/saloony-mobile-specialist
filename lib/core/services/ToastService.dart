@@ -35,7 +35,6 @@ class ToastService {
     );
   }
 
-  /// ℹ️ Toast d'information
   static void showInfo(BuildContext context, String message) {
     _fToast.init(context);
     _fToast.showToast(
@@ -107,7 +106,6 @@ class ToastService {
     );
   }
 
-  /// Annuler tous les toasts affichés
   static void cancelAll() {
     _fToast.removeCustomToast();
     _fToast.removeQueuedCustomToasts();
