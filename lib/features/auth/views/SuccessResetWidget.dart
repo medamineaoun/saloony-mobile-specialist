@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/SaloonyColors.dart';
+import '../../../core/constants/SaloonyTextStyles.dart';
+import '../../../core/widgets/SaloonyButtons.dart';
+import '../../../core/constants/app_routes.dart';
 
 class SuccessResetWidget extends StatelessWidget {
   const SuccessResetWidget({Key? key}) : super(key: key);
@@ -8,7 +12,7 @@ class SuccessResetWidget extends StatelessWidget {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: SaloonyColors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -18,49 +22,24 @@ class SuccessResetWidget extends StatelessWidget {
               children: [
                 Icon(
                   Icons.check_circle_outline_rounded,
-                  color: Colors.green[700],
+                  color: SaloonyColors.success,
                   size: 80,
                 ),
                 const SizedBox(height: 32),
                 Text(
                   'Password Reset',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: SaloonyTextStyles.heading1,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Your password has been reset successfully',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[700],
-                  ),
+                  style: SaloonyTextStyles.bodyMedium.copyWith(color: SaloonyColors.textSecondary),
                 ),
                 const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/signIn');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Sign in',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                SaloonyPrimaryButton(
+                  label: 'Sign in',
+                  onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.signIn),
                 ),
               ],
             ),

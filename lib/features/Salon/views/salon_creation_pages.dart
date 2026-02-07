@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:saloony/features/Salon/AdditionalServicesPage.dart';
-import 'package:saloony/features/Salon/DisponibiliteView.dart';
-import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
-import 'package:saloony/features/Salon/ServicesManagementPage.dart';
-import 'package:saloony/features/Salon/account_info_step.dart';
-import 'package:saloony/features/Salon/business_details_step.dart';
-import 'package:saloony/features/Salon/confirmation_step.dart';
-import 'package:saloony/features/Salon/team_members_list_view.dart';
-import 'package:saloony/features/Salon/widgets/bottom_button.dart';
-import 'package:saloony/features/Salon/widgets/progress_bar.dart';
+import 'package:SaloonySpecialist/features/Salon/views/AdditionalServicesPage.dart';
+import 'package:SaloonySpecialist/features/Salon/views/DisponibiliteView.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/features/Salon/views/ServicesManagementPage.dart';
+import 'package:SaloonySpecialist/features/Salon/views/account_info_step.dart';
+import 'package:SaloonySpecialist/features/Salon/views/business_details_step.dart';
+import 'package:SaloonySpecialist/features/Salon/views/confirmation_step.dart';
+import 'package:SaloonySpecialist/features/Salon/views/team_members_list_view.dart';
+import 'package:SaloonySpecialist/features/Salon/widgets/bottom_button.dart';
+import 'package:SaloonySpecialist/features/Salon/widgets/progress_bar.dart';
 
 
 class SalonCreationFlow extends StatelessWidget {
@@ -148,7 +148,7 @@ class SalonCreationScreen extends StatelessWidget {
       case 3:
         return AvailabilityPage(vm: vm);
       case 4:
-        return ServicesManagementPage(vm: vm);
+        return ServicesManagementPage(vm: vm, salonId: null);
       case 5:
         return TeamManagementPage(vm: vm);
       case 6:

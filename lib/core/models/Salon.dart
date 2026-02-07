@@ -1,9 +1,9 @@
 
-import 'package:saloony/core/constants/SalonConstants.dart';
-import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/core/enum/SalonGenderType.dart';
-import 'package:saloony/core/enum/SalonStatus.dart';
-import 'package:saloony/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/core/constants/SalonConstants.dart';
+import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
+import 'package:SaloonySpecialist/core/enum/SalonGenderType.dart';
+import 'package:SaloonySpecialist/core/enum/SalonStatus.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
 class Salon {
   final String? salonId;
   final String salonName;

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/SaloonyColors.dart';
+import '../../../core/constants/SaloonyTextStyles.dart';
+import '../../../core/widgets/SaloonyButtons.dart';
+import '../../../core/widgets/SaloonyInputFields.dart';
 import '../viewmodels/VerifyResetCodeViewModel.dart';
 
 class VerifyResetCodeWidget extends StatelessWidget {
@@ -12,24 +15,20 @@ class VerifyResetCodeWidget extends StatelessWidget {
     final String email = ModalRoute.of(context)!.settings.arguments as String;
 
     return ChangeNotifierProvider(
-      create: (_) => VerifyResetCodeViewModel(),
+      create: (_) => VerifyResetCodeViewModel(context),
       child: Consumer<VerifyResetCodeViewModel>(
         builder: (context, vm, child) {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              backgroundColor: const Color(0xFFF8F9FA),
+              backgroundColor: SaloonyColors.backgroundSecondary,
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
                 title: Text(
                   "Verify Code",
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B2B3E),
-                  ),
+                  style: SaloonyTextStyles.labelLarge.copyWith(color: SaloonyColors.textPrimary),
                 ),
                 leading: IconButton(
                   icon: Container(
@@ -37,7 +36,7 @@ class VerifyResetCodeWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE1E2E2)),
+                      border: Border.all(color: SaloonyColors.borderLight),
                     ),
                     child: const Icon(
                       Icons.arrow_back_ios_new,
@@ -110,31 +109,19 @@ class VerifyResetCodeWidget extends StatelessWidget {
                             Text(
                               'Verify Code',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1B2B3E),
-                              ),
+                              style: SaloonyTextStyles.heading1,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'We sent a verification code to',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                color: Colors.grey[600],
-                                height: 1.5,
-                              ),
+                              style: SaloonyTextStyles.subtitle,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               email,
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1B2B3E),
-                              ),
+                              style: SaloonyTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                             ),
 
                             const SizedBox(height: 48),
@@ -145,11 +132,7 @@ class VerifyResetCodeWidget extends StatelessWidget {
                               children: [
                                 Text(
                                   'Verification Code',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1B2B3E),
-                                  ),
+                                  style: SaloonyTextStyles.labelLarge,
                                 ),
                                 const SizedBox(height: 12),
                                 CodeInputField(
@@ -162,57 +145,10 @@ class VerifyResetCodeWidget extends StatelessWidget {
                             const SizedBox(height: 32),
 
                             // Verify button
-                            Container(
-                              height: 56,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: vm.isLoading
-                                      ? [Colors.grey[400]!, Colors.grey[400]!]
-                                      : [const Color(0xFF1B2B3E), const Color(0xFF243441)],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: vm.isLoading
-                                    ? []
-                                    : [
-                                        BoxShadow(
-                                          color: const Color(0xFF1B2B3E).withOpacity(0.4),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 8),
-                                        ),
-                                      ],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: vm.isLoading
-                                    ? null
-                                    : () => vm.verifyCode(context, email),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: vm.isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
-                                        ),
-                                      )
-                                    : Text(
-                                        'Verify Code',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFFF0CD97),
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                              ),
+                            SaloonyPrimaryButton(
+                              label: 'Verify Code',
+                              isLoading: vm.isLoading,
+                              onPressed: vm.isLoading ? () {} : () => vm.verifyCode(email),
                             ),
 
                             const SizedBox(height: 24),
@@ -220,27 +156,19 @@ class VerifyResetCodeWidget extends StatelessWidget {
                             // Resend code
                             Center(
                               child: TextButton(
-                                onPressed: vm.isLoading
-                                    ? null
-                                    : () => vm.resendCode(context, email),
+                                onPressed: vm.isLoading ? null : () => vm.resendCode(email),
                                 child: RichText(
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
                                         text: "Didn't receive the code? ",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
+                                        style: SaloonyTextStyles.bodySmall.copyWith(color: SaloonyColors.textSecondary),
                                       ),
                                       TextSpan(
                                         text: "Resend",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
+                                        style: SaloonyTextStyles.bodySmall.copyWith(
                                           fontWeight: FontWeight.w600,
-                                          color: vm.isLoading
-                                              ? Colors.grey
-                                              : const Color(0xFF1B2B3E),
+                                          color: vm.isLoading ? SaloonyColors.textTertiary : SaloonyColors.textPrimary,
                                         ),
                                       ),
                                     ],
@@ -355,10 +283,10 @@ class _CodeInputFieldState extends State<CodeInputField> {
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               maxLength: 1,
-              style: GoogleFonts.poppins(
+              style: SaloonyTextStyles.bodyLarge.copyWith(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1B2B3E),
+                color: SaloonyColors.textPrimary,
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,

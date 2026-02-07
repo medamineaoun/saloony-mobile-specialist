@@ -1,41 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/features/auth/viewmodels/sign_up_viewmodel.dart';
-import 'package:saloony/core/constants/app_routes.dart';
 
+import '../../../core/constants/SaloonyColors.dart';
+import '../../../core/constants/SaloonyTextStyles.dart';
+import '../../../core/constants/app_routes.dart';
+import '../../../core/widgets/SaloonyButtons.dart';
+import '../../../core/widgets/SaloonyInputFields.dart';
+import '../viewmodels/sign_up_viewmodel.dart';
 class SignUpWidget extends StatelessWidget {
-  const SignUpWidget({super.key});
+  const SignUpWidget({Key? key}) : super(key: key);
+  static const String routeName = 'signUp';
+  static const String routePath = '/signUp';
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => SignUpViewModel(),
+      child: Consumer<SignUpViewModel>(
+        builder: (context, viewModel, _) {
+          return _SignUpViewContent(viewModel: viewModel);
+        },
+      ),
+    );
+  }
+}
 
-  static String routeName = 'signUp';
-  static String routePath = '/signUp';
+class _SignUpViewContent extends StatelessWidget {
+  final SignUpViewModel viewModel;
+
+  const _SignUpViewContent({required this.viewModel});
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<SignUpViewModel>();
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE1E2E2)),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 16,
-              color: Color(0xFF1B2B3E),
-            ),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: SaloonyColors.backgroundSecondary,
+      appBar: _buildAppBar(context),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -44,458 +42,38 @@ class SignUpWidget extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 440),
                 child: Form(
-                  key: vm.formKey,
+                  key: viewModel.formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 20),
-                      
-                      // Image de signup
-                      Center(
-                        child: Container(
-                          width: 180,
-                          height: 180,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              'assets/images/bbb.png',
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 180,
-                                  height: 180,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF1B2B3E), Color(0xFF243441)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF1B2B3E).withOpacity(0.3),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.person_add_outlined,
-                                    size: 70,
-                                    color: Color(0xFFF0CD97),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      
+                      _buildProfileImage(),
                       const SizedBox(height: 24),
-                      
-                      // Titre
-                      Text(
-                        "Create Account",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1B2B3E),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Sign up to get started with Saloony",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          color: Colors.grey[600],
-                          height: 1.5,
-                        ),
-                      ),
-
+                      _buildHeader(),
                       const SizedBox(height: 36),
-
-                      // First Name et Last Name sur la même ligne
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildValidatedTextField(
-                              controller: vm.firstNameController,
-                              enabled: !vm.isLoading,
-                              label: "First Name",
-                              hint: "Enter first name",
-                              icon: Icons.person_outline_rounded,
-                              validator: vm.validateFirstName,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildValidatedTextField(
-                              controller: vm.lastNameController,
-                              enabled: !vm.isLoading,
-                              label: "Last Name",
-                              hint: "Enter last name",
-                              icon: Icons.person_outline_rounded,
-                              validator: vm.validateLastName,
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildNameFields(),
                       const SizedBox(height: 20),
-
-                      // Email avec validation
-                      _buildValidatedTextField(
-                        controller: vm.emailController,
-                        enabled: !vm.isLoading,
-                        label: "Email",
-                        hint: "Enter your email",
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: vm.validateEmail,
-                      ),
+                      _buildEmailField(),
                       const SizedBox(height: 20),
-
-                      _buildValidatedTextField(
-                        controller: vm.phoneController,
-                        enabled: !vm.isLoading,
-                        label: "Phone Number",
-                        hint: "Enter your phone number",
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        validator: vm.validatePhone,
-                      ),
+                      _buildPhoneField(),
                       const SizedBox(height: 20),
-
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                "Gender",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1B2B3E),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "*",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GenderOption(
-                                  label: "Man",
-                                  value: "MEN",
-                                  selectedValue: vm.selectedGender,
-                                  onTap: () => vm.setGender("MEN"),
-                                  isEnabled: !vm.isLoading,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: GenderOption(
-                                  label: "Woman",
-                                  value: "WOMEN",
-                                  selectedValue: vm.selectedGender,
-                                  onTap: () => vm.setGender("WOMEN"),
-                                  isEnabled: !vm.isLoading,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (vm.genderError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8, left: 12),
-                              child: Text(
-                                vm.genderError!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.red,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      _buildGenderSection(),
                       const SizedBox(height: 20),
-
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                "Password",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1B2B3E),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "*",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: vm.passwordController,
-                            enabled: !vm.isLoading,
-                            obscureText: !vm.passwordVisible,
-                            validator: vm.validatePassword,
-                            decoration: InputDecoration(
-                              hintText: "At least 8 characters",
-                              hintStyle: GoogleFonts.poppins(
-                                color: Colors.grey[400],
-                                fontSize: 15,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.lock_outline_rounded,
-                                color: Color(0xFFF0CD97),
-                                size: 22,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF1B2B3E),
-                                  width: 2,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.red,
-                                  width: 1,
-                                ),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.red,
-                                  width: 2,
-                                ),
-                              ),
-                              disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[200]!),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 18,
-                              ),
-                              errorStyle: GoogleFonts.poppins(
-                                fontSize: 12,
-                                height: 1.5,
-                              ),
-                              errorMaxLines: 2,
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  vm.passwordVisible
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                  color: const Color(0xFFF0CD97),
-                                  size: 22,
-                                ),
-                                onPressed: vm.togglePasswordVisibility,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildPasswordSection(),
                       const SizedBox(height: 24),
-
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: vm.termsError != null 
-                                ? Colors.red 
-                                : Colors.grey[300]!,
-                            width: vm.termsError != null ? 2 : 1,
-                          ),
-                        ),
-                        child: Theme(
-                          data: ThemeData(
-                            unselectedWidgetColor: Colors.grey[400],
-                          ),
-                          child: CheckboxListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            dense: true,
-                            title: Text.rich(
-                              TextSpan(
-                                text: "I agree to the ",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: const Color(0xFF1B2B3E),
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: "Terms & Conditions",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: const Color(0xFF1B2B3E),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const TextSpan(text: " and "),
-                                  TextSpan(
-                                    text: "Privacy Policy",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: const Color(0xFF1B2B3E),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            value: vm.termsAccepted,
-                            onChanged: vm.isLoading 
-                                ? null 
-                                : (value) => vm.setTermsAccepted(value ?? false),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: const Color(0xFF1B2B3E),
-                            checkColor: const Color(0xFFF0CD97),
-                          ),
-                        ),
-                      ),
-                      if (vm.termsError != null)
+                      _buildTermsCheckbox(),
+                      if (viewModel.termsError != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 8, left: 12),
                           child: Text(
-                            vm.termsError!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.red,
-                              height: 1.5,
-                            ),
+                            viewModel.termsError!,
+                            style: SaloonyTextStyles.errorText,
                           ),
                         ),
                       const SizedBox(height: 20),
-
-                      // Sign Up Button
-                      Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: vm.isLoading
-                                ? [Colors.grey[400]!, Colors.grey[400]!]
-                                : [const Color(0xFF1B2B3E), const Color(0xFF243441)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: vm.isLoading
-                              ? []
-                              : [
-                                  BoxShadow(
-                                    color: const Color(0xFF1B2B3E).withOpacity(0.4),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: vm.isLoading ? null : () => vm.signUp(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: vm.isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
-                                  ),
-                                )
-                              : Text(
-                                  "Sign Up",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFFF0CD97),
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                        ),
-                      ),
+                      _buildSignUpButton(context),
                       const SizedBox(height: 20),
-
-                      Center(
-                        child: InkWell(
-                          onTap: vm.isLoading
-                              ? null
-                              : () {
-                                  Navigator.pushReplacementNamed(
-                                    context,
-                                    AppRoutes.signIn,
-                                  );
-                                },
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: "Already have an account? ",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: "Sign In",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: vm.isLoading
-                                        ? Colors.grey
-                                        : const Color(0xFF1B2B3E),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      _buildSignInLink(context),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -508,7 +86,418 @@ class SignUpWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildValidatedTextField({
+  /// Construire la barre d'application
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: SaloonyColors.borderLight),
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_new,
+            size: 16,
+            color: SaloonyColors.primary,
+          ),
+        ),
+        onPressed: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  /// Construire l'image de profil
+  Widget _buildProfileImage() {
+    return Center(
+      child: Container(
+        width: 180,
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Image.asset(
+            'assets/images/bbb.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [SaloonyColors.primary, SaloonyColors.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: SaloonyColors.primary.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.person_add_outlined,
+                  size: 70,
+                  color: SaloonyColors.secondary,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Construire l'en-tête
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Text(
+          "Create Account",
+          textAlign: TextAlign.center,
+          style: SaloonyTextStyles.heading1,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Sign up to get started with Saloony",
+          textAlign: TextAlign.center,
+          style: SaloonyTextStyles.subtitle,
+        ),
+      ],
+    );
+  }
+
+  /// Construire les champs Prénom et Nom
+  Widget _buildNameFields() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildTextField(
+            controller: viewModel.firstNameController,
+            enabled: !viewModel.isLoading,
+            label: "First Name",
+            hint: "Enter first name",
+            icon: Icons.person_outline_rounded,
+            validator: viewModel.validateFirstName,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildTextField(
+            controller: viewModel.lastNameController,
+            enabled: !viewModel.isLoading,
+            label: "Last Name",
+            hint: "Enter last name",
+            icon: Icons.person_outline_rounded,
+            validator: viewModel.validateLastName,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Construire le champ Email
+  Widget _buildEmailField() {
+    return _buildTextField(
+      controller: viewModel.emailController,
+      enabled: !viewModel.isLoading,
+      label: "Email",
+      hint: "Enter your email",
+      icon: Icons.email_outlined,
+      keyboardType: TextInputType.emailAddress,
+      validator: viewModel.validateEmail,
+    );
+  }
+
+  /// Construire le champ Numéro de Téléphone
+  Widget _buildPhoneField() {
+    return _buildTextField(
+      controller: viewModel.phoneController,
+      enabled: !viewModel.isLoading,
+      label: "Phone Number",
+      hint: "Enter your phone number",
+      icon: Icons.phone_outlined,
+      keyboardType: TextInputType.phone,
+      validator: viewModel.validatePhone,
+    );
+  }
+
+  /// Construire la section Genre
+  Widget _buildGenderSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text("Gender", style: SaloonyTextStyles.labelMedium),
+            const SizedBox(width: 4),
+            Text("*", style: SaloonyTextStyles.errorText),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _GenderOption(
+                label: "Man",
+                value: "MEN",
+                selectedValue: viewModel.selectedGender,
+                onTap: () => viewModel.setGender("MEN"),
+                isEnabled: !viewModel.isLoading,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _GenderOption(
+                label: "Woman",
+                value: "WOMEN",
+                selectedValue: viewModel.selectedGender,
+                onTap: () => viewModel.setGender("WOMEN"),
+                isEnabled: !viewModel.isLoading,
+              ),
+            ),
+          ],
+        ),
+        if (viewModel.genderError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 12),
+            child: Text(
+              viewModel.genderError!,
+              style: SaloonyTextStyles.errorText,
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Construire la section Mot de Passe
+  Widget _buildPasswordSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text("Password", style: SaloonyTextStyles.labelMedium),
+            const SizedBox(width: 4),
+            Text("*", style: SaloonyTextStyles.errorText),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SaloonyInputField(
+          controller: viewModel.passwordController,
+          label: '',
+          hintText: "At least 8 characters",
+          prefixIcon: Icons.lock_outline_rounded,
+          obscureText: !viewModel.passwordVisible,
+          suffixIcon: viewModel.passwordVisible
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
+          onSuffixIconTap: viewModel.togglePasswordVisibility,
+        ),
+        const SizedBox(height: 12),
+        _buildPasswordCriteriaBox(),
+      ],
+    );
+  }
+
+  /// Construire la boîte de critères de mot de passe
+  Widget _buildPasswordCriteriaBox() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SaloonyColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Password must contain:",
+            style: SaloonyTextStyles.labelMedium,
+          ),
+          const SizedBox(height: 12),
+          _buildPasswordCriteria(
+            "At least 8 characters",
+            viewModel.hasMinLength,
+          ),
+          const SizedBox(height: 8),
+          _buildPasswordCriteria(
+            "One uppercase letter (A-Z)",
+            viewModel.hasUppercase,
+          ),
+          const SizedBox(height: 8),
+          _buildPasswordCriteria(
+            "One lowercase letter (a-z)",
+            viewModel.hasLowercase,
+          ),
+          const SizedBox(height: 8),
+          _buildPasswordCriteria(
+            "One number (0-9)",
+            viewModel.hasNumber,
+          ),
+          const SizedBox(height: 8),
+          _buildPasswordCriteria(
+            "One special character (!@#\$&*~)",
+            viewModel.hasSpecialChar,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construire un critère de validation du mot de passe
+  Widget _buildPasswordCriteria(String text, bool isValid) {
+    return Row(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isValid ? SaloonyColors.success : SaloonyColors.borderLight,
+          ),
+          child: Icon(
+            Icons.check,
+            size: 14,
+            color: isValid ? Colors.white : SaloonyColors.textTertiary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              color: isValid ? SaloonyColors.success : SaloonyColors.textTertiary,
+              fontWeight: isValid ? FontWeight.w500 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Construire la case à cocher Conditions Générales
+  Widget _buildTermsCheckbox() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: viewModel.termsError != null
+              ? SaloonyColors.error
+              : SaloonyColors.borderLight,
+          width: viewModel.termsError != null ? 2 : 1,
+        ),
+      ),
+      child: Theme(
+        data: ThemeData(
+          unselectedWidgetColor: SaloonyColors.textSecondary,
+        ),
+        child: CheckboxListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
+          dense: true,
+          title: Text.rich(
+            TextSpan(
+              text: "I agree to the ",
+              style: SaloonyTextStyles.bodySmall.copyWith(
+                color: SaloonyColors.textPrimary,
+              ),
+              children: [
+                TextSpan(
+                  text: "Terms & Conditions",
+                  style: SaloonyTextStyles.bodySmall.copyWith(
+                    color: SaloonyColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const TextSpan(text: " and "),
+                TextSpan(
+                  text: "Privacy Policy",
+                  style: SaloonyTextStyles.bodySmall.copyWith(
+                    color: SaloonyColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          value: viewModel.termsAccepted,
+          onChanged: viewModel.isLoading
+              ? null
+              : (value) => viewModel.setTermsAccepted(value ?? false),
+          controlAffinity: ListTileControlAffinity.leading,
+          activeColor: SaloonyColors.primary,
+          checkColor: SaloonyColors.secondary,
+        ),
+      ),
+    );
+  }
+
+  /// Construire le bouton d'inscription
+  Widget _buildSignUpButton(BuildContext context) {
+    return SaloonyPrimaryButton(
+      label: "Sign Up",
+      isLoading: viewModel.isLoading,
+      onPressed: viewModel.isLoading 
+          ? () {} 
+          : () {
+            viewModel.signUp(context);
+          },
+    );
+  }
+
+  /// Construire le lien de connexion
+  Widget _buildSignInLink(BuildContext context) {
+    return Center(
+      child: InkWell(
+        onTap: viewModel.isLoading
+            ? null
+            : () {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppRoutes.signIn,
+                );
+              },
+        child: RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: "Already have an account? ",
+                style: SaloonyTextStyles.bodySmall.copyWith(
+                  color: SaloonyColors.textSecondary,
+                ),
+              ),
+              TextSpan(
+                text: "Sign In",
+                style: SaloonyTextStyles.bodySmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: viewModel.isLoading
+                      ? SaloonyColors.textTertiary
+                      : SaloonyColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Construire un champ texte personnalisé
+  Widget _buildTextField({
     required TextEditingController controller,
     required bool enabled,
     required String label,
@@ -524,124 +513,55 @@ class SignUpWidget extends StatelessWidget {
           children: [
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1B2B3E),
-              ),
+              style: SaloonyTextStyles.labelMedium,
             ),
-            // Ajouter * seulement si pas "Optional" dans le label
-            if (!label.contains("Optional")) ...[
-              const SizedBox(width: 4),
-              Text(
-                "*",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.red,
-                ),
-              ),
-            ],
+            const SizedBox(width: 4),
+            if (!label.contains("Optional"))
+              Text("*", style: SaloonyTextStyles.errorText),
           ],
         ),
         const SizedBox(height: 8),
-        TextFormField(
+        SaloonyInputField(
           controller: controller,
-          enabled: enabled,
-          keyboardType: keyboardType,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.poppins(
-              color: Colors.grey[400],
-              fontSize: 15,
-            ),
-            prefixIcon: Icon(
-              icon,
-              color: const Color(0xFFF0CD97),
-              size: 22,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF1B2B3E),
-                width: 2,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 1,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 2,
-              ),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 18,
-            ),
-            errorStyle: GoogleFonts.poppins(
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
+          label: '',
+          hintText: hint,
+          prefixIcon: icon,
+          keyboardType: keyboardType ?? TextInputType.text,
         ),
       ],
     );
   }
 }
-
-// Widget pour la sélection du genre avec images
-class GenderOption extends StatelessWidget {
+class _GenderOption extends StatelessWidget {
   final String label;
   final String value;
   final String selectedValue;
   final VoidCallback onTap;
   final bool isEnabled;
 
-  const GenderOption({
-    super.key,
+  const _GenderOption({
+    Key? key,
     required this.label,
     required this.value,
     required this.selectedValue,
     required this.onTap,
     required this.isEnabled,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final isSelected = value == selectedValue;
-    
+
     return GestureDetector(
       onTap: isEnabled ? onTap : null,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF1B2B3E).withOpacity(0.08) 
+          color: isSelected
+              ? SaloonyColors.primary.withOpacity(0.08)
               : Colors.white,
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[300]!,
+            color: isSelected ? SaloonyColors.primary : SaloonyColors.borderLight,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -654,15 +574,19 @@ class GenderOption extends StatelessWidget {
               width: 24,
               height: 24,
               child: Image.asset(
-                value == "MEN" 
+                value == "MEN"
                     ? 'images/iconss/homme.png'
                     : 'images/iconss/woman.png',
-                color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[600],
+                color: isSelected
+                    ? SaloonyColors.secondary
+                    : SaloonyColors.textSecondary,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback si l'image n'est pas trouvée
                   return Icon(
                     value == "MEN" ? Icons.boy : Icons.girl,
-                    color: isSelected ? const Color(0xFFF0CD97) : Colors.grey[600],
+                    color: isSelected
+                        ? SaloonyColors.secondary
+                        : SaloonyColors.textSecondary,
                     size: 30,
                   );
                 },
@@ -671,10 +595,13 @@ class GenderOption extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF1B2B3E) : Colors.grey[700],
+                fontWeight:
+                    isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? SaloonyColors.primary
+                    : SaloonyColors.textSecondary,
               ),
             ),
           ],

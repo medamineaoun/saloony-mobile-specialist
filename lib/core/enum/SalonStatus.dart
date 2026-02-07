@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Énumération du statut d'un salon
 enum SalonStatus {
   PENDING,
   ACTIVE,
@@ -8,12 +7,10 @@ enum SalonStatus {
   SUSPENDED,
   CLOSED;
 
-  /// Convertir en chaîne pour l'API
   String toJson() {
     return name;
   }
 
-  /// Créer depuis une chaîne
   static SalonStatus fromString(String value) {
     try {
       return SalonStatus.values.firstWhere(
@@ -25,7 +22,6 @@ enum SalonStatus {
     }
   }
 
-  /// Obtenir le nom formaté pour l'affichage
   String get displayName {
     switch (this) {
       case SalonStatus.PENDING:
@@ -41,7 +37,6 @@ enum SalonStatus {
     }
   }
 
-  /// Obtenir le nom en anglais
   String get displayNameEn {
     switch (this) {
       case SalonStatus.PENDING:
@@ -57,7 +52,6 @@ enum SalonStatus {
     }
   }
 
-  /// Obtenir la couleur associée
   Color get color {
     switch (this) {
       case SalonStatus.PENDING:
@@ -73,7 +67,6 @@ enum SalonStatus {
     }
   }
 
-  /// Obtenir l'icône associée
   IconData get icon {
     switch (this) {
       case SalonStatus.PENDING:
@@ -89,12 +82,10 @@ enum SalonStatus {
     }
   }
 
-  /// Est-ce que le salon peut accepter des réservations?
   bool get canAcceptBookings {
     return this == SalonStatus.ACTIVE;
   }
 
-  /// Est-ce que le salon est visible dans les recherches?
   bool get isVisibleInSearch {
     return this == SalonStatus.ACTIVE || this == SalonStatus.INACTIVE;
   }

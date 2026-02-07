@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:saloony/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 class ResetPasswordViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -10,7 +11,6 @@ class ResetPasswordViewModel extends ChangeNotifier {
   bool _passwordVisible1 = false;
   bool _passwordVisible2 = false;
 
-  // Password validation flags
   bool _hasMinLength = false;
   bool _hasUppercase = false;
   bool _hasLowercase = false;
@@ -18,17 +18,17 @@ class ResetPasswordViewModel extends ChangeNotifier {
   bool _hasSpecialChar = false;
   bool _passwordsMatch = false;
 
-  // Getters
   bool get isLoading => _isLoading;
   bool get passwordVisible1 => _passwordVisible1;
   bool get passwordVisible2 => _passwordVisible2;
+
   bool get hasMinLength => _hasMinLength;
   bool get hasUppercase => _hasUppercase;
   bool get hasLowercase => _hasLowercase;
   bool get hasNumber => _hasNumber;
   bool get hasSpecialChar => _hasSpecialChar;
   bool get passwordsMatch => _passwordsMatch;
-  
+
   bool get isPasswordValid =>
       _hasMinLength &&
       _hasUppercase &&
@@ -39,7 +39,6 @@ class ResetPasswordViewModel extends ChangeNotifier {
       passwordController.text.isNotEmpty &&
       confirmPasswordController.text.isNotEmpty;
 
-  // Toggle password visibility
   void togglePasswordVisibility1() {
     _passwordVisible1 = !_passwordVisible1;
     notifyListeners();
@@ -50,46 +49,27 @@ class ResetPasswordViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Validate password requirements
   void validatePassword() {
     final password = passwordController.text;
     final confirmPassword = confirmPasswordController.text;
 
-    // Check minimum length (8 characters)
     _hasMinLength = password.length >= 8;
-
-    // Check for uppercase letter
     _hasUppercase = password.contains(RegExp(r'[A-Z]'));
-
-    // Check for lowercase letter
     _hasLowercase = password.contains(RegExp(r'[a-z]'));
-
-    // Check for number
     _hasNumber = password.contains(RegExp(r'[0-9]'));
-
-    // Check for special character
     _hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-
-    // Check if passwords match
-    _passwordsMatch = password.isNotEmpty && 
-                      confirmPassword.isNotEmpty && 
-                      password == confirmPassword;
+    _passwordsMatch = password == confirmPassword && password.isNotEmpty;
 
     notifyListeners();
   }
 
-  // Change password
   Future<void> changePassword(
     BuildContext context,
     String email,
     String code,
   ) async {
-    // Validate before submitting
     if (!isPasswordValid) {
-      _showErrorSnackBar(
-        context,
-        'Please meet all password requirements',
-      );
+      ToastService.showError(context, "Please meet all password requirements");
       return;
     }
 
@@ -107,6 +87,8 @@ class ResetPasswordViewModel extends ChangeNotifier {
       notifyListeners();
 
       if (result['success']) {
+        ToastService.showSuccess(context, "Password updated successfully");
+
         if (context.mounted) {
           _showSuccessDialog(
             context,
@@ -114,32 +96,28 @@ class ResetPasswordViewModel extends ChangeNotifier {
           );
         }
       } else {
-        if (context.mounted) {
-          _showErrorSnackBar(
-            context,
-            result['message'] ?? 'Error resetting password',
-          );
-        }
+        ToastService.showError(
+          context,
+          result['message'] ?? "Error resetting password",
+        );
       }
     } catch (e) {
       _isLoading = false;
       notifyListeners();
 
-      if (context.mounted) {
-        _showErrorSnackBar(
-          context,
-          'Failed to reset password. Please try again.',
-        );
-      }
+      ToastService.showError(
+        context,
+        "Failed to reset password. Please try again.",
+      );
     }
   }
 
-  // Show success dialog
+  // Success dialog unchanged
   void _showSuccessDialog(BuildContext context, String message) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -186,7 +164,7 @@ class ResetPasswordViewModel extends ChangeNotifier {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.of(context).pop();
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       '/signIn',
@@ -198,7 +176,6 @@ class ResetPasswordViewModel extends ChangeNotifier {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
                   ),
                   child: const Text(
                     'Go to Login',
@@ -214,36 +191,6 @@ class ResetPasswordViewModel extends ChangeNotifier {
           ),
         );
       },
-    );
-  }
-
-  // Show error snackbar
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFFE74C3C),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
-      ),
     );
   }
 

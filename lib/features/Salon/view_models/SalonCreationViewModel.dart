@@ -1,21 +1,21 @@
-// salon_creation_viewmodel.dart - VERSION CORRIGÉE
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/core/enum/SalonGenderType.dart';
-import 'package:saloony/core/enum/additional_service.dart';
-import 'package:saloony/core/models/DayAvailability.dart';
-import 'package:saloony/core/models/TeamMember.dart';
-import 'package:saloony/core/models/Treatment.dart';
-import 'package:saloony/core/services/AuthService.dart';
-import 'package:saloony/core/models/User.dart';
+import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
+import 'package:SaloonySpecialist/core/enum/SalonGenderType.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/core/models/DayAvailability.dart';
+import 'package:SaloonySpecialist/core/models/TeamMember.dart';
+import 'package:SaloonySpecialist/core/models/Treatment.dart';
+import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:SaloonySpecialist/core/models/User.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:saloony/core/services/SalonService.dart';
-import 'package:saloony/core/services/TreatmentService.dart';
-import 'package:saloony/features/Salon/location_result.dart';
-import 'package:saloony/core/services/ToastService.dart'; // ✅ AJOUT IMPORT
+import 'package:SaloonySpecialist/core/services/SalonService.dart';
+import 'dart:typed_data';
+import 'package:SaloonySpecialist/core/services/TreatmentService.dart';
+import 'package:SaloonySpecialist/features/Salon/views/location_result.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
+import 'package:SaloonySpecialist/core/constants/app_routes.dart';
 
-enum AccountType { solo, team }
 
 class TimeRange {
   TimeOfDay startTime;
@@ -38,7 +38,7 @@ class DayAvailabilityWithSlots {
 
 class CustomService {
   String id;
-  final double? duration; // en minutes
+  final double? duration; 
   String name;
   String description;
   double price;
@@ -62,6 +62,53 @@ class SalonCreationViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
   final TreatmentService _treatmentService = TreatmentService();
+  // Allowed global services (must match backend `GlobalService` enum values)
+  static const Set<String> _allowedGlobalServices = <String>{
+    'HOMME_COUP_DEGRADEE','HOMME_COUP_CLASSIQUE','HOMME_COUP_TONDEUSE','HOMME_BRUSHING','HOMME_COLORATION','HOMME_MECHES','HOMME_LISSAGE','HOMME_PERMANENTE','HOMME_TAILLE_BARBE','HOMME_RASAGE_TRADITIONNEL','HOMME_SOIN_BARBE','HOMME_SOIN_CUIR_CHEVELU',
+    'BARBE_TAILLE_CLASSIQUE','BARBE_RASAGE_COUTEAU','BARBE_COLORATION','BARBE_SOIN_PROFOND',
+    'FEMME_COUP_CHEVEUX','FEMME_BRUSHING','FEMME_COLORATION','FEMME_MECHES','FEMME_BALAYAGE','FEMME_LISSAGE','FEMME_PERMANENTE','FEMME_CHIGNON','FEMME_COIFFURE_SOIREE','FEMME_SOIN_PROFOND','FEMME_SOIN_KERATINE','FEMME_BOTOX_CAPILLAIRE',
+    'MANUCURE_CLASSIQUE','MANUCURE_SEMIPERMANENTE','MANUCURE_GEL','MANUCURE_NAIL_ART','MANUCURE_SOIN_MAINS','PEDICURE_CLASSIQUE','PEDICURE_SPA','PEDICURE_GEL',
+    'MAKEUP_SOFT','MAKEUP_SOIREE','MAKEUP_BRIDE','MAKEUP_correction','EXTENSIONS_CILS','REHAUSSEMENT_CILS','TEINTURE_CILS','MICROBLADING','MICROSHADING',
+    'EPILATION_CIRE_VISAGE','EPILATION_CIRE_CORPS','EPILATION_JAMBES','EPILATION_BRAS','EPILATION_AISSLES','EPILATION_BRESILIENNE','EPILATION_INTEGRALE','EPILATION_LASER_VISAGE','EPILATION_LASER_CORPS','EPILATION_LASER_JAMBES','EPILATION_LASER_AISSLES','EPILATION_LASER_BIKINI',
+    'MASSAGE_RELAXANT','MASSAGE_TONIFIANT','MASSAGE_SPORTIF','MASSAGE_HUILES_ESSENTIELLES','MASSAGE_CALIFORNIEN','MASSAGE_SUEDE','MASSAGE_THERAPEUTIQUE','MASSAGE_PIERRES_CHAUDES','MASSAGE_DORSAL','MASSAGE_PIEDS','MASSAGE_CUIR_CHEVELU',
+    'SOIN_VISAGE_CLASSIQUE','SOIN_VISAGE_PROFOND','SOIN_HYDRATANT','SOIN_ANTI_AGE','SOIN_ACNE','MICRONEEDLING','PEELING_VISAGE','HYDRAFACIAL','DERMAPLANING',
+    'GOMMAGE_CORPS','ENVELOPPEMENT_CORPS','HAMMAM','SAUNA','SOIN_MINCEUR','PRESSOTHERAPIE',
+    'EXTENSIONS_KERATINE','EXTENSIONS_BANDE','EXTENSIONS_CLIP','RETRAIT_EXTENSIONS'
+  };
+
+  // Expose ordered list for dropdowns
+  List<String> get allowedGlobalServiceNames {
+    final list = _allowedGlobalServices.toList()..sort();
+    return list;
+  }
+
+  // Provide value/label pairs for UI dropdowns
+  List<Map<String, String>> get allowedGlobalServiceOptions {
+    return allowedGlobalServiceNames
+        .map((v) => {'value': v, 'label': _formatServiceLabel(v)})
+        .toList();
+  }
+
+  String _formatServiceLabel(String raw) {
+    final lower = raw.replaceAll('_', ' ').toLowerCase();
+    return lower.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+  }
+
+  // Map a user input (or selected label) to the canonical GlobalService name
+  String? _mapToGlobal(String? raw) {
+    if (raw == null) return null;
+    final s = raw.trim().toUpperCase()
+        .replaceAll(RegExp(r"[^A-Z0-9_]"), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_\$'), '');
+    if (_allowedGlobalServices.contains(s)) return s;
+    // Also allow mapping from formatted label back to value
+    final fromLabel = s.replaceAll('_', ' ');
+    for (final v in _allowedGlobalServices) {
+      if (_formatServiceLabel(v).toUpperCase() == fromLabel) return v;
+    }
+    return null;
+  }
   String? _currentUserId;
   String? get currentUserId => _currentUserId;
   final ImagePicker _picker = ImagePicker();
@@ -81,6 +128,8 @@ class SalonCreationViewModel extends ChangeNotifier {
   SalonCategory? selectedCategory = SalonCategory.hairSalon;
 
   String? _salonImagePath;
+  // For web (and universal) image handling
+  Uint8List? _salonImageBytes;
   LocationResult? _location;
   SalonGenderType? _selectedGenderType;
   List<AdditionalService> selectedAdditionalServices = [];
@@ -92,7 +141,6 @@ class SalonCreationViewModel extends ChangeNotifier {
   
   // Team
   List<TeamMember> _teamMembers = [];
-  AccountType? _accountType;
 
   // Availability
   final Map<String, DayAvailabilityWithSlots> _weeklyAvailability = {};
@@ -102,8 +150,8 @@ class SalonCreationViewModel extends ChangeNotifier {
   bool get isLoadingUser => _isLoadingUser;
   bool get isCreatingSalon => _isCreatingSalon;
   int get currentStep => _currentStep;
-  AccountType? get accountType => _accountType;
   String? get salonImagePath => _salonImagePath;
+  Uint8List? get salonImageBytes => _salonImageBytes;
   LocationResult? get location => _location;
   Map<String, DayAvailabilityWithSlots> get weeklyAvailability => _weeklyAvailability;
   List<TeamMember> get teamMembers => _teamMembers;
@@ -235,10 +283,7 @@ class SalonCreationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setAccountType(AccountType type) {
-    _accountType = type;
-    notifyListeners();
-  }
+ 
 
   // Step navigation
   void nextStep(BuildContext context) {
@@ -281,7 +326,14 @@ class SalonCreationViewModel extends ChangeNotifier {
       );
       
       if (image != null) {
-        _salonImagePath = image.path;
+        // Read bytes for web compatibility; keep path for mobile/backwards compatibility
+        try {
+          _salonImageBytes = await image.readAsBytes();
+        } catch (e) {
+          _salonImageBytes = null;
+        }
+
+        _salonImagePath = image.path.isNotEmpty ? image.path : image.name;
         notifyListeners();
         _showToastSuccess(null, 'Image sélectionnée avec succès');
       }
@@ -308,9 +360,12 @@ class SalonCreationViewModel extends ChangeNotifier {
   void toggleTreatmentSelection(String treatmentId) {
     if (_selectedTreatmentIds.contains(treatmentId)) {
       _selectedTreatmentIds.remove(treatmentId);
+      debugPrint('🗑️ Deselected treatment: $treatmentId');
     } else {
       _selectedTreatmentIds.add(treatmentId);
+      debugPrint('➕ Selected treatment: $treatmentId');
     }
+    debugPrint('📌 Current selectedTreatmentIds: $_selectedTreatmentIds');
     notifyListeners();
   }
 
@@ -324,6 +379,63 @@ class SalonCreationViewModel extends ChangeNotifier {
     _customServices.removeWhere((s) => s.id == serviceId);
     notifyListeners();
     _showToastInfo(null, 'Service personnalisé supprimé');
+  }
+
+
+  /// Upload image bytes to salon photo endpoint and try to extract the saved path from response
+  Future<String?> uploadSalonPhotoAndGetPath(String salonId, Uint8List imageBytes, {String filename = 'image.jpg'}) async {
+    try {
+      final result = await _salonService.addSalonPhotoBytes(
+        salonId: salonId,
+        imageBytes: imageBytes,
+        filename: filename,
+      );
+
+      if (result['success'] != true) {
+        debugPrint('⚠️ Upload returned success=false');
+        return null;
+      }
+
+      final data = result['data'];
+      debugPrint('📤 Upload response data: $data');
+
+      if (data == null) return null;
+
+      // Try common shapes: direct path string, map with path/photoPath/url, or salon dto with salonPhotosPaths
+      if (data is String) return data;
+
+      if (data is Map) {
+        if (data.containsKey('path')) return data['path'] as String?;
+        if (data.containsKey('photoPath')) return data['photoPath'] as String?;
+        if (data.containsKey('url')) return data['url'] as String?;
+        if (data.containsKey('salonPhotosPaths') && data['salonPhotosPaths'] is List && (data['salonPhotosPaths'] as List).isNotEmpty) {
+          final list = data['salonPhotosPaths'] as List;
+          return list.last as String?;
+        }
+        // If backend returned the created resource as a map containing 'data' inner
+        if (data.containsKey('data') && data['data'] is Map) {
+          final inner = data['data'] as Map;
+          if (inner.containsKey('path')) return inner['path'] as String?;
+        }
+      }
+
+      if (data is List && data.isNotEmpty) {
+        // maybe returned list of paths or objects
+        final first = data.last;
+        if (first is String) return first;
+        if (first is Map) {
+          if (first.containsKey('path')) return first['path'] as String?;
+          if (first.containsKey('treatmentPhotosPaths') && first['treatmentPhotosPaths'] is List && (first['treatmentPhotosPaths'] as List).isNotEmpty) {
+            return (first['treatmentPhotosPaths'] as List).last as String?;
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error uploading salon photo and extracting path: $e');
+      return null;
+    }
   }
 
   // ✅ FIXED: Validate time range when setting
@@ -400,11 +512,42 @@ class SalonCreationViewModel extends ChangeNotifier {
   Future<void> _loadAvailableTreatments() async {
     try {
       final result = await _salonService.getAllTreatments();
+      debugPrint('🔎 _loadAvailableTreatments - salonService result: $result');
+
+      List<dynamic>? rawTreatments;
       if (result['success'] == true && result['treatments'] != null) {
-        _availableTreatments = (result['treatments'] as List)
-            .map((json) => Treatment.fromJson(json))
-            .toList();
+        rawTreatments = result['treatments'] as List<dynamic>?;
+      }
+
+      // Fallback: try TreatmentService if salonService didn't return treatments
+      if ((rawTreatments == null || rawTreatments.isEmpty)) {
+        debugPrint('ℹ️ Aucun traitement retourné par SalonService, tentative via TreatmentService...');
+        try {
+          final alt = await _treatmentService.getAllTreatments();
+          debugPrint('🔎 _loadAvailableTreatments - treatmentService result: $alt');
+          if (alt['success'] == true && alt['treatments'] != null) {
+            rawTreatments = alt['treatments'] as List<dynamic>?;
+          }
+        } catch (e) {
+          debugPrint('⚠️ Fallback traitement échoué: $e');
+        }
+      }
+
+      if (rawTreatments != null && rawTreatments.isNotEmpty) {
+        _availableTreatments = rawTreatments.map<Treatment>((item) {
+          try {
+            if (item is Map<String, dynamic>) return Treatment.fromJson(item);
+            if (item is Map) return Treatment.fromJson(Map<String, dynamic>.from(item));
+            return Treatment.fromJson({});
+          } catch (e) {
+            debugPrint('⚠️ Erreur parsing traitement item: $e - item: $item');
+            return Treatment.fromJson({});
+          }
+        }).toList();
+        debugPrint('✅ ${_availableTreatments.length} traitements chargés');
         notifyListeners();
+      } else {
+        debugPrint('⚠️ Aucun traitement récupéré après fallback');
       }
     } catch (e) {
       debugPrint('❌ Erreur chargement traitements: $e');
@@ -412,197 +555,319 @@ class SalonCreationViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _finishCreation(BuildContext context) async {
-    if (_isCreatingSalon) return;
+// Replace the default treatment creation section with this:
 
-    _isCreatingSalon = true;
-    notifyListeners();
+Future<void> _finishCreation(BuildContext context) async {
+  if (_isCreatingSalon) return;
 
-    final BuildContext? savedContext = context;
+  _isCreatingSalon = true;
+  notifyListeners();
 
-    try {
-      // Validation de base
-      if (_location == null) {
-        _showError(savedContext, 'Veuillez sélectionner un emplacement');
+  final BuildContext? savedContext = context;
+
+  try {
+    debugPrint('🔔 _finishCreation - selectedTreatmentIds: $_selectedTreatmentIds');
+    debugPrint('🔔 _finishCreation - customServices count: ${_customServices.length}');
+    debugPrint('🔔 _finishCreation - availableTreatments loaded: ${_availableTreatments.length}');
+    for (final t in _availableTreatments) {
+      debugPrint('   - available treatment: id=${t.treatmentId}, name=${t.treatmentName}');
+    }
+    // Basic validation
+    if (_location == null) {
+      _showError(savedContext, 'Veuillez sélectionner un emplacement');
+      return;
+    }
+
+    if (_selectedTreatmentIds.isEmpty && _customServices.isEmpty) {
+      _showError(savedContext, 'Veuillez sélectionner au moins un traitement ou créer un service personnalisé');
+      return;
+    }
+
+    if (selectedCategory == null) {
+      _showError(savedContext, 'Veuillez sélectionner une catégorie');
+      return;
+    }
+
+    if (_selectedGenderType == null) {
+      _showError(savedContext, 'Veuillez sélectionner le type de clientèle');
+      return;
+    }
+
+    if (selectedAdditionalServices.isEmpty) {
+      _showError(savedContext, 'Veuillez sélectionner au moins un service additionnel');
+      return;
+    }
+
+    final availableDays = _weeklyAvailability.values
+        .where((day) => day.isAvailable && 
+                       day.timeRange != null && 
+                       _isValidTimeRange(day.timeRange!.startTime, day.timeRange!.endTime))
+        .length;
+
+    if (availableDays == 0) {
+      _showError(savedContext, 'Veuillez définir au moins un jour de disponibilité avec des horaires valides');
+      return;
+    }
+
+    // Prepare specialist IDs
+    List<String> specialistIds = [];
+    if (_currentUser != null) {
+      specialistIds = [_currentUser!.userId!];
+    }
+    
+    for (final member in _teamMembers) {
+      if (!_isValidUUID(member.id)) {
+        _showError(savedContext, 'ID invalide pour ${member.fullName}. Veuillez contacter le support.');
         return;
       }
+      specialistIds.add(member.id);
+    }
 
-      // ✅ FIXED: Vérifier qu'au moins un traitement OU service personnalisé est sélectionné
-      if (_selectedTreatmentIds.isEmpty && _customServices.isEmpty) {
-        _showError(savedContext, 'Veuillez sélectionner au moins un traitement ou service personnalisé');
-        return;
-      }
+    if (specialistIds.isEmpty) {
+      _showError(savedContext, 'Erreur: utilisateur non identifié');
+      return;
+    }
 
-      if (selectedCategory == null) {
-        _showError(savedContext, 'Veuillez sélectionner une catégorie');
-        return;
-      }
+    List<String> finalTreatmentIds = List.from(_selectedTreatmentIds);
+    
+    // ✅ FIXED: Use a predefined treatment instead of creating custom one
+    if (finalTreatmentIds.isEmpty) {
+      debugPrint('📝 Aucun traitement sélectionné. Tentative d\'utiliser un traitement par défaut...');
 
-      if (_selectedGenderType == null) {
-        _showError(savedContext, 'Veuillez sélectionner le type de clientèle');
-        return;
-      }
-
-      if (selectedAdditionalServices.isEmpty) {
-        _showError(savedContext, 'Veuillez sélectionner au moins un service additionnel');
-        return;
-      }
-
-      final availableDays = _weeklyAvailability.values
-          .where((day) => day.isAvailable && 
-                         day.timeRange != null && 
-                         _isValidTimeRange(day.timeRange!.startTime, day.timeRange!.endTime))
-          .length;
-
-      if (availableDays == 0) {
-        _showError(savedContext, 'Veuillez définir au moins un jour de disponibilité avec des horaires valides');
-        return;
-      }
-
-      if (_weeklyAvailability.length != 7) {
-        _showError(savedContext, 'Veuillez définir la disponibilité pour tous les jours de la semaine');
-        return;
-      }
-
-      List<String> specialistIds = [];
-      if (_currentUser != null) {
-        specialistIds = [_currentUser!.userId!];
-      }
-      
-      for (final member in _teamMembers) {
-        if (!_isValidUUID(member.id)) {
-          _showError(savedContext, 'ID invalide pour ${member.fullName}. Veuillez contacter le support.');
+      if (_availableTreatments.isNotEmpty) {
+        final defaultTreatment = _availableTreatments.first;
+        finalTreatmentIds.add(defaultTreatment.treatmentId);
+        debugPrint('✅ Utilisation du traitement par défaut: ${defaultTreatment.treatmentName} (${defaultTreatment.treatmentId})');
+      } else {
+        // If there are custom services, allow creation with only custom services
+        if (_customServices.isNotEmpty) {
+          debugPrint('⚠️ Aucun traitement API disponible mais ${_customServices.length} service(s) personnalisé(s) présents — création autorisée avec services personnalisés uniquement.');
+          // finalTreatmentIds remains empty; proceed to create salon with empty list
+        } else {
+          debugPrint('❌ Aucun traitement disponible dans le système');
+          _showError(savedContext, 'Veuillez sélectionner au moins un traitement existant ou ajouter un service personnalisé.');
           return;
         }
-        specialistIds.add(member.id);
       }
+    }
 
-      if (specialistIds.isEmpty) {
-        _showError(savedContext, 'Erreur: utilisateur non identifié');
-        return;
-      }
+    // If still empty but custom services exist, allow; otherwise enforce at least one treatment
+    if (finalTreatmentIds.isEmpty && _customServices.isEmpty) {
+      debugPrint('❌ ERREUR CRITIQUE: Aucun traitement disponible et aucun service personnalisé');
+      _showError(savedContext, 'Veuillez sélectionner au moins un traitement de la liste.');
+      return;
+    }
 
-      final List<String> additionalServicesStrings = additionalServicesForApi;
+    debugPrint('📋 Traitements finaux à envoyer: $finalTreatmentIds');
 
-      debugPrint('📤 Création du salon...');
-      debugPrint('Nom: ${salonNameController.text}');
-      debugPrint('Catégorie (API): $salonCategoryForApi');
-      debugPrint('Gender Type (API): $genderTypeForApi');
-      debugPrint('Services additionnels: $additionalServicesStrings');
-      debugPrint('Traitements: ${_selectedTreatmentIds.length}');
-      debugPrint('Services personnalisés: ${_customServices.length}');
-      debugPrint('Spécialistes: ${specialistIds.length}');
-      debugPrint('Spécialistes IDs: $specialistIds');
-      debugPrint('Jours disponibles: $availableDays/7');
+    List<String> _tempCreatedTreatmentIds = [];
 
-      List<String> finalTreatmentIds = List.from(_selectedTreatmentIds);
-      
-      if (_customServices.isNotEmpty) {
-        debugPrint('📝 Création des ${_customServices.length} services personnalisés...');
-        
-        for (final customService in _customServices) {
-          try {
-            final backendCategory = _mapTreatmentCategoryToBackend(customService.category);
-            
-            debugPrint('  🎯 Catégorie mapping: ${customService.category} -> $backendCategory');
-            
-            final treatmentResult = await _treatmentService.addTreatment(
-              name: customService.name,
-              description: customService.description,
-              price: customService.price,
-              duration: customService.duration != null ? customService.duration! / 60 : 1.0,
-              category: backendCategory, 
-              photoPath: customService.photoPath,
-            );
-            
-            if (treatmentResult['success'] && treatmentResult['treatment'] != null) {
-              final treatmentId = treatmentResult['treatment']['treatmentId'] ?? treatmentResult['treatment']['id'];
-              if (treatmentId != null) {
-                finalTreatmentIds.add(treatmentId);
-                debugPrint('  ✅ Service "${customService.name}" créé avec ID: $treatmentId');
-              } else {
-                debugPrint('  ⚠️ ID manquant pour service "${customService.name}"');
-              }
-            } else {
-              debugPrint('  ⚠️ Échec création service "${customService.name}": ${treatmentResult['message']}');
-            }
-          } catch (e) {
-            debugPrint('  ❌ Erreur création service "${customService.name}": $e');
-          }
-        }
-      }
+    // If no existing treatment IDs selected but there are custom services,
+    // create the SALON first (so we have a salonId), then call the API that
+    // attaches custom services to that salon. This matches backend expectations
+    // which require a salonId when creating treatments.
+    List<Map<String, dynamic>>? customServicesPayload;
+    bool createdSalonEarly = false;
+    Map<String, dynamic>? earlySalonData;
 
-      if (finalTreatmentIds.isEmpty) {
-        _showError(savedContext, 'Impossible de créer les services. Veuillez réessayer.');
-        return;
-      }
+    if (finalTreatmentIds.isEmpty && _customServices.isNotEmpty) {
+      debugPrint('ℹ️ Aucun traitement existant — création du salon d\'abord pour obtenir salonId');
 
-      debugPrint('📋 Total traitements finaux: ${finalTreatmentIds.length}');
-
+      // Prepare minimal salon payload and the customTreatments payload
       final availabilityForApi = _prepareAvailabilityForApi();
 
-      final createResult = await _salonService.createSalon(
+      // Build customTreatments payload expected by backend
+      final List<Map<String, dynamic>> builtCustomTreatments = [];
+      for (final cs in _customServices) {
+        final mappedName = _mapToGlobal(cs.name);
+        if (mappedName == null) {
+          _showToastError(savedContext, 'Nom de service invalide: ${cs.name}. Utilisez un nom valide provenant de la liste.');
+          _isCreatingSalon = false;
+          notifyListeners();
+          return;
+        }
+
+        final durationHours = (cs.duration ?? 30) / 60.0;
+
+        builtCustomTreatments.add({
+          'treatmentName': mappedName,
+          'treatmentDescription': cs.description ?? '',
+          'treatmentPrice': cs.price ?? 0,
+          'treatmentTime': durationHours,
+          'treatmentCategory': _mapTreatmentCategoryToBackend(cs.category),
+          'treatmentPhotosPaths': cs.photoPath != null ? [cs.photoPath] : [],
+        });
+      }
+
+      final createResultEarly = await _salonService.createSalon(
         salonName: salonNameController.text.trim(),
         salonDescription: descriptionController.text.trim(),
         salonCategory: salonCategoryForApi,
-        additionalServices: additionalServicesStrings,
+        additionalServices: additionalServicesForApi,
         genderType: genderTypeForApi,
         latitude: _location!.latitude,
         longitude: _location!.longitude,
-        treatmentIds: finalTreatmentIds, 
+        treatmentIds: <String>[],
         specialistIds: specialistIds,
         availability: availabilityForApi,
+        customTreatments: builtCustomTreatments,
       );
 
-      if (!createResult['success']) {
-        final errorMessage = createResult['message'] ?? 'Erreur lors de la création';
-        debugPrint('❌ Erreur création: $errorMessage');
-        _showError(savedContext, errorMessage);
+      if (createResultEarly['success'] != true) {
+        final err = createResultEarly['message'] ?? 'Erreur création salon (préliminaire)';
+        _showError(savedContext, err);
+        _isCreatingSalon = false;
+        notifyListeners();
         return;
       }
 
-      final salonId = createResult['salon']?['salonId'];
-      if (salonId == null) {
-        debugPrint('❌ ID salon manquant dans la réponse');
-        _showError(savedContext, 'Erreur: ID du salon non reçu');
+      earlySalonData = createResultEarly['salon'];
+      final salonIdEarly = earlySalonData?['salonId']?.toString();
+      if (salonIdEarly == null || salonIdEarly.isEmpty) {
+        _showError(savedContext, 'Erreur: salonId manquant après création');
+        _isCreatingSalon = false;
+        notifyListeners();
         return;
       }
 
-      debugPrint('✅ Salon créé: $salonId');
+      createdSalonEarly = true;
+      debugPrint('✅ Salon créé temporairement (avant traitements): $salonIdEarly');
 
-      if (_salonImagePath != null) {
-        debugPrint('📷 Upload de la photo...');
-        final photoResult = await _salonService.addSalonPhoto(
-          salonId: salonId,
-          imagePath: _salonImagePath!,
-        );
+      // We included custom treatments in the create call; mark payload as sent
+      customServicesPayload = builtCustomTreatments;
+    }
+
+    final availabilityForApi = _prepareAvailabilityForApi();
+
+    // Create the salon with validated treatment IDs (or reuse early-created)
+    debugPrint('📤 Création du salon avec ${finalTreatmentIds.length} traitement(s)...');
+
+    Map<String, dynamic> createResult;
+    if (createdSalonEarly && earlySalonData != null) {
+      createResult = {'success': true, 'salon': earlySalonData};
+      debugPrint('ℹ️ Réutilisation du salon créé précédemment.');
+    } else {
+      createResult = await _salonService.createSalon(
+        salonName: salonNameController.text.trim(),
+        salonDescription: descriptionController.text.trim(),
+        salonCategory: salonCategoryForApi,
+        additionalServices: additionalServicesForApi,
+        genderType: genderTypeForApi,
+        latitude: _location!.latitude,
+        longitude: _location!.longitude,
+        treatmentIds: finalTreatmentIds,
+        specialistIds: specialistIds,
+        availability: availabilityForApi,
+        customTreatments: customServicesPayload,
+      );
+    }
+
+    if (!createResult['success']) {
+      final errorMessage = createResult['message'] ?? 'Erreur lors de la création';
+      debugPrint('❌ Erreur création salon: $errorMessage');
+      // Cleanup: delete any temporary treatments we created
+      if (_tempCreatedTreatmentIds.isNotEmpty) {
+        for (final tId in _tempCreatedTreatmentIds) {
+          try {
+            final del = await _treatmentService.deleteTreatment(tId);
+            debugPrint('🧹 Suppression traitement temporaire ($tId): $del');
+          } catch (e) {
+            debugPrint('⚠️ Erreur suppression traitement temporaire: $e');
+          }
+        }
+      }
+      _showError(savedContext, errorMessage);
+      return;
+    }
+
+    final salonId = createResult['salon']?['salonId'];
+    if (salonId == null) {
+      debugPrint('❌ ID salon manquant dans la réponse');
+      _showError(savedContext, 'Erreur: ID du salon non reçu');
+      return;
+    }
+
+    debugPrint('✅ Salon créé avec succès: $salonId');
+
+    // Upload photo if available
+    if (_salonImagePath != null) {
+      debugPrint('📷 Upload de la photo...');
+      Map<String, dynamic> photoResult;
+      
+      try {
+        if (_salonImageBytes != null) {
+          photoResult = await _salonService.addSalonPhotoBytes(
+            salonId: salonId,
+            imageBytes: _salonImageBytes!,
+            filename: _salonImagePath!.split('/').last,
+          );
+        } else {
+          photoResult = await _salonService.addSalonPhoto(
+            salonId: salonId,
+            imagePath: _salonImagePath!,
+          );
+        }
         
         if (photoResult['success']) {
           debugPrint('✅ Photo uploadée');
-          _showToastSuccess(savedContext, 'Photo du salon uploadée avec succès');
         } else {
           debugPrint('⚠️ Photo non uploadée: ${photoResult['message']}');
-          _showToastWarning(savedContext, 'Photo non uploadée: ${photoResult['message']}');
+          _showToastWarning(savedContext, 'Photo non uploadée');
         }
+      } catch (e) {
+        debugPrint('⚠️ Erreur upload photo: $e');
+        _showToastWarning(savedContext, 'Erreur lors de l\'upload de la photo');
       }
-
-      if (savedContext != null && savedContext.mounted) {
-        _showToastSuccess(savedContext, '✅ Salon créé avec succès !');
-        
-        // Navigation après un délai pour voir le toast
-        Future.delayed(const Duration(seconds: 2), () {
-          Navigator.of(savedContext).popUntil((route) => route.isFirst);
-        });
-      }
-    } catch (e) {
-      debugPrint('❌ Erreur création salon: $e');
-      _showError(savedContext, 'Erreur: ${e.toString()}');
-    } finally {
-      _isCreatingSalon = false;
-      notifyListeners();
     }
-  }
 
+    // Add custom services if any (only if they were NOT already sent in createSalon)
+    if (_customServices.isNotEmpty && (customServicesPayload == null || customServicesPayload.isEmpty)) {
+      debugPrint('📝 Ajout de ${_customServices.length} service(s) personnalisé(s)...');
+      
+      try {
+        final customResult = await _salonService.addCustomServices(
+          salonId: salonId,
+          customServices: _customServices,
+        );
+
+        if (customResult['success'] == true) {
+          debugPrint('✅ Services personnalisés ajoutés');
+        } else {
+          debugPrint('⚠️ Échec ajout services personnalisés: ${customResult['message']}');
+          _showToastWarning(savedContext, 'Les services personnalisés n\'ont pas été ajoutés');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Erreur ajout services personnalisés: $e');
+        _showToastWarning(savedContext, 'Erreur lors de l\'ajout des services personnalisés');
+      }
+    }
+
+    // Success!
+    if (savedContext != null && savedContext.mounted) {
+      // Ensure the user sees immediate feedback even if FToast fails.
+      try {
+        ScaffoldMessenger.of(savedContext).showSnackBar(
+          const SnackBar(content: Text('✅ Salon créé avec succès !'), duration: Duration(seconds: 2)),
+        );
+      } catch (e) {
+        // ignore - fallback to ToastService
+        _showToastSuccess(savedContext, '✅ Salon créé avec succès !');
+      }
+
+      // Navigate to dashboard immediately so the user lands on the home screen.
+      if (savedContext.mounted) {
+        Navigator.of(savedContext).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      }
+    }
+
+  } catch (e) {
+    debugPrint('❌ Erreur création salon: $e');
+    _showError(savedContext, 'Erreur: ${e.toString()}');
+  } finally {
+    _isCreatingSalon = false;
+    notifyListeners();
+  }
+}
   void _showError(BuildContext? context, String message) {
     _showToastError(context, message);
   }
@@ -1047,7 +1312,126 @@ class SalonCreationViewModel extends ChangeNotifier {
       ],
     );
   }
+void clearImage() {
+  _salonImagePath = null;
+  _salonImageBytes = null;
+  notifyListeners();
+}
 
+Future<void> syncCustomServicesToBackend(String salonId, {BuildContext? context}) async {
+  if (_customServices.isEmpty) {
+    debugPrint('ℹ️ Aucun service personnalisé à synchroniser');
+    return;
+  }
+
+  try {
+    debugPrint('📝 Synchronisation de ${_customServices.length} service(s) personnalisé(s)...');
+    
+    // 1. Créer les traitements sans photos d'abord
+    final customResult = await _salonService.addCustomServices(
+      salonId: salonId,
+      customServices: _customServices,
+    );
+
+    if (customResult['success'] != true) {
+      debugPrint('⚠️ Échec synchronisation services: ${customResult['message']}');
+      _showToastWarning(context, 'Erreur lors de la synchronisation des services');
+      return;
+    }
+
+    debugPrint('✅ Services personnalisés créés');
+
+    // 2. Récupérer les IDs des traitements créés
+    final List<dynamic>? createdTreatments = customResult['data'];
+    
+    if (createdTreatments == null || createdTreatments.isEmpty) {
+      debugPrint('⚠️ Aucun traitement retourné après création');
+      return;
+    }
+
+    // 3. Upload des photos pour chaque traitement qui en a
+    int photosUploaded = 0;
+    for (int i = 0; i < _customServices.length && i < createdTreatments.length; i++) {
+      final customService = _customServices[i];
+      final createdTreatment = createdTreatments[i];
+      
+      // Extraire l'ID du traitement créé
+      String? treatmentId;
+      if (createdTreatment is Map) {
+        treatmentId = createdTreatment['treatmentId']?.toString();
+      }
+      
+      if (treatmentId == null) {
+        debugPrint('⚠️ ID de traitement manquant pour le service: ${customService.name}');
+        continue;
+      }
+
+      // Upload de la photo si elle existe
+      if (customService.photoPath != null && customService.photoPath!.isNotEmpty) {
+        debugPrint('📤 Upload photo pour traitement: $treatmentId');
+        
+        try {
+          // Si c'est un chemin local (fichier)
+          if (!customService.photoPath!.startsWith('http') && 
+              !customService.photoPath!.startsWith('data:')) {
+            
+            final photoResult = await _treatmentService.uploadTreatmentPhoto(
+              treatmentId,
+              customService.photoPath!,
+            );
+            
+            if (photoResult['success'] == true) {
+              photosUploaded++;
+              debugPrint('✅ Photo uploadée pour: ${customService.name}');
+            } else {
+              debugPrint('⚠️ Échec upload photo pour: ${customService.name}');
+            }
+          }
+          // Si c'est déjà une URL ou base64, on skip (déjà stocké)
+          else {
+            debugPrint('ℹ️ Photo déjà stockée ou URL pour: ${customService.name}');
+          }
+        } catch (e) {
+          debugPrint('❌ Erreur upload photo pour ${customService.name}: $e');
+        }
+      }
+    }
+
+    if (photosUploaded > 0) {
+      debugPrint('✅ $photosUploaded photo(s) uploadée(s) avec succès');
+      _showToastSuccess(context, 'Services et photos synchronisés');
+    } else {
+      _showToastSuccess(context, 'Services synchronisés');
+    }
+
+  } catch (e) {
+    debugPrint('⚠️ Erreur synchronisation services: $e');
+    _showToastWarning(context, 'Erreur lors de la synchronisation');
+  }
+}
+
+// ✅ NOUVEAU: Méthode pour uploader une photo après création du traitement
+Future<bool> uploadPhotoForTreatment(String treatmentId, String photoPath) async {
+  try {
+    debugPrint('📤 Upload photo pour traitement: $treatmentId');
+    
+    final result = await _treatmentService.uploadTreatmentPhoto(
+      treatmentId,
+      photoPath,
+    );
+    
+    if (result['success'] == true) {
+      debugPrint('✅ Photo uploadée avec succès');
+      return true;
+    } else {
+      debugPrint('⚠️ Échec upload photo: ${result['message']}');
+      return false;
+    }
+  } catch (e) {
+    debugPrint('❌ Erreur upload photo: $e');
+    return false;
+  }
+}
   @override
   void dispose() {
     salonNameController.dispose();

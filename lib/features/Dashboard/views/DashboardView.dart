@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:saloony/features/Appointment/views/AppointmentCardWidget.dart';
-import 'package:saloony/features/Dashboard/viewmodels/DashboardViewModel.dart';
-import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
-import 'package:saloony/features/Menu/viewmodels/MenuViewModel.dart' hide SideMenuDialog;
+import 'package:SaloonySpecialist/features/Appointment/views/AppointmentCardWidget.dart';
+import 'package:SaloonySpecialist/features/Dashboard/viewmodels/DashboardViewModel.dart';
+import 'package:SaloonySpecialist/features/Menu/views/SideMenuDialog.dart';
+import 'package:SaloonySpecialist/features/Menu/viewmodels/MenuViewModel.dart' hide SideMenuDialog;
 
 
 class DashboardView extends StatelessWidget {

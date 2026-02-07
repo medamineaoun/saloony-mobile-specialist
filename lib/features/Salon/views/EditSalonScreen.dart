@@ -1,13 +1,15 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:google_fonts/google_fonts.dart' hide Config;
 import 'package:image_picker/image_picker.dart';
-import 'package:saloony/core/Config/ProviderSetup.dart';
-import 'package:saloony/core/constants/SalonConstants.dart';
-import 'package:saloony/core/enum/SalonCategory.dart';
-import 'package:saloony/core/enum/SalonGenderType.dart';
-import 'package:saloony/core/enum/additional_service.dart';
-import 'package:saloony/core/services/SalonService.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:SaloonySpecialist/core/constants/SalonConstants.dart';
+import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
+import 'package:SaloonySpecialist/core/enum/SalonGenderType.dart';
+import 'package:SaloonySpecialist/core/enum/additional_service.dart';
+import 'package:SaloonySpecialist/core/services/SalonService.dart';
+import 'package:SaloonySpecialist/core/services/ToastService.dart';
 
 class EditSalonScreen extends StatefulWidget {
   final Map<String, dynamic> salonData;
@@ -22,23 +24,20 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
   final SalonService _salonService = SalonService();
   final _formKey = GlobalKey<FormState>();
 
-  // Contrôleurs
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
 
-  // États
   SalonCategory _selectedCategory = SalonCategory.barbershop;
   SalonGenderType _selectedGenderType = SalonGenderType.mixed;
   List<AdditionalService> _selectedAdditionalServices = [];
   
-  // Image unique
   String? _currentPhotoUrl;
-  File? _newPhoto;
+  XFile? _newPhoto;
+  Uint8List? _newPhotoBytes;
   bool _isLoading = false;
   
-  // Données du salon original pour conserver les traitements
   late Map<String, dynamic> _originalSalonData;
 
   @override
@@ -63,7 +62,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
         ?.map((e) => AdditionalService.fromString(e.toString()))
         .toList() ?? [];
     
-    // Récupérer la première photo ou null
     final photos = (salon['salonPhotosPaths'] as List<dynamic>?)
         ?.map((e) => e.toString())
         .where((path) => path.isNotEmpty)
@@ -172,39 +170,48 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: _newPhoto != null
-                            ? Image.file(
-                                _newPhoto!,
+                        child: _newPhotoBytes != null
+                            ? Image.memory(
+                                _newPhotoBytes!,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
                               )
-                            : Image.network(
-                                '${Config.baseUrl}/$_currentPhotoUrl',
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Center(
-                                    child: Icon(
-                                      Icons.broken_image,
-                                      size: 50,
-                                      color: Colors.grey[400],
-                                    ),
-                                  );
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded /
-                                              loadingProgress.expectedTotalBytes!
-                                          : null,
-                                    ),
-                                  );
-                                },
-                              ),
+                            : (_currentPhotoUrl != null
+                                ? Image.network(
+                                    '${Config.baseUrl}/$_currentPhotoUrl',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                          color: Colors.grey[400],
+                                        ),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                  loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.image_outlined, size: 50, color: Colors.grey[400]),
+                                      const SizedBox(height: 8),
+                                      Text('No photo', style: GoogleFonts.poppins(color: Colors.grey[500])),
+                                    ],
+                                  )),
                       ),
                       Positioned(
                         top: 8,
@@ -565,274 +572,137 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     );
     
     if (image != null) {
+      final bytes = await image.readAsBytes();
       setState(() {
-        _newPhoto = File(image.path);
+        _newPhoto = image;
+        _newPhotoBytes = bytes;
         _currentPhotoUrl = null;
       });
     }
   }
 
-  void _removePhoto() {
-    setState(() {
-      _newPhoto = null;
-      _currentPhotoUrl = null;
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Photo supprimée',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: Colors.orange,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+  Future<void> _removePhoto() async {
+    // If the photo is already stored on the server, attempt to delete it there first
+    final salonId = _originalSalonData['salonId']?.toString();
 
-  Future<void> _saveChanges() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // 1. Récupérer d'abord les données complètes du salon depuis le backend
-      print('📥 Récupération des données complètes du salon...');
-      final fullSalonData = await _salonService.getSalonById(_originalSalonData['salonId']);
-      
-      print('📋 Données complètes reçues: ${fullSalonData.keys}');
-      
-      // 2. Vérifier si des traitements existent (utiliser salonTreatmentsIds)
-      final treatmentIds = fullSalonData['salonTreatmentsIds'] as List<dynamic>? ?? [];
-      print('💊 Traitements IDs trouvés: ${treatmentIds.length}');
-      print('💊 IDs: $treatmentIds');
-      
-      if (treatmentIds.isEmpty) {
-        // Avertir l'utilisateur qu'il faut d'abord ajouter des traitements
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Vous devez d\'abord ajouter au moins un traitement à votre salon',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+    if (salonId != null && _currentPhotoUrl != null) {
+      try {
+        final del = await _salonService.deleteSalonPhoto(salonId: salonId, index: 0);
+        if (del['success'] == true) {
+          ToastService.showSuccess(context, 'Photo supprimée du serveur');
+        } else {
+          ToastService.showWarning(context, 'Impossible de supprimer la photo sur le serveur');
         }
-        setState(() => _isLoading = false);
-        return;
-      }
-      
-      // 2b. Récupérer aussi les specialists IDs
-      final specialistIds = fullSalonData['salonSpecialistsIds'] as List<dynamic>? ?? [];
-      print('👥 Spécialistes IDs trouvés: ${specialistIds.length}');
-      
-      if (specialistIds.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Vous devez d\'abord ajouter au moins un spécialiste à votre salon',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-        setState(() => _isLoading = false);
-        return;
-      }
-      
-      // 2c. Récupérer les availabilities
-      final availabilities = fullSalonData['salonAvailabilities'] as List<dynamic>? ?? [];
-      print('📅 Disponibilités trouvées: ${availabilities.length}');
-      
-      if (availabilities.length != 7) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Le salon doit avoir exactement 7 disponibilités (Lundi à Dimanche)',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-        setState(() => _isLoading = false);
-        return;
-      }
-      
-      // 3. Construire les données de mise à jour avec les IDs des traitements et spécialistes
-      final updateData = {
-        'salonId': fullSalonData['salonId'],
-        'salonName': _nameController.text.trim(),
-        'salonDescription': _descriptionController.text.trim(),
-        'salonCategory': _mapSalonCategoryToBackend(_selectedCategory),
-        'salonGenderType': _mapGenderTypeToBackend(_selectedGenderType),
-        'additionalService': _selectedAdditionalServices
-            .map((s) => _mapAdditionalServiceToBackend(s))
-            .toList(),
-        'salonLatitude': double.tryParse(_latitudeController.text) ?? 
-            fullSalonData['salonLatitude'],
-        'salonLongitude': double.tryParse(_longitudeController.text) ?? 
-            fullSalonData['salonLongitude'],
-        
-        // CRITIQUE: Envoyer les IDs des traitements (pas les objets)
-        'salonTreatmentsIds': treatmentIds,
-        
-        // CRITIQUE: Envoyer les IDs des spécialistes (pas les objets)
-        'salonSpecialistsIds': specialistIds,
-        
-        // CRITIQUE: Envoyer les disponibilités
-        'salonAvailabilities': availabilities,
-      };
-
-      print('📤 Envoi des données de mise à jour...');
-      print('   - Nom: ${updateData['salonName']}');
-      print('   - Catégorie: ${updateData['salonCategory']}');
-      print('   - Traitements IDs: ${(updateData['salonTreatmentsIds'] as List).length}');
-      print('   - Spécialistes IDs: ${(updateData['salonSpecialistsIds'] as List).length}');
-      print('   - Disponibilités: ${(updateData['salonAvailabilities'] as List).length}');
-
-      final result = await _salonService.updateSalon(
-        salonId: fullSalonData['salonId'],
-        updateData: updateData,
-      );
-
-      if (result['success'] == true) {
-        // Upload nouvelle photo si elle existe
-        if (_newPhoto != null) {
-          try {
-            await _salonService.addSalonPhoto(
-              salonId: _originalSalonData['salonId'],
-              imagePath: _newPhoto!.path,
-            );
-            print('✅ Photo uploadée avec succès');
-          } catch (photoError) {
-            print('⚠️ Erreur lors de l\'upload de la photo: $photoError');
-            // Continue même si l'upload de la photo échoue
-          }
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Salon modifié avec succès',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-          Navigator.pop(context, true);
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      result['message'] ?? 'Erreur lors de la modification',
-                      style: GoogleFonts.poppins(),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print('❌ Erreur lors de la sauvegarde: $e'); // Debug
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.warning, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Erreur: $e',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      } catch (e) {
+        ToastService.showWarning(context, 'Erreur suppression photo: $e');
       }
     }
+
+    // Clear local selection regardless
+    setState(() {
+      _newPhoto = null;
+      _newPhotoBytes = null;
+      _currentPhotoUrl = null;
+    });
+
+    ToastService.showInfo(context, 'Photo supprimée');
   }
+
+
+Future<void> _saveChanges() async {
+  if (!_formKey.currentState!.validate()) return;
+
+  setState(() => _isLoading = true);
+
+  try {
+    print('📥 Récupération des données complètes du salon...');
+    final fullSalonData = await _salonService.getSalonById(_originalSalonData['salonId']);
+    
+    final treatmentIds = fullSalonData['salonTreatmentsIds'] as List<dynamic>? ?? [];
+    final specialistIds = fullSalonData['salonSpecialistsIds'] as List<dynamic>? ?? [];
+    final availabilities = fullSalonData['salonAvailabilities'] as List<dynamic>? ?? [];
+    
+    // Validations...
+    if (treatmentIds.isEmpty || specialistIds.isEmpty || availabilities.length != 7) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    final updateData = {
+      'salonId': fullSalonData['salonId'],
+      'salonName': _nameController.text.trim(),
+      'salonDescription': _descriptionController.text.trim(),
+      'salonCategory': _mapSalonCategoryToBackend(_selectedCategory),
+      'salonGenderType': _mapGenderTypeToBackend(_selectedGenderType),
+      'additionalService': _selectedAdditionalServices
+          .map((s) => _mapAdditionalServiceToBackend(s))
+          .toList(),
+      'salonLatitude': double.tryParse(_latitudeController.text) ?? 
+          fullSalonData['salonLatitude'],
+      'salonLongitude': double.tryParse(_longitudeController.text) ?? 
+          fullSalonData['salonLongitude'],
+      'salonTreatmentsIds': treatmentIds,
+      'salonSpecialistsIds': specialistIds,
+      'salonAvailabilities': availabilities,
+    };
+
+    print('📤 Envoi des données de mise à jour...');
+    final result = await _salonService.updateSalon(
+      salonId: fullSalonData['salonId'],
+      updateData: updateData,
+    );
+
+    if (result['success'] == true) {
+      // Upload photo si nécessaire
+      if (_newPhotoBytes != null) {
+        try {
+          await _salonService.addSalonPhotoBytes(
+            salonId: _originalSalonData['salonId'],
+            imageBytes: _newPhotoBytes!,
+            filename: _newPhoto?.name ?? 'salon.jpg',
+          );
+          print('✅ Photo uploadée avec succès');
+        } catch (photoError) {
+          print('⚠️ Erreur upload photo: $photoError');
+        }
+      }
+
+      // ✅ SOLUTION: Récupérer les données mises à jour depuis le backend
+      print('🔄 Récupération des données mises à jour...');
+      final updatedSalonData = await _salonService.getSalonById(
+        _originalSalonData['salonId']
+      );
+      
+      print('✅ Données fraîches récupérées');
+      print('📋 Nouveau nom: ${updatedSalonData['salonName']}');
+      print('📋 Nouvelle description: ${updatedSalonData['salonDescription']}');
+
+      if (mounted) {
+        ToastService.showSuccess(context, 'Salon modifié avec succès');
+        
+        // ✅ CRITIQUE: Retourner les données mises à jour
+        Navigator.pop(context, updatedSalonData); // ← Au lieu de true
+      }
+    } else {
+      if (mounted) {
+        ToastService.showError(
+          context,
+          result['message'] ?? 'Erreur lors de la modification',
+        );
+      }
+    }
+  } catch (e) {
+    print('❌ Erreur lors de la sauvegarde: $e');
+    if (mounted) {
+      ToastService.showError(context, 'Erreur: $e');
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+}
+
 
   @override
   void dispose() {
@@ -843,7 +713,6 @@ class _EditSalonScreenState extends State<EditSalonScreen> {
     super.dispose();
   }
 
-  // Méthodes de mapping pour l'API Backend
   String _mapSalonCategoryToBackend(SalonCategory category) {
     switch (category) {
       case SalonCategory.hairSalon:

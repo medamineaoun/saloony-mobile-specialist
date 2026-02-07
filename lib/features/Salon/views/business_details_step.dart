@@ -1,12 +1,13 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'package:saloony/features/Salon/LocalisationPage.dart';
-import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
-import 'package:saloony/features/Salon/location_result.dart';
-import 'package:saloony/features/Salon/widgets/StepHeader.dart';
+import 'package:SaloonySpecialist/features/Salon/views/LocalisationPage.dart';
+import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:SaloonySpecialist/features/Salon/views/location_result.dart';
+import 'package:SaloonySpecialist/features/Salon/widgets/StepHeader.dart';
+import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
 
 class BusinessDetailsStep extends StatelessWidget {
   final SalonCreationViewModel vm;
@@ -31,100 +32,8 @@ class BusinessDetailsStep extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Salon Image Upload
-            GestureDetector(
-              onTap: vm.pickImage,
-              child: Container(
-                width: double.infinity,
-                height: size.height * 0.25,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: vm.salonImagePath == null
-                        ? Colors.grey[300]!
-                        : const Color(0xFFF0CD97),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: vm.salonImagePath == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFFF0CD97).withOpacity(0.1),
-                                  const Color(0xFF1B2B3E).withOpacity(0.05),
-                                ],
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.add_photo_alternate_outlined,
-                              size: 42,
-                              color: Color(0xFF1B2B3E),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'Upload Salon Photo',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1B2B3E),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'JPG, PNG (Max 5MB)',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      )
-                    : Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.file(
-                              File(vm.salonImagePath!),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                          ),
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.edit,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
+            // Salon Image Upload - AMÉLIORÉ
+            _buildSalonImageUpload(size),
 
             const SizedBox(height: 32),
 
@@ -212,6 +121,240 @@ class BusinessDetailsStep extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// ✅ Widget amélioré pour l'upload d'image du salon
+  Widget _buildSalonImageUpload(Size size) {
+    final hasImage = vm.salonImageBytes != null || (vm.salonImagePath != null && vm.salonImagePath!.isNotEmpty);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Salon Photo *'),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: vm.pickImage,
+          child: Container(
+            width: double.infinity,
+            height: size.height * 0.25,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: hasImage ? const Color(0xFFF0CD97) : Colors.grey[300]!,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: hasImage
+                ? Stack(
+                    children: [
+                      // Image affichée
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: vm.salonImageBytes != null
+                            ? Image.memory(
+                                vm.salonImageBytes!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          size: 48,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Failed to load image',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.grey[500],
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              )
+                            : (vm.salonImagePath != null && vm.salonImagePath!.toLowerCase().startsWith('http')
+                                ? Image.network(
+                                    vm.salonImagePath!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.broken_image,
+                                              size: 48,
+                                              color: Colors.grey[400],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Failed to load image',
+                                              style: GoogleFonts.inter(
+                                                color: Colors.grey[500],
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : // Fallback: cannot display local file on web without bytes
+                                Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          size: 48,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Unable to preview image',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.grey[500],
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )),
+                      ),
+
+                      // Boutons d'action (Edit/Delete)
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                onPressed: vm.pickImage,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                onPressed: vm.clearImage,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Indication "Tap to change"
+                      Positioned(
+                        bottom: 12,
+                        left: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.touch_app,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Tap to change',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFFF0CD97).withOpacity(0.1),
+                              const Color(0xFF1B2B3E).withOpacity(0.05),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add_photo_alternate_outlined,
+                          size: 42,
+                          color: Color(0xFF1B2B3E),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Upload Salon Photo',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1B2B3E),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'JPG, PNG (Max 5MB)',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
