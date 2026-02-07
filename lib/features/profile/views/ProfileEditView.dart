@@ -1,8 +1,9 @@
-import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
-import 'package:SaloonySpecialist/core/constants/SaloonyTextStyles.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:SaloonySpecialist/features/profile/view_models/ProfileEditViewModel.dart';
+import 'package:saloony/core/constants/SaloonyColors.dart';
+import 'package:saloony/features/profile/view_models/ProfileEditViewModel.dart';
 
 class ProfileEditView extends StatelessWidget {
   const ProfileEditView({Key? key}) : super(key: key);
@@ -10,7 +11,7 @@ class ProfileEditView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProfileEditViewModel(context),
+      create: (_) => ProfileEditViewModel(),
       child: const _ProfileEditContent(),
     );
   }
@@ -25,49 +26,56 @@ class _ProfileEditContent extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
-          color: SaloonyColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 48,
+              width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: SaloonyColors.borderLight,
+                color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 28),
-            Text('Profile Photo', style: SaloonyTextStyles.heading3),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
+            Text(
+              'Photo de profil',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: SaloonyColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
             _ImageOptionTile(
               icon: Icons.photo_library_outlined,
-              title: 'Gallery',
-              subtitle: 'Choose from gallery',
+              title: 'Galerie',
+              subtitle: 'Choisir depuis la galerie',
               onTap: () {
                 Navigator.pop(context);
                 viewModel.pickImage();
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _ImageOptionTile(
               icon: Icons.camera_alt_outlined,
-              title: 'Camera',
-              subtitle: 'Take a photo',
+              title: 'Appareil photo',
+              subtitle: 'Prendre une photo',
               onTap: () {
                 Navigator.pop(context);
                 viewModel.takePhoto();
               },
             ),
             if (viewModel.profileImageUrl != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _ImageOptionTile(
                 icon: Icons.delete_outline,
-                title: 'Remove',
-                subtitle: 'Delete profile photo',
+                title: 'Supprimer',
+                subtitle: 'Retirer la photo de profil',
                 onTap: () {
                   Navigator.pop(context);
                   viewModel.removeProfilePhoto();
@@ -75,7 +83,7 @@ class _ProfileEditContent extends StatelessWidget {
                 isDestructive: true,
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -88,16 +96,22 @@ class _ProfileEditContent extends StatelessWidget {
 
     if (viewModel.isLoadingData) {
       return Scaffold(
-        backgroundColor: SaloonyColors.backgroundSecondary,
+        backgroundColor: const Color(0xFFF8F9FA),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(SaloonyColors.gold),
+                valueColor: AlwaysStoppedAnimation<Color>(SaloonyColors.secondary),
               ),
-              const SizedBox(height: 20),
-              Text('Loading...', style: SaloonyTextStyles.bodyMedium),
+              const SizedBox(height: 16),
+              Text(
+                'Chargement...',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: SaloonyColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),
@@ -105,15 +119,22 @@ class _ProfileEditContent extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: SaloonyColors.backgroundSecondary,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: SaloonyColors.background,
+        backgroundColor: const Color(0xFFF8F9FA),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: SaloonyColors.primary, size: 22),
+          icon: const Icon(Icons.arrow_back_ios, color: SaloonyColors.primary, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Edit Profile', style: SaloonyTextStyles.heading3),
+        title: Text(
+          'Modifier le profil',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: SaloonyColors.primary,
+          ),
+        ),
         centerTitle: false,
       ),
       body: SafeArea(
@@ -134,23 +155,21 @@ class _ProfileEditContent extends StatelessWidget {
                             child: Stack(
                               children: [
                                 Container(
-                                  width: 150,
-                                  height: 150,
+                                  width: 140,
+                                  height: 140,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
                                       colors: [
-                                        SaloonyColors.gold.withOpacity(0.2),
+                                        SaloonyColors.primary.withOpacity(0.1),
                                         SaloonyColors.secondary.withOpacity(0.1),
                                       ],
                                     ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: SaloonyColors.primary.withOpacity(0.1),
-                                        blurRadius: 24,
-                                        offset: const Offset(0, 8),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
                                       ),
                                     ],
                                   ),
@@ -159,25 +178,23 @@ class _ProfileEditContent extends StatelessWidget {
                                   ),
                                 ),
                                 Positioned(
-                                  bottom: 0,
-                                  right: 0,
+                                  bottom: 4,
+                                  right: 4,
                                   child: Container(
-                                    width: 48,
-                                    height: 48,
+                                    width: 44,
+                                    height: 44,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
                                         colors: [
-                                          SaloonyColors.gold,
                                           SaloonyColors.secondary,
+                                          SaloonyColors.gold,
                                         ],
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: SaloonyColors.gold.withOpacity(0.4),
-                                          blurRadius: 16,
+                                          color: SaloonyColors.secondary.withOpacity(0.4),
+                                          blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
                                       ],
@@ -186,15 +203,15 @@ class _ProfileEditContent extends StatelessWidget {
                                         ? const Padding(
                                             padding: EdgeInsets.all(12.0),
                                             child: CircularProgressIndicator(
-                                              strokeWidth: 2.5,
+                                              strokeWidth: 2,
                                               valueColor: AlwaysStoppedAnimation<Color>(
                                                 SaloonyColors.primary,
                                               ),
                                             ),
                                           )
                                         : const Icon(
-                                            Icons.camera_alt_rounded,
-                                            size: 22,
+                                            Icons.camera_alt,
+                                            size: 20,
                                             color: SaloonyColors.primary,
                                           ),
                                   ),
@@ -202,57 +219,43 @@ class _ProfileEditContent extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           Text(
-                            'Change Photo',
-                            style: SaloonyTextStyles.labelLarge.copyWith(
-                              color: SaloonyColors.gold,
+                            'Modifier la photo',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: SaloonyColors.secondary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 40),
 
-                    // Form Section Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: SaloonyColors.secondaryLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.person_outline_rounded,
-                              size: 20,
-                              color: SaloonyColors.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Personal Information',
-                            style: SaloonyTextStyles.heading4,
-                          ),
-                        ],
+                    // Form Section
+                    Text(
+                      'Informations personnelles',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: SaloonyColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     // First Name
                     _ModernInputField(
-                      label: 'First Name',
+                      label: 'Prénom',
                       value: viewModel.firstName,
                       onChanged: viewModel.setFirstName,
-                      icon: Icons.person_outline_rounded,
+                      icon: Icons.person_outline,
                     ),
                     const SizedBox(height: 20),
 
                     // Last Name
                     _ModernInputField(
-                      label: 'Last Name',
+                      label: 'Nom',
                       value: viewModel.lastName,
                       onChanged: viewModel.setLastName,
                       icon: Icons.badge_outlined,
@@ -261,13 +264,10 @@ class _ProfileEditContent extends StatelessWidget {
 
                     // Gender
                     _ModernDropdownField(
-                      label: 'Gender',
-                      value: _formatGenderForDisplay(viewModel.gender),
-                      items: const ['Male', 'Female'],
-                      onChanged: (displayValue) {
-                        final backendValue = _formatGenderForBackend(displayValue);
-                        viewModel.setGender(backendValue);
-                      },
+                      label: 'Genre',
+                      value: _formatGender(viewModel.gender),
+                      items: const ['Homme', 'Femme'],
+                      onChanged: viewModel.setGender,
                       icon: Icons.wc_outlined,
                     ),
                     const SizedBox(height: 32),
@@ -282,32 +282,22 @@ class _ProfileEditContent extends StatelessWidget {
     );
   }
 
-  /// ✅ MÉTHODE CORRIGÉE pour afficher l'image (Web & Mobile compatible)
   Widget _buildProfileImage(ProfileEditViewModel viewModel) {
-    // Priorité 1: Image en bytes (nouveau upload en cours)
-    if (viewModel.imageBytes != null) {
-      return Image.memory(
-        viewModel.imageBytes!,
+    if (viewModel.imageFile != null) {
+      return Image.file(
+        viewModel.imageFile!,
         fit: BoxFit.cover,
-        width: 150,
-        height: 150,
-        errorBuilder: (context, error, stackTrace) {
-          debugPrint('❌ Error loading image from bytes: $error');
-          return _buildDefaultAvatar();
-        },
+        width: 140,
+        height: 140,
       );
-    }
-
-    // Priorité 2: Image depuis URL (image existante sur le serveur)
-    if (viewModel.profileImageUrl != null && viewModel.profileImageUrl!.isNotEmpty) {
+    } else if (viewModel.profileImageUrl != null) {
       return Image.network(
         viewModel.profileImageUrl!,
         fit: BoxFit.cover,
-        width: 150,
-        height: 150,
+        width: 140,
+        height: 140,
         errorBuilder: (context, error, stackTrace) {
-          debugPrint('❌ Error loading network image: $error');
-          debugPrint('❌ URL was: ${viewModel.profileImageUrl}');
+          debugPrint('❌ Error loading image: $error');
           return _buildDefaultAvatar();
         },
         loadingBuilder: (context, child, loadingProgress) {
@@ -319,59 +309,44 @@ class _ProfileEditContent extends StatelessWidget {
                       loadingProgress.expectedTotalBytes!
                   : null,
               valueColor: const AlwaysStoppedAnimation<Color>(
-                SaloonyColors.gold,
+                SaloonyColors.secondary,
               ),
             ),
           );
         },
       );
     }
-
-    // Priorité 3: Placeholder par défaut
     return _buildDefaultAvatar();
   }
 
   Widget _buildDefaultAvatar() {
     return Container(
-      width: 150,
-      height: 150,
+      width: 140,
+      height: 140,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
           colors: [
-            SaloonyColors.backgroundTertiary,
-            const Color.fromARGB(255, 166, 195, 224),
+            SaloonyColors.primary.withOpacity(0.1),
+            SaloonyColors.secondary.withOpacity(0.1),
           ],
         ),
       ),
       child: Icon(
-        Icons.person_rounded,
-        size: 70,
-        color: SaloonyColors.textTertiary,
+        Icons.person,
+        size: 64,
+        color: SaloonyColors.textSecondary.withOpacity(0.5),
       ),
     );
   }
 
-  String _formatGenderForDisplay(String gender) {
+  String _formatGender(String gender) {
     switch (gender.toUpperCase()) {
-      case 'MEN':
-        return 'Male';
-      case 'WOMEN':
-        return 'Female';
+      case 'MAN':
+        return 'Homme';
+      case 'WOMAN':
+        return 'Femme';
       default:
         return gender;
-    }
-  }
-
-  String _formatGenderForBackend(String displayGender) {
-    switch (displayGender) {
-      case 'Male':
-        return 'MEN';
-      case 'Female':
-        return 'WOMEN';
-      default:
-        return displayGender;
     }
   }
 
@@ -379,12 +354,12 @@ class _ProfileEditContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: SaloonyColors.background,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: SaloonyColors.primary.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
@@ -392,18 +367,16 @@ class _ProfileEditContent extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
             colors: [
-              SaloonyColors.gold,
               SaloonyColors.secondary,
+              SaloonyColors.gold,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: SaloonyColors.gold.withOpacity(0.4),
-              blurRadius: 20,
+              color: SaloonyColors.secondary.withOpacity(0.4),
+              blurRadius: 16,
               offset: const Offset(0, 8),
             ),
           ],
@@ -414,6 +387,29 @@ class _ProfileEditContent extends StatelessWidget {
               : () async {
                   final result = await viewModel.saveChanges();
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          result['message'] ?? 
+                              (result['success'] == true 
+                                  ? 'Profil mis à jour avec succès' 
+                                  : 'Erreur lors de la mise à jour'),
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        backgroundColor: result['success'] == true 
+                            ? SaloonyColors.success 
+                            : SaloonyColors.error,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        margin: const EdgeInsets.all(16),
+                      ),
+                    );
+                    
                     if (result['success'] == true) {
                       await Future.delayed(const Duration(milliseconds: 500));
                       if (context.mounted) {
@@ -425,9 +421,9 @@ class _ProfileEditContent extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            disabledBackgroundColor: SaloonyColors.disabled,
+            disabledBackgroundColor: Colors.grey[300],
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: viewModel.isLoading
@@ -444,17 +440,20 @@ class _ProfileEditContent extends StatelessWidget {
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      size: 22,
-                      color: SaloonyColors.primary,
-                    ),
-                    const SizedBox(width: 12),
                     Text(
-                      'Save Changes',
-                      style: SaloonyTextStyles.buttonLarge.copyWith(
+                      'Enregistrer',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: SaloonyColors.primary,
+                        letterSpacing: 0.3,
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 20,
+                      color: SaloonyColors.primary,
                     ),
                   ],
                 ),
@@ -487,65 +486,53 @@ class _ModernInputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(label, style: SaloonyTextStyles.labelLarge),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: SaloonyColors.background,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: SaloonyColors.primary.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: SaloonyColors.primary,
           ),
-          child: TextField(
-            controller: TextEditingController(text: value)
-              ..selection = TextSelection.fromPosition(
-                TextPosition(offset: value.length),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: TextEditingController(text: value)
+            ..selection = TextSelection.fromPosition(
+              TextPosition(offset: value.length),
+            ),
+          onChanged: onChanged,
+          keyboardType: keyboardType,
+          enabled: enabled,
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            color: enabled ? SaloonyColors.textPrimary : SaloonyColors.textSecondary,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: Icon(
+              icon,
+              color: SaloonyColors.secondary.withOpacity(0.7),
+              size: 20,
+            ),
+            filled: true,
+            fillColor: enabled ? Colors.white : Colors.grey[100],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: SaloonyColors.primary,
+                width: 2,
               ),
-            onChanged: onChanged,
-            keyboardType: keyboardType,
-            enabled: enabled,
-            style: SaloonyTextStyles.bodyMedium,
-            decoration: InputDecoration(
-              prefixIcon: Container(
-                margin: const EdgeInsets.only(left: 12, right: 8),
-                child: Icon(
-                  icon,
-                  color: SaloonyColors.gold,
-                  size: 22,
-                ),
-              ),
-              filled: true,
-              fillColor: enabled ? SaloonyColors.background : SaloonyColors.backgroundTertiary,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: SaloonyColors.borderLight),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: SaloonyColors.borderLight),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: SaloonyColors.gold,
-                  width: 2,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: SaloonyColors.borderLight),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 18,
-              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
@@ -577,33 +564,30 @@ class _ModernDropdownField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(label, style: SaloonyTextStyles.labelLarge),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: SaloonyColors.primary,
+          ),
         ),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: SaloonyColors.background,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: SaloonyColors.borderLight),
-            boxShadow: [
-              BoxShadow(
-                color: SaloonyColors.primary.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: safeValue,
               isExpanded: true,
-              dropdownColor: SaloonyColors.background,
+              dropdownColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               icon: Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: SaloonyColors.gold,
-                size: 24,
+                color: SaloonyColors.secondary.withOpacity(0.7),
               ),
               items: items.map((item) {
                 return DropdownMenuItem<String>(
@@ -612,11 +596,17 @@ class _ModernDropdownField extends StatelessWidget {
                     children: [
                       Icon(
                         icon,
-                        color: SaloonyColors.gold,
-                        size: 22,
+                        color: SaloonyColors.secondary.withOpacity(0.7),
+                        size: 20,
                       ),
                       const SizedBox(width: 12),
-                      Text(item, style: SaloonyTextStyles.bodyMedium),
+                      Text(
+                        item,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          color: SaloonyColors.textPrimary,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -652,37 +642,37 @@ class _ImageOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDestructive 
-              ? SaloonyColors.errorLight
-              : SaloonyColors.backgroundTertiary,
-          borderRadius: BorderRadius.circular(16),
+              ? SaloonyColors.error.withOpacity(0.05)
+              : SaloonyColors.primary.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDestructive
-                ? SaloonyColors.error.withOpacity(0.2)
-                : SaloonyColors.borderLight,
+                ? SaloonyColors.error.withOpacity(0.1)
+                : Colors.grey[200]!,
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: isDestructive
-                    ? SaloonyColors.error.withOpacity(0.15)
-                    : SaloonyColors.secondaryLight,
-                borderRadius: BorderRadius.circular(14),
+                    ? SaloonyColors.error.withOpacity(0.1)
+                    : SaloonyColors.secondary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
                 color: isDestructive 
                     ? SaloonyColors.error 
-                    : SaloonyColors.gold,
-                size: 26,
+                    : SaloonyColors.secondary,
+                size: 24,
               ),
             ),
             const SizedBox(width: 16),
@@ -692,22 +682,29 @@ class _ImageOptionTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: SaloonyTextStyles.bodyMedium.copyWith(
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: isDestructive 
                           ? SaloonyColors.error 
                           : SaloonyColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: SaloonyTextStyles.bodySmall),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: SaloonyColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: SaloonyColors.textTertiary,
-              size: 22,
+              color: Colors.grey[400],
+              size: 20,
             ),
           ],
         ),

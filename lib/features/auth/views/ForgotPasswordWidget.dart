@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/SaloonyColors.dart';
-import '../../../core/constants/SaloonyTextStyles.dart';
-import '../../../core/widgets/SaloonyInputFields.dart';
-import '../../../core/widgets/SaloonyButtons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/ForgotPasswordViewModel.dart';
 
 class ForgotPasswordWidget extends StatelessWidget {
@@ -18,7 +15,7 @@ class ForgotPasswordWidget extends StatelessWidget {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              backgroundColor: SaloonyColors.backgroundSecondary,
+              backgroundColor: const Color(0xFFF8F9FA),
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
@@ -28,7 +25,7 @@ class ForgotPasswordWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: SaloonyColors.borderLight),
+                      border: Border.all(color: const Color(0xFFE1E2E2)),
                     ),
                     child: const Icon(
                       Icons.arrow_back_ios_new,
@@ -101,13 +98,21 @@ class ForgotPasswordWidget extends StatelessWidget {
                             Text(
                               'Forgot Password?',
                               textAlign: TextAlign.center,
-                              style: SaloonyTextStyles.heading1,
+                              style: GoogleFonts.poppins(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1B2B3E),
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'Enter your email address and we\'ll send you a code to reset your password',
                               textAlign: TextAlign.center,
-                              style: SaloonyTextStyles.subtitle,
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                color: Colors.grey[600],
+                                height: 1.5,
+                              ),
                             ),
 
                             const SizedBox(height: 48),
@@ -118,17 +123,56 @@ class ForgotPasswordWidget extends StatelessWidget {
                               children: [
                                 Text(
                                   'Email',
-                                  style: SaloonyTextStyles.labelLarge,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1B2B3E),
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
-                                SaloonyInputField(
+                                TextFormField(
                                   controller: viewModel.emailController,
-                                  label: '',
-                                  hintText: 'Enter your email',
-                                  prefixIcon: Icons.email_outlined,
+                                  focusNode: viewModel.emailFocusNode,
+                                  enabled: !viewModel.isLoading,
                                   keyboardType: TextInputType.emailAddress,
                                   validator: viewModel.emailValidator,
-                                  readOnly: viewModel.isLoading,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter your email',
+                                    hintStyle: GoogleFonts.poppins(
+                                      color: Colors.grey[400],
+                                      fontSize: 15,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.email_outlined,
+                                      color: Color(0xFFF0CD97),
+                                      size: 22,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF1B2B3E),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    disabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[200]!),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 18,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -136,10 +180,57 @@ class ForgotPasswordWidget extends StatelessWidget {
                             const SizedBox(height: 32),
 
                             // Send Code button
-                            SaloonyPrimaryButton(
-                              label: 'Send Code',
-                              isLoading: viewModel.isLoading,
-                              onPressed: viewModel.isLoading ? () {} : () => viewModel.sendResetCode(context),
+                            Container(
+                              height: 56,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: viewModel.isLoading
+                                      ? [Colors.grey[400]!, Colors.grey[400]!]
+                                      : [const Color(0xFF1B2B3E), const Color(0xFF243441)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: viewModel.isLoading
+                                    ? []
+                                    : [
+                                        BoxShadow(
+                                          color: const Color(0xFF1B2B3E).withOpacity(0.4),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: viewModel.isLoading
+                                    ? null
+                                    : () => viewModel.sendResetCode(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: viewModel.isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
+                                        ),
+                                      )
+                                    : Text(
+                                        'Send Code',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFFF0CD97),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                              ),
                             ),
 
                             const SizedBox(height: 24),
@@ -147,17 +238,28 @@ class ForgotPasswordWidget extends StatelessWidget {
                             // Back to Sign In
                             Center(
                               child: TextButton(
-                                onPressed: viewModel.isLoading ? null : () => Navigator.pop(context),
+                                onPressed: viewModel.isLoading
+                                    ? null
+                                    : () => Navigator.pop(context),
                                 child: RichText(
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
                                         text: "Remember your password? ",
-                                        style: SaloonyTextStyles.bodySmall.copyWith(color: SaloonyColors.textSecondary),
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
                                       TextSpan(
                                         text: "Sign In",
-                                        style: SaloonyTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, color: viewModel.isLoading ? SaloonyColors.textTertiary : SaloonyColors.textPrimary),
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: viewModel.isLoading
+                                              ? Colors.grey
+                                              : const Color(0xFF1B2B3E),
+                                        ),
                                       ),
                                     ],
                                   ),

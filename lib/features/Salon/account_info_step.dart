@@ -1,8 +1,9 @@
+// views/account_info_step.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:SaloonySpecialist/core/enum/SalonCategory.dart';
-import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
-import 'package:SaloonySpecialist/features/Salon/widgets/StepHeader.dart';
+import 'package:saloony/core/enum/SalonCategory.dart';
+import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
+import 'package:saloony/features/Salon/widgets/StepHeader.dart';
 
 class AccountInfoStep extends StatelessWidget {
   final SalonCreationViewModel vm;

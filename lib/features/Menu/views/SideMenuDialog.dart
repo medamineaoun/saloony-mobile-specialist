@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart' hide Config;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:SaloonySpecialist/features/Menu/viewmodels/MenuViewModel.dart';
-import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:saloony/features/Menu/viewmodels/MenuViewModel.dart';
 
 class SideMenuDialog extends StatelessWidget {
   const SideMenuDialog({super.key});
@@ -141,10 +140,11 @@ class SideMenuDialog extends StatelessWidget {
             },
           ),
         ),
+
         // autres items
         for (var item in viewModel.menuItems.where((item) {
           if (item.title == 'Create Salon') {
-            return !viewModel.hasSalon;
+            return !viewModel.hasSalon; 
           }
           return true;
         }))
@@ -176,7 +176,7 @@ class SideMenuDialog extends StatelessWidget {
         ),
         child: const Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(Color(0xFFF0CD97)),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
           ),
         ),
       );
@@ -262,64 +262,42 @@ class SideMenuDialog extends StatelessWidget {
     );
   }
 
-  /// ✅ Affichage de l'avatar utilisateur (même logique que EditSalonScreen)
   Widget _buildUserAvatar(MenuViewModel viewModel) {
     final String? photoPath = viewModel.currentUser?.profilePhotoPath;
-
+    
     // Si une photo de profil existe
     if (photoPath != null && photoPath.isNotEmpty) {
-      // Construire l'URL complète
-      final String imageUrl = photoPath.startsWith('http')
-          ? photoPath
-          : '${Config.baseUrl}/$photoPath';
-
-      return ClipOval(
-        child: Image.network(
-          imageUrl,
-          width: 44,
-          height: 44,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint('❌ Erreur chargement image: $error');
-            return _buildDefaultAvatar();
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8F9FA),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFFF0CD97)),
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              ),
-            );
-          },
+      return CircleAvatar(
+        radius: 22,
+        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundImage: NetworkImage(
+          photoPath,
         ),
+        onBackgroundImageError: (exception, stackTrace) {
+          // Log l'erreur
+          debugPrint('❌ Erreur de chargement image profil: $exception');
+        },
+        child: _buildImageLoadingIndicator(),
       );
     }
-
+    
     // Photo par défaut si aucune photo n'est disponible
     return _buildDefaultAvatar();
   }
 
-  Widget _buildDefaultAvatar() {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8F9FA),
-        shape: BoxShape.circle,
+  Widget _buildImageLoadingIndicator() {
+    return const Center(
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF0CD97)),
       ),
+    );
+  }
+
+  Widget _buildDefaultAvatar() {
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: const Color(0xFFF8F9FA),
       child: Icon(
         Icons.person,
         color: const Color(0xFF1B2B3E).withOpacity(0.6),
@@ -355,15 +333,13 @@ class _MenuItemTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(
           icon,
-          color:
-              isSelected ? const Color(0xFFF0CD97) : const Color(0xFF6B7280),
+          color: isSelected ? const Color(0xFFF0CD97) : const Color(0xFF6B7280),
           size: 22,
         ),
         title: Text(
           title,
           style: GoogleFonts.poppins(
-            color:
-                isSelected ? const Color(0xFF1B2B3E) : const Color(0xFF6B7280),
+            color: isSelected ? const Color(0xFF1B2B3E) : const Color(0xFF6B7280),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             fontSize: 15,
           ),

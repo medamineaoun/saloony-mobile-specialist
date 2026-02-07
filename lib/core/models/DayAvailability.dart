@@ -113,6 +113,7 @@ class TimeRange {
     required this.endTime,
   });
 
+  /// Retourne une représentation lisible, ex: "08:00 - 18:00"
   String format() {
     final start =
         '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:SaloonySpecialist/core/constants/app_routes.dart';
-import 'package:SaloonySpecialist/core/services/AuthService.dart';
-import 'package:SaloonySpecialist/core/services/TokenHelper.dart';
+import 'package:saloony/core/constants/app_routes.dart';
+import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/TokenHelper.dart';
 
 class SaloonySplashPage extends StatefulWidget {
   const SaloonySplashPage({Key? key}) : super(key: key);

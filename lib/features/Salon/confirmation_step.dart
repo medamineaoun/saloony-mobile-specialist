@@ -1,9 +1,10 @@
 // views/confirmation_step.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:SaloonySpecialist/core/enum/additional_service.dart';
-import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
-import 'package:SaloonySpecialist/features/Salon/widgets/StepHeader.dart';
+import 'package:saloony/core/enum/additional_service.dart';
+import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
+import 'package:saloony/features/Salon/widgets/StepHeader.dart';
 
 class ConfirmationStep extends StatelessWidget {
   final SalonCreationViewModel vm;
@@ -450,9 +451,9 @@ class ConfirmationStep extends StatelessWidget {
                               colors: [Color(0xFF1B2B3E), Color(0xFF2A3F54)],
                             )
                           : null,
-                      image: service.photoPath != null && service.photoPath!.startsWith('http')
+                      image: service.photoPath != null
                           ? DecorationImage(
-                              image: NetworkImage(service.photoPath!),
+                              image: FileImage(File(service.photoPath!)),
                               fit: BoxFit.cover,
                             )
                           : null,
@@ -491,7 +492,14 @@ class ConfirmationStep extends StatelessWidget {
                                 color: const Color(0xFFF0CD97).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                             
+                              child: Text(
+                                'TIME',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1B2B3E),
+                                ),
+                              ),
                             ),
                           ],
                         ),

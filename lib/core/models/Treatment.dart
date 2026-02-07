@@ -3,8 +3,8 @@ class Treatment {
   final String treatmentName;
   final String treatmentDescription;
   final String treatmentCategory;
-  final double? treatmentTime; 
-  final double? duration;
+  final double? treatmentTime; // en heures
+  final double? duration; // en minutes (ajouté)
   final double? treatmentPrice;
   final List<String>? treatmentPhotosPaths;
 
@@ -21,34 +21,17 @@ class Treatment {
 
   factory Treatment.fromJson(Map<String, dynamic> json) {
     final treatmentTime = _parseDouble(json['treatmentTime']);
-
-    // Accept plusieurs formes d'ID retournées par l'API
-    String id = '';
-    if (json['treatmentId'] != null) {
-      id = json['treatmentId'].toString();
-    } else if (json['treatment_id'] != null) {
-      id = json['treatment_id'].toString();
-    } else if (json['_id'] != null) {
-      id = json['_id'].toString();
-    } else if (json['id'] != null) {
-      id = json['id'].toString();
-    }
-
-    final name = json['treatmentName'] ?? json['name'] ?? '';
-    final description = json['treatmentDescription'] ?? json['description'] ?? '';
-    final category = json['treatmentCategory'] ?? json['category'] ?? '';
-
     return Treatment(
-      treatmentId: id,
-      treatmentName: name,
-      treatmentDescription: description,
-      treatmentCategory: category,
+      treatmentId: json['treatmentId']?.toString() ?? '',
+      treatmentName: json['treatmentName'] ?? '',
+      treatmentDescription: json['treatmentDescription'] ?? '',
+      treatmentCategory: json['treatmentCategory'] ?? '',
       treatmentTime: treatmentTime,
       duration: treatmentTime != null ? treatmentTime * 60 : null, // convertit en minutes
-      treatmentPrice: _parseDouble(json['treatmentPrice'] ?? json['price']),
+      treatmentPrice: _parseDouble(json['treatmentPrice']),
       treatmentPhotosPaths: json['treatmentPhotosPaths'] != null
           ? List<String>.from(json['treatmentPhotosPaths'])
-          : (json['photos'] != null ? List<String>.from(json['photos']) : null),
+          : null,
     );
   }
 

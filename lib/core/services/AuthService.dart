@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
@@ -119,24 +119,12 @@ class AuthService {
 
         return {'success': true, ...tokens};
       } else {
-        // Try to extract a useful error message from the server response.
-        String errorMessage = 'Email or password incorrect';
-        String rawBody = response.body ?? '';
+        String errorMessage = 'Email ou mot de passe incorrect';
         try {
           final error = jsonDecode(response.body);
           errorMessage = error['message'] ?? errorMessage;
-        } catch (_) {
-          // If response isn't JSON, use raw body when available
-          if (rawBody.isNotEmpty) errorMessage = rawBody;
-        }
-
-        // Include statusCode and rawBody so callers can inspect server responses
-        return {
-          'success': false,
-          'message': errorMessage,
-          'statusCode': response.statusCode,
-          'rawBody': rawBody,
-        };
+        } catch (_) {}
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       return {'success': false, 'message': 'Erreur de connexion: $e'};

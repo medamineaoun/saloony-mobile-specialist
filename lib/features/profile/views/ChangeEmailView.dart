@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
-import 'package:SaloonySpecialist/core/services/AuthService.dart';
-import 'package:SaloonySpecialist/core/services/UserService.dart';
-import 'package:SaloonySpecialist/core/services/ToastService.dart';
-import 'package:SaloonySpecialist/core/models/User.dart';
+import 'package:saloony/core/constants/SaloonyColors.dart';
+import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/UserService.dart';
+import 'package:saloony/core/models/User.dart';
 
 class VerifyEmailChangeView extends StatefulWidget {
   const VerifyEmailChangeView({Key? key}) : super(key: key);
@@ -17,17 +15,8 @@ class VerifyEmailChangeView extends StatefulWidget {
 class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final TextEditingController _codeController = TextEditingController();
   final TextEditingController _newEmailController = TextEditingController();
-  
-  // 6 controllers pour les 6 cases du code PIN
-  final List<TextEditingController> _pinControllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
-  final List<FocusNode> _pinFocusNodes = List.generate(
-    6,
-    (index) => FocusNode(),
-  );
   
   bool _isLoading = false;
   bool _codeSent = false;
@@ -53,40 +42,24 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         });
       } else {
         setState(() => _isLoading = false);
-        ToastService.showError(context, 'Erreur lors du chargement de l\'utilisateur');
+        _showSnackBar('Erreur lors du chargement de l\'utilisateur', isError: true);
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ToastService.showError(context, 'Erreur de connexion');
+      _showSnackBar('Erreur de connexion', isError: true);
     }
   }
 
   @override
   void dispose() {
+    _codeController.dispose();
     _newEmailController.dispose();
-    for (var controller in _pinControllers) {
-      controller.dispose();
-    }
-    for (var node in _pinFocusNodes) {
-      node.dispose();
-    }
     super.dispose();
-  }
-
-  String _getPinCode() {
-    return _pinControllers.map((c) => c.text).join();
-  }
-
-  void _clearPinCode() {
-    for (var controller in _pinControllers) {
-      controller.clear();
-    }
-    _pinFocusNodes[0].requestFocus();
   }
 
   Future<void> _sendVerificationCode() async {
     if (_currentEmail.isEmpty) {
-      ToastService.showError(context, 'Email actuel non disponible');
+      _showSnackBar('Email actuel non disponible', isError: true);
       return;
     }
 
@@ -100,52 +73,60 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         
         if (result['success'] == true) {
           setState(() => _codeSent = true);
-          ToastService.showSuccess(context, 'Code envoyé à $_currentEmail');
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) _pinFocusNodes[0].requestFocus();
-          });
+          _showSnackBar(
+            'Code envoyé à $_currentEmail',
+            isError: false,
+          );
         } else {
-          ToastService.showError(
-            context,
+          _showSnackBar(
             result['message'] ?? 'Erreur lors de l\'envoi du code',
+            isError: true,
           );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ToastService.showError(context, 'Erreur de connexion');
+        _showSnackBar('Erreur de connexion', isError: true);
       }
     }
   }
 
   Future<void> _verifyAndUpdateEmail() async {
-    final code = _getPinCode();
+    final code = _codeController.text.trim();
     final newEmail = _newEmailController.text.trim();
 
-    if (code.length != 6) {
-      ToastService.showError(context, 'Veuillez entrer le code complet');
+    // Validation du code
+    if (code.isEmpty) {
+      _showSnackBar('Veuillez entrer le code de vérification', isError: true);
       return;
     }
 
+    if (code.length != 6) {
+      _showSnackBar('Le code doit contenir 6 chiffres', isError: true);
+      return;
+    }
+
+    // Validation du nouvel email
     if (newEmail.isEmpty) {
-      ToastService.showError(context, 'Veuillez entrer le nouvel email');
+      _showSnackBar('Veuillez entrer le nouvel email', isError: true);
       return;
     }
 
     if (!_isValidEmail(newEmail)) {
-      ToastService.showError(context, 'Format d\'email invalide');
+      _showSnackBar('Format d\'email invalide', isError: true);
       return;
     }
 
     if (newEmail == _currentEmail) {
-      ToastService.showError(context, 'Le nouvel email doit être différent');
+      _showSnackBar('Le nouvel email doit être différent', isError: true);
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
+      // Vérifier le code avec l'email actuel
       final verifyResult = await _authService.verifyResetCode(
         email: _currentEmail,
         code: code,
@@ -154,15 +135,15 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
       if (verifyResult['success'] != true) {
         if (mounted) {
           setState(() => _isLoading = false);
-          ToastService.showError(
-            context,
+          _showSnackBar(
             verifyResult['message'] ?? 'Code invalide ou expiré',
+            isError: true,
           );
-          _clearPinCode();
         }
         return;
       }
 
+      // Mettre à jour l'email avec le code et le nouvel email
       final updateResult = await _userService.updateEmail(
         code: code,
         newEmail: newEmail,
@@ -172,33 +153,35 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         setState(() => _isLoading = false);
 
         if (updateResult['success'] == true) {
-          ToastService.showSuccess(
-            context,
+          _showSnackBar(
             'Email mis à jour avec succès ! Reconnexion requise',
+            isError: false,
           );
 
+          // Déconnecter l'utilisateur
           await _authService.signOut();
 
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
+              // Rediriger vers la page de connexion
               Navigator.pushNamedAndRemoveUntil(
                 context,
-                '/signIn', 
+                '/signIn', // ou '/login' selon votre route
                 (route) => false,
               );
             }
           });
         } else {
-          ToastService.showError(
-            context,
+          _showSnackBar(
             updateResult['message'] ?? 'Erreur lors de la mise à jour',
+            isError: true,
           );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ToastService.showError(context, 'Erreur de connexion');
+        _showSnackBar('Erreur de connexion', isError: true);
       }
     }
   }
@@ -210,7 +193,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
 
   Future<void> _resendCode() async {
     if (_currentEmail.isEmpty) {
-      ToastService.showError(context, 'Email actuel non disponible');
+      _showSnackBar('Email actuel non disponible', isError: true);
       return;
     }
 
@@ -223,76 +206,43 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
         setState(() => _isLoading = false);
         
         if (result['success'] == true) {
-          ToastService.showSuccess(context, 'Code renvoyé avec succès');
-          _clearPinCode();
+          _showSnackBar(
+            'Code renvoyé avec succès',
+            isError: false,
+          );
         } else {
-          ToastService.showError(
-            context,
+          _showSnackBar(
             result['message'] ?? 'Erreur lors de l\'envoi',
+            isError: true,
           );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ToastService.showError(context, 'Erreur de connexion');
+        _showSnackBar('Erreur de connexion', isError: true);
       }
     }
   }
 
-  Widget _buildPinBox(int index) {
-    return Container(
-      width: 50,
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _pinControllers[index].text.isNotEmpty
-              ? SaloonyColors.primary
-              : Colors.grey[300]!,
-          width: _pinControllers[index].text.isNotEmpty ? 2 : 1,
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        boxShadow: _pinControllers[index].text.isNotEmpty
-            ? [
-                BoxShadow(
-                  color: SaloonyColors.primary.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
-      ),
-      child: TextField(
-        controller: _pinControllers[index],
-        focusNode: _pinFocusNodes[index],
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: GoogleFonts.poppins(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: SaloonyColors.primary,
+        backgroundColor: isError ? SaloonyColors.error : SaloonyColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
-        onChanged: (value) {
-          setState(() {});
-          
-          if (value.isNotEmpty && index < 5) {
-            _pinFocusNodes[index + 1].requestFocus();
-          }
-          
-          if (value.isEmpty && index > 0) {
-            _pinFocusNodes[index - 1].requestFocus();
-          }
-        },
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -504,7 +454,7 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                   
                   // Formulaire (si code envoyé)
                   if (_codeSent) ...[
-                    // Code PIN avec 6 cases
+                    // Champ du code
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -516,12 +466,46 @@ class _VerifyEmailChangeViewState extends State<VerifyEmailChangeView> {
                             color: SaloonyColors.primary,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(
-                            6,
-                            (index) => _buildPinBox(index),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _codeController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 8,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: '000000',
+                            hintStyle: GoogleFonts.poppins(
+                              color: Colors.grey[300],
+                              fontSize: 24,
+                              letterSpacing: 8,
+                            ),
+                            counterText: '',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: SaloonyColors.primary,
+                                width: 2,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 20,
+                            ),
                           ),
                         ),
                       ],

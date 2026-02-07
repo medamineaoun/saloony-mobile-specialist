@@ -1,18 +1,15 @@
-import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
-import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:SaloonySpecialist/core/enum/TreatmentCategory.dart';
-import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:saloony/core/enum/TreatmentCategory.dart';
+import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class ServicesManagementPage extends StatefulWidget {
   final SalonCreationViewModel vm;
-  final String? salonId;
 
-  const ServicesManagementPage({super.key, required this.vm, this.salonId});
+  const ServicesManagementPage({super.key, required this.vm});
   
   @override
   State<ServicesManagementPage> createState() => _ServicesManagementPageState();
@@ -131,7 +128,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
         Container(
           margin: const EdgeInsets.only(bottom: 8),
           child: Material(
-            color: Colors.transparent,
+            color: const Color.fromARGB(0, 0, 0, 0),
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(12),
@@ -159,16 +156,14 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
+                        // Remplacé l'emoji par l'image
                         child: Image.asset(
-                          'assets/images/treatment_categories/${category.imagePath}',
+                          category.imagePath,
                           width: 28,
                           height: 28,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return Text(
-                              categoryData['emoji'] ?? '📋',
-                              style: const TextStyle(fontSize: 20, color: Colors.white),
-                            );
+                            return Icon(Icons.spa, size: 24, color: Colors.white);
                           },
                         ),
                       ),
@@ -194,10 +189,11 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.add_circle_outline, color: (categoryData['gradient'] as List<Color>)[0]),
-                      onPressed: onAdd,
-                    ),
+                 IconButton(
+  icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+  onPressed: onAdd,
+),
+
                     Icon(
                       isSelected ? Icons.expand_less : Icons.expand_more,
                       color: Colors.grey[600],
@@ -218,7 +214,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   name: treatment.treatmentName,
                   description: treatment.treatmentDescription,
                   price: treatment.treatmentPrice ?? 0.0,
-                  imagePath: treatment.treatmentPhotosPaths?.isNotEmpty == true ? treatment.treatmentPhotosPaths!.first as String? : null,
+                  imagePath: treatment.treatmentPhotosPaths?.isNotEmpty == true ? treatment.treatmentPhotosPaths!.first : null,
                   isSelected: vm.selectedTreatmentIds.contains(treatment.treatmentId),
                   isCustom: false,
                   onTap: () => vm.toggleTreatmentSelection(treatment.treatmentId),
@@ -246,54 +242,28 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
   }
 
   Map<String, dynamic> _getCategoryVisualData(TreatmentCategory category) {
-    switch (category) {
-      case TreatmentCategory.HAIRCUT:
-        return {
-          'gradient': [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-          'emoji': '✂️'
-        };
-      case TreatmentCategory.COLORING:
-        return {
-          'gradient': [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
-          'emoji': '🎨'
-        };
-      case TreatmentCategory.BEARD:
-        return {
-          'gradient': [const Color(0xFF78716C), const Color(0xFF57534E)],
-          'emoji': '🧔'
-        };
-      case TreatmentCategory.FACIAL:
-        return {
-          'gradient': [const Color(0xFF14B8A6), const Color(0xFF06B6D4)],
-          'emoji': '✨'
-        };
-      case TreatmentCategory.MASSAGE:
-        return {
-          'gradient': [const Color(0xFF3B82F6), const Color(0xFF06B6D4)],
-          'emoji': '💆'
-        };
-      case TreatmentCategory.NAILS:
-        return {
-          'gradient': [const Color(0xFFEC4899), const Color(0xFFF43F5E)],
-          'emoji': '💅'
-        };
-      case TreatmentCategory.WAXING:
-        return {
-          'gradient': [const Color(0xFFEF4444), const Color(0xFFF97316)],
-          'emoji': '🔥'
-        };
-      case TreatmentCategory.MAKEUP:
-        return {
-          'gradient': [const Color(0xFFF59E0B), const Color(0xFFEC4899)],
-          'emoji': '💄'
-        };
-      default:
-        return {
-          'gradient': [const Color(0xFF64748B), const Color(0xFF475569)],
-          'emoji': '📋'
-        };
-    }
+  switch (category) {
+    case TreatmentCategory.HAIRCUT:
+      return {'gradient': [const Color(0x00FDFDFE), const Color(0x006366F1)]};
+    case TreatmentCategory.COLORING:
+      return {'gradient': [const Color(0x00F59E0B), const Color(0x00EF4444)]};
+    case TreatmentCategory.BEARD:
+      return {'gradient': [const Color(0x0078716C), const Color(0x0057534E)]};
+    case TreatmentCategory.FACIAL:
+      return {'gradient': [const Color(0x0014B8A6), const Color(0x0006B6D4)]};
+    case TreatmentCategory.MASSAGE:
+      return {'gradient': [const Color(0x003B82F6), const Color(0x0006B6D4)]};
+    case TreatmentCategory.NAILS:
+      return {'gradient': [const Color(0x00EC4899), const Color(0x00F43F5E)]};
+    case TreatmentCategory.WAXING:
+      return {'gradient': [const Color(0x00EF4444), const Color(0x00F97316)]};
+    case TreatmentCategory.MAKEUP:
+      return {'gradient': [const Color(0x00F59E0B), const Color(0x00EC4899)]};
+    default:
+      return {'gradient': [const Color(0x0064748B), const Color(0x00475569)]};
   }
+}
+
 
   int _getServiceCountForCategory(SalonCreationViewModel vm, TreatmentCategory category) {
     final apiCount = vm.availableTreatments.where((t) => t.treatmentCategory.toUpperCase() == category.value).length;
@@ -335,7 +305,21 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                _buildServiceImage(imagePath, null),
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    image: imagePath != null
+                        ? DecorationImage(
+                            image: imagePath.startsWith('http') ? NetworkImage(imagePath) as ImageProvider : FileImage(File(imagePath)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: imagePath == null ? Icon(Icons.image_outlined, size: 32, color: Colors.grey[400]) : null,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -355,6 +339,8 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                             IconButton(
                               icon: Icon(Icons.edit_outlined, size: 18, color: Colors.blue[600]),
                               onPressed: onEdit,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ],
@@ -390,6 +376,8 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                       IconButton(
                         icon: Icon(Icons.delete_outline, color: Colors.red[600], size: 22),
                         onPressed: onDelete,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ],
@@ -407,11 +395,10 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     final descriptionController = TextEditingController();
     final priceController = TextEditingController();
     String? selectedDuration;
-    String? selectedServiceValue;
     String? imagePath;
-    Uint8List? imageBytes;
     final categoryData = _getCategoryVisualData(category);
 
+    // Options de durée prédéfinies
     final durationOptions = [
       {'display': '30 min', 'value': '30'},
       {'display': '1h', 'value': '60'},
@@ -442,16 +429,14 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 6, offset: const Offset(0, 3))],
                         ),
+                        // Remplacé l'emoji par l'image
                         child: Image.asset(
-                          'assets/images/treatment_categories/${category.imagePath}',
+                          category.imagePath,
                           width: 28,
                           height: 28,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return Text(
-                              categoryData['emoji'] ?? '📋',
-                              style: const TextStyle(fontSize: 20, color: Colors.white),
-                            );
+                            return Icon(Icons.spa, size: 24, color: Colors.white);
                           },
                         ),
                       ),
@@ -470,6 +455,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                   ),
                   const SizedBox(height: 20),
                   
+                  // Section image avec bouton amélioré
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -480,11 +466,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                           final picker = ImagePicker();
                           final image = await picker.pickImage(source: ImageSource.gallery);
                           if (image != null) {
-                            final bytes = await image.readAsBytes();
-                            setState(() {
-                              imageBytes = bytes;
-                              imagePath = (image.path != null && image.path.isNotEmpty) ? image.path : null;
-                            });
+                            setState(() => imagePath = image.path);
                           }
                         },
                         child: Container(
@@ -502,110 +484,44 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                               color: imagePath == null ? Colors.grey[300]! : (categoryData['gradient'] as List<Color>)[0],
                               width: imagePath == null ? 1.5 : 2,
                             ),
+                            image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath!)), fit: BoxFit.cover) : null,
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: imageBytes != null
-                                ? Image.memory(
-                                    imageBytes!,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: 140,
-                                  )
-                                : (imagePath == null
-                                    ? Container(
-                                        height: 140,
-                                        width: double.infinity,
-                                        color: (categoryData['gradient'] as List<Color>)[0].withOpacity(0.03),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey[400]),
-                                            const SizedBox(height: 8),
-                                            Text('Add Photo (Optional)', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500])),
-                                          ],
+                          child: imagePath == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey[400]),
+                                    const SizedBox(height: 8),
+                                    Text('Add Photo (Optional)', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500])),
+                                  ],
+                                )
+                              : Stack(
+                                  children: [
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.circular(20),
                                         ),
-                                      )
-                                    : Stack(
-                                        children: [
-                                          Positioned.fill(
-                                            child: imagePath!.startsWith('http')
-                                                ? Image.network(
-                                                    imagePath!,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stack) => Container(
-                                                      color: Colors.grey[100],
-                                                      child: Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    color: Colors.grey[100],
-                                                    child: Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-                                                  ),
-                                          ),
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: BoxDecoration(
-                                                color: Colors.black54,
-                                                borderRadius: BorderRadius.circular(20),
-                                              ),
-                                              child: Icon(Icons.edit, color: Colors.white, size: 18),
-                                            ),
-                                          ),
-                                        ],
-                                      )),
-                          ),
+                                        child: Icon(Icons.edit, color: Colors.white, size: 18),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ],
                   ),
                   
                   const SizedBox(height: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Service Name', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedServiceValue,
-                            isExpanded: true,
-                            hint: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text('Select a service', style: GoogleFonts.inter(color: Colors.grey[400])),
-                            ),
-                            items: vm.allowedGlobalServiceOptions.map((opt) {
-                              return DropdownMenuItem<String>(
-                                value: opt['value'] as String?,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  child: Text((opt['label'] as String?) ?? '', style: GoogleFonts.inter(fontSize: 14)),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (String? newVal) {
-                              setState(() {
-                                selectedServiceValue = newVal;
-                                nameController.text = newVal ?? '';
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildDialogTextField(label: 'Service Name', hint: 'e.g., Haircut, Manicure...', controller: nameController),
                   const SizedBox(height: 16),
                   _buildDialogTextField(label: 'Description (optional)', hint: 'Describe your service...', controller: descriptionController, maxLines: 3),
                   
+                  // Sélecteur de durée amélioré
                   const SizedBox(height: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,44 +577,21 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
-                        onPressed: () async {
-                          if ((selectedServiceValue != null || nameController.text.trim().isNotEmpty) && 
+                        onPressed: () {
+                          if (nameController.text.trim().isNotEmpty && 
                               priceController.text.trim().isNotEmpty &&
                               selectedDuration != null) {
-                            final serviceName = selectedServiceValue ?? nameController.text.trim();
-                            String? finalPhotoPath = imagePath;
-                            if (imageBytes != null && widget.salonId != null && widget.salonId!.isNotEmpty) {
-                              final uploadedPath = await vm.uploadSalonPhotoAndGetPath(widget.salonId!, imageBytes!, filename: 'service_${DateTime.now().millisecondsSinceEpoch}.jpg');
-                              if (uploadedPath != null && uploadedPath.isNotEmpty) {
-                                finalPhotoPath = uploadedPath;
-                              } else {
-                                finalPhotoPath = 'data:image/png;base64,${base64Encode(imageBytes!)}';
-                              }
-                            } else if (imageBytes != null) {
-                              finalPhotoPath = 'data:image/png;base64,${base64Encode(imageBytes!)}';
-                            }
-
                             final service = CustomService(
                               id: DateTime.now().millisecondsSinceEpoch.toString(),
-                              name: serviceName,
+                              name: nameController.text.trim(),
                               description: descriptionController.text.trim(),
                               price: double.tryParse(priceController.text) ?? 0.0,
                               duration: double.tryParse(selectedDuration!),
-                              photoPath: finalPhotoPath,
+                              photoPath: imagePath,
                               category: category.value,
                             );
-
                             vm.addCustomService(service);
-
-                            if (widget.salonId != null && widget.salonId!.isNotEmpty) {
-                              await vm.syncCustomServicesToBackend(widget.salonId!, context: context);
-                            }
-
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill required fields')));
+                            Navigator.pop(context);
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -727,21 +620,10 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
     final priceController = TextEditingController(text: service.price.toString());
     String? selectedGender = service.specificGender;
     String? imagePath = service.photoPath;
-    Uint8List? imageBytes;
-    if (service.photoPath != null && service.photoPath!.startsWith('data:')) {
-      final comma = service.photoPath!.indexOf(',');
-      if (comma != -1) {
-        try {
-          final b64 = service.photoPath!.substring(comma + 1);
-          imageBytes = base64Decode(b64);
-          imagePath = null;
-        } catch (_) {}
-      }
-    }
-    String? selectedServiceValue;
     final category = TreatmentCategory.values.firstWhere((cat) => cat.value == service.category.toUpperCase(), orElse: () => TreatmentCategory.HAIRCUT);
     final categoryData = _getCategoryVisualData(category);
 
+    // Options de durée prédéfinies
     final durationOptions = [
       {'display': '30 min', 'value': '30'},
       {'display': '1h', 'value': '60'},
@@ -763,12 +645,10 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: categoryData['gradient'] as List<Color>),
-                  borderRadius: BorderRadius.circular(10)
-                ),
+                decoration: BoxDecoration(gradient: LinearGradient(colors: categoryData['gradient'] as List<Color>), borderRadius: BorderRadius.circular(10)),
+                // Remplacé l'icône par l'image de la catégorie
                 child: Image.asset(
-                  'assets/images/treatment_categories/${category.imagePath}',
+                  category.imagePath,
                   width: 24,
                   height: 24,
                   fit: BoxFit.contain,
@@ -786,6 +666,7 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Section image améliorée
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -796,129 +677,58 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
                         final picker = ImagePicker();
                         final image = await picker.pickImage(source: ImageSource.gallery);
                         if (image != null) {
-                          final bytes = await image.readAsBytes();
-                          setState(() {
-                            imageBytes = bytes;
-                            imagePath = (image.path != null && image.path.isNotEmpty) ? image.path : null;
-                          });
+                          setState(() => imagePath = image.path);
                         }
                       },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: (imageBytes != null)
-                            ? Image.memory(
-                                imageBytes!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: 140,
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: imagePath == null
+                              ? LinearGradient(colors: [
+                                  (categoryData['gradient'] as List<Color>)[0].withOpacity(0.05),
+                                  (categoryData['gradient'] as List<Color>)[1].withOpacity(0.05),
+                                ])
+                              : null,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: imagePath == null ? Colors.grey[300]! : (categoryData['gradient'] as List<Color>)[0],
+                            width: imagePath == null ? 1.5 : 2,
+                          ),
+                          image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath!)), fit: BoxFit.cover) : null,
+                        ),
+                        child: imagePath == null
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey[400]),
+                                  const SizedBox(height: 8),
+                                  Text('Add Photo', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500])),
+                                ],
                               )
-                            : (imagePath == null
-                                ? Container(
-                                    height: 140,
-                                    width: double.infinity,
-                                    color: (categoryData['gradient'] as List<Color>)[0].withOpacity(0.03),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey[400]),
-                                        const SizedBox(height: 8),
-                                        Text('Add Photo', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500])),
-                                      ],
+                            : Stack(
+                                children: [
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Icon(Icons.edit, color: Colors.white, size: 18),
                                     ),
-                                  )
-                                : Stack(
-                                    children: [
-                                      Positioned.fill(
-                                        child: imagePath!.startsWith('http')
-                                            ? Image.network(
-                                                imagePath!,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stack) => Container(
-                                                  color: Colors.grey[100],
-                                                  child: Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-                                                ),
-                                              )
-                                            : Container(
-                                                color: Colors.grey[100],
-                                                child: Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-                                              ),
-                                      ),
-                                      Positioned(
-                                        top: 8,
-                                        right: 8,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black54,
-                                            borderRadius: BorderRadius.circular(20),
-                                          ),
-                                          child: Icon(Icons.edit, color: Colors.white, size: 18),
-                                        ),
-                                      ),
-                                    ],
-                                  )),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                   ],
                 ),
                 
                 const SizedBox(height: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Service Name', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1B2B3E))),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: StatefulBuilder(
-                          builder: (context, setDropdownState) {
-                            if (selectedServiceValue == null) {
-                              for (final opt in vm.allowedGlobalServiceOptions) {
-                                if (opt['value'] == service.name) {
-                                  selectedServiceValue = opt['value'];
-                                  break;
-                                }
-                                if (opt['label']!.toLowerCase() == service.name.toLowerCase()) {
-                                  selectedServiceValue = opt['value'];
-                                  break;
-                                }
-                              }
-                            }
-
-                            return DropdownButton<String>(
-                              value: selectedServiceValue,
-                              isExpanded: true,
-                              hint: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text('Select a service', style: GoogleFonts.inter(color: Colors.grey[400])),
-                              ),
-                              items: vm.allowedGlobalServiceOptions.map((opt) {
-                                return DropdownMenuItem<String>(
-                                  value: opt['value'] as String?,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    child: Text((opt['label'] as String?) ?? '', style: GoogleFonts.inter(fontSize: 14)),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (String? newVal) {
-                                setState(() {
-                                  selectedServiceValue = newVal;
-                                  nameController.text = newVal ?? '';
-                                });
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                _buildDialogTextField(label: 'Service Name', hint: 'Service name', controller: nameController),
                 const SizedBox(height: 16),
                 _buildDialogTextField(label: 'Description', hint: 'Service description', controller: descriptionController, maxLines: 3),
                 
@@ -973,44 +783,22 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
               child: Text('Cancel', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[600]))
             ),
             ElevatedButton(
-              onPressed: () async {
-                if ((selectedServiceValue != null || nameController.text.trim().isNotEmpty) && 
+              onPressed: () {
+                if (nameController.text.trim().isNotEmpty && 
                     priceController.text.trim().isNotEmpty &&
                     selectedDuration != null) {
-                  final serviceName = selectedServiceValue ?? nameController.text.trim();
-                  String? finalPhotoPath = imagePath;
-                  if (imageBytes != null && widget.salonId != null && widget.salonId!.isNotEmpty) {
-                    final uploadedPath = await vm.uploadSalonPhotoAndGetPath(widget.salonId!, imageBytes!, filename: 'service_${DateTime.now().millisecondsSinceEpoch}.jpg');
-                    if (uploadedPath != null && uploadedPath.isNotEmpty) {
-                      finalPhotoPath = uploadedPath;
-                    } else {
-                      finalPhotoPath = 'data:image/png;base64,${base64Encode(imageBytes!)}';
-                    }
-                  } else if (imageBytes != null) {
-                    finalPhotoPath = 'data:image/png;base64,${base64Encode(imageBytes!)}';
-                  }
-
                   final updatedService = CustomService(
                     id: service.id,
-                    name: serviceName,
+                    name: nameController.text.trim(),
                     description: descriptionController.text.trim(),
                     price: double.tryParse(priceController.text) ?? 0.0,
                     duration: double.tryParse(selectedDuration!),
-                    photoPath: finalPhotoPath,
+                    photoPath: imagePath,
                     specificGender: selectedGender,
                     category: service.category,
                   );
                   vm.updateCustomService(updatedService);
-                  
-                  if (widget.salonId != null && widget.salonId!.isNotEmpty) {
-                    await vm.syncCustomServicesToBackend(widget.salonId!, context: context);
-                  }
-                  
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill required fields')));
+                  Navigator.pop(context);
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -1128,65 +916,6 @@ class _ServicesManagementPageState extends State<ServicesManagementPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildServiceImage(String? imagePath, Uint8List? imageBytes) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: imageBytes != null
-            ? Image.memory(
-                imageBytes,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              )
-            : (imagePath == null
-                ? Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[100],
-                    child: Icon(Icons.image_outlined, size: 32, color: Colors.grey[400]),
-                  )
-                : (imagePath.startsWith('data:')
-                    ? (() {
-                        try {
-                          final idx = imagePath.indexOf(',');
-                          if (idx != -1) {
-                            final b64 = imagePath.substring(idx + 1);
-                            final bytes = base64Decode(b64);
-                            return Image.memory(bytes, width: 80, height: 80, fit: BoxFit.cover);
-                          }
-                        } catch (_) {}
-                        return Container(width: 80, height: 80, color: Colors.grey[100], child: Icon(Icons.broken_image, size: 32, color: Colors.grey[400]));
-                      })()
-                    : (imagePath.startsWith('http')
-                        ? Image.network(
-                            imagePath,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stack) => Container(
-                              width: 80,
-                              height: 80,
-                              color: Colors.grey[100],
-                              child: Icon(Icons.broken_image, size: 32, color: Colors.grey[400]),
-                            ),
-                          )
-                        : Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[100],
-                            child: Icon(Icons.broken_image, size: 32, color: Colors.grey[400]),
-                          )))),
-      ),
     );
   }
 }

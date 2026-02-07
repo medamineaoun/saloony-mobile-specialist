@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/SaloonyColors.dart';
-import '../../../core/constants/SaloonyTextStyles.dart';
-import '../../../core/widgets/SaloonyButtons.dart';
-// no local input fields needed
-import '../../../core/constants/app_routes.dart';
 
 class LinkSentWidget extends StatelessWidget {
   const LinkSentWidget({Key? key}) : super(key: key);
@@ -13,7 +8,7 @@ class LinkSentWidget extends StatelessWidget {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: SaloonyColors.background,
+        backgroundColor: Colors.white,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -24,24 +19,49 @@ class LinkSentWidget extends StatelessWidget {
                 const SizedBox(height: 32),
                 Icon(
                   Icons.email_outlined,
-                  color: SaloonyColors.primary,
+                  color: Colors.blueGrey[900],
                   size: 80,
                 ),
                 const SizedBox(height: 32),
                 Text(
                   'Link has been sent',
-                  style: SaloonyTextStyles.heading1,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'You’ll shortly receive an email with a code to setup a new password.',
                   textAlign: TextAlign.center,
-                  style: SaloonyTextStyles.bodyMedium.copyWith(color: SaloonyColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[700],
+                  ),
                 ),
                 const SizedBox(height: 40),
-                SaloonyPrimaryButton(
-                  label: 'Done',
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.resetPassword),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/resetPassword');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

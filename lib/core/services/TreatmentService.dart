@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart';
-import 'package:SaloonySpecialist/core/services/AuthService.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart';
+import 'package:saloony/core/services/AuthService.dart';
 
 class TreatmentService {
   final AuthService _authService = AuthService();
@@ -87,44 +86,23 @@ class TreatmentService {
         final data = jsonDecode(response.body);
         
         // Upload de la photo si fournie
-        if (photoPath != null && (data['treatmentId'] != null || data['id'] != null)) {
-          final treatmentId = data['treatmentId'] ?? data['id'];
-          debugPrint('📷 Upload photo pour traitement: $treatmentId');
-          
-          final photoResult = await uploadTreatmentPhoto(treatmentId, photoPath);
-          
-          if (photoResult['success'] == true) {
-            debugPrint('✅ Photo uploadée avec succès');
-            // Mettre à jour les données avec la photo
-            data['treatmentPhotosPaths'] = photoResult['treatment']?['treatmentPhotosPaths'];
-          } else {
-            debugPrint('⚠️ Photo non uploadée: ${photoResult['message']}');
-          }
+        if (photoPath != null && data['treatmentId'] != null) {
+          await uploadTreatmentPhoto(
+            data['treatmentId'] ?? data['id'], 
+            photoPath
+          );
         }
         
         return {
           'success': true,
           'treatment': data,
-          'treatmentId': data['treatmentId'] ?? data['id'],
         };
       } else {
-        debugPrint('❗ Erreur ajout traitement - status: ${response.statusCode}');
-        debugPrint('❗ Body: ${response.body}');
-        try {
-          final error = jsonDecode(response.body);
-          return {
-            'success': false,
-            'statusCode': response.statusCode,
-            'message': error['message'] ?? response.body,
-            'body': error,
-          };
-        } catch (e) {
-          return {
-            'success': false,
-            'statusCode': response.statusCode,
-            'message': response.body,
-          };
-        }
+        final error = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': error['message'] ?? 'Erreur lors de l\'ajout du traitement',
+        };
       }
     } catch (e) {
       debugPrint('❌ Erreur ajout traitement: $e');
@@ -135,7 +113,7 @@ class TreatmentService {
     }
   }
 
-  /// ✅ Upload photo de traitement (compatible Web et Mobile)
+  /// Upload photo de traitement
   Future<Map<String, dynamic>> uploadTreatmentPhoto(String treatmentId, String imagePath) async {
     try {
       final token = await _getAuthToken();
@@ -149,63 +127,24 @@ class TreatmentService {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
-      // ✅ Gestion Web vs Mobile
-      if (kIsWeb) {
-        debugPrint('🌐 Upload pour Web');
-        // Pour le web, lire les bytes depuis le chemin
-        try {
-          final bytes = await File(imagePath).readAsBytes();
-          request.files.add(
-            http.MultipartFile.fromBytes(
-              'file',
-              bytes,
-              filename: imagePath.split('/').last.split('\\').last,
-            ),
-          );
-        } catch (e) {
-          debugPrint('⚠️ Erreur lecture fichier Web: $e');
-          return {
-            'success': false,
-            'message': 'Erreur lecture fichier: $e',
-          };
-        }
-      } else {
-        debugPrint('📱 Upload pour Mobile');
-        // Pour mobile, utiliser le chemin du fichier
-        try {
-          request.files.add(
-            await http.MultipartFile.fromPath('file', imagePath),
-          );
-        } catch (e) {
-          debugPrint('⚠️ Erreur lecture fichier Mobile: $e');
-          return {
-            'success': false,
-            'message': 'Erreur lecture fichier: $e',
-          };
-        }
-      }
+      request.files.add(await http.MultipartFile.fromPath('file', imagePath));
 
-      debugPrint('📤 Envoi requête upload photo...');
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
 
       debugPrint('📷 Upload photo traitement: ${response.statusCode}');
-      debugPrint('📄 Réponse: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(responseBody);
         return {
           'success': true,
           'message': 'Photo uploadée avec succès',
-          'treatment': data['treatment'] ?? data['data'],
-          'photoPath': data['treatment']?['treatmentPhotosPaths']?.last ?? 
-                       data['data']?['treatmentPhotosPaths']?.last,
+          'treatment': data,
         };
       } else {
-        final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'message': errorData['message'] ?? 'Erreur lors de l\'upload de la photo',
+          'message': 'Erreur lors de l\'upload de la photo',
         };
       }
     } catch (e) {
@@ -382,7 +321,7 @@ class TreatmentService {
     }
   }
 
-  /// ✅ Mettre à jour la photo d'un traitement (compatible Web et Mobile)
+  /// Mettre à jour la photo d'un traitement
   Future<Map<String, dynamic>> updateTreatmentPhoto({
     required String treatmentId,
     required int index,
@@ -400,57 +339,24 @@ class TreatmentService {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
-      // ✅ Gestion Web vs Mobile
-      if (kIsWeb) {
-        debugPrint('🌐 Mise à jour photo pour Web');
-        try {
-          final bytes = await File(imagePath).readAsBytes();
-          request.files.add(
-            http.MultipartFile.fromBytes(
-              'file',
-              bytes,
-              filename: imagePath.split('/').last.split('\\').last,
-            ),
-          );
-        } catch (e) {
-          debugPrint('⚠️ Erreur lecture fichier Web: $e');
-          return {
-            'success': false,
-            'message': 'Erreur lecture fichier: $e',
-          };
-        }
-      } else {
-        debugPrint('📱 Mise à jour photo pour Mobile');
-        try {
-          request.files.add(
-            await http.MultipartFile.fromPath('file', imagePath),
-          );
-        } catch (e) {
-          debugPrint('⚠️ Erreur lecture fichier Mobile: $e');
-          return {
-            'success': false,
-            'message': 'Erreur lecture fichier: $e',
-          };
-        }
-      }
+      request.files.add(await http.MultipartFile.fromPath('file', imagePath));
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
 
       debugPrint('📷 Mise à jour photo traitement: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(responseBody);
         return {
           'success': true,
           'message': 'Photo mise à jour avec succès',
-          'treatment': data['treatment'] ?? data['data'],
+          'treatment': data,
         };
       } else {
-        final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'message': errorData['message'] ?? 'Erreur lors de la mise à jour de la photo',
+          'message': 'Erreur lors de la mise à jour de la photo',
         };
       }
     } catch (e) {
@@ -485,7 +391,7 @@ class TreatmentService {
         return {
           'success': true,
           'message': 'Photo supprimée avec succès',
-          'treatment': data['treatment'] ?? data['data'],
+          'treatment': data,
         };
       } else {
         return {
@@ -522,7 +428,7 @@ class TreatmentService {
         return {
           'success': true,
           'message': 'Toutes les photos supprimées avec succès',
-          'treatment': data['treatment'] ?? data['data'],
+          'treatment': data,
         };
       } else {
         return {
@@ -568,50 +474,6 @@ class TreatmentService {
       }
     } catch (e) {
       debugPrint('❌ Erreur recherche traitements: $e');
-      return {
-        'success': false,
-        'message': 'Erreur: $e',
-      };
-    }
-  }
-
-  /// ✅ NOUVEAU: Upload multiple photos pour un traitement
-  Future<Map<String, dynamic>> uploadMultipleTreatmentPhotos(
-    String treatmentId, 
-    List<String> imagePaths
-  ) async {
-    try {
-      final results = <Map<String, dynamic>>[];
-      int successCount = 0;
-      int failureCount = 0;
-
-      for (int i = 0; i < imagePaths.length; i++) {
-        debugPrint('📤 Upload photo ${i + 1}/${imagePaths.length}...');
-        
-        final result = await uploadTreatmentPhoto(treatmentId, imagePaths[i]);
-        results.add(result);
-        
-        if (result['success'] == true) {
-          successCount++;
-        } else {
-          failureCount++;
-        }
-
-        // Petite pause entre les uploads pour éviter la surcharge
-        if (i < imagePaths.length - 1) {
-          await Future.delayed(const Duration(milliseconds: 300));
-        }
-      }
-
-      return {
-        'success': failureCount == 0,
-        'message': '$successCount photo(s) uploadée(s), $failureCount échec(s)',
-        'results': results,
-        'successCount': successCount,
-        'failureCount': failureCount,
-      };
-    } catch (e) {
-      debugPrint('❌ Erreur upload multiple photos: $e');
       return {
         'success': false,
         'message': 'Erreur: $e',

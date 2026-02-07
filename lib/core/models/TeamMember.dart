@@ -12,7 +12,7 @@ class TeamMember {
     this.email,
     this.userId,
     this.profilePhotoPath,
-    this.status = 'PENDING', 
+    this.status = 'PENDING',  // Par défaut PENDING
   });
   
   Map<String, dynamic> toJson() {

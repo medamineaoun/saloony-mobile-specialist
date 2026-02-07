@@ -1,7 +1,13 @@
-import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
 import 'package:flutter/material.dart';
 
-
+class SaloonyColors {
+  static const Color primary = Color(0xFF1B2B3E);
+  static const Color secondary = Color(0xFFF0CD97);
+  static const Color tertiary = Color(0xFFE1E2E2);
+  static const Color textPrimary = Color(0xFF1B2B3E);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color background = Color(0xFFFFFFFF);
+}
 
 class TeamMembersScreen extends StatefulWidget {
   const TeamMembersScreen({super.key});
@@ -352,6 +358,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
   }
 
   void _addNewMember() {
+    // TODO: Implement add new member functionality
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

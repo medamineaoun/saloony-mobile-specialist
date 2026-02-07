@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/SaloonyColors.dart';
-import '../../../core/constants/SaloonyTextStyles.dart';
-import '../../../core/widgets/SaloonyInputFields.dart';
-import '../../../core/widgets/SaloonyButtons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/ResetPasswordViewModel.dart';
 
 class ResetPasswordWidget extends StatelessWidget {
@@ -23,7 +20,7 @@ class ResetPasswordWidget extends StatelessWidget {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              backgroundColor: SaloonyColors.backgroundSecondary,
+              backgroundColor: const Color(0xFFF8F9FA),
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
@@ -33,7 +30,7 @@ class ResetPasswordWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: SaloonyColors.borderLight),
+                      border: Border.all(color: const Color(0xFFE1E2E2)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
@@ -111,13 +108,22 @@ class ResetPasswordWidget extends StatelessWidget {
                             Text(
                               'Reset Password',
                               textAlign: TextAlign.center,
-                              style: SaloonyTextStyles.heading1,
+                              style: GoogleFonts.poppins(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1B2B3E),
+                                letterSpacing: -0.5,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Create a strong password to secure your account',
                               textAlign: TextAlign.center,
-                              style: SaloonyTextStyles.subtitle,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                height: 1.5,
+                              ),
                             ),
 
                             const SizedBox(height: 36),
@@ -128,19 +134,79 @@ class ResetPasswordWidget extends StatelessWidget {
                               children: [
                                 Text(
                                   'New Password',
-                                  style: SaloonyTextStyles.labelLarge,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1B2B3E),
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
-                                SaloonyInputField(
+                                TextFormField(
                                   controller: vm.passwordController,
-                                  label: '',
-                                  readOnly: vm.isLoading,
+                                  enabled: !vm.isLoading,
                                   obscureText: !vm.passwordVisible1,
                                   onChanged: (_) => vm.validatePassword(),
-                                  hintText: 'Enter new password',
-                                  prefixIcon: Icons.lock_outline_rounded,
-                                  onSuffixIconTap: vm.togglePasswordVisibility1,
-                                  suffixIcon: vm.passwordVisible1 ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter new password',
+                                    hintStyle: GoogleFonts.poppins(
+                                      color: Colors.grey[400],
+                                      fontSize: 15,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.lock_outline_rounded,
+                                      color: Color(0xFFF0CD97),
+                                      size: 22,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF1B2B3E),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFE74C3C),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFE74C3C),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    disabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[200]!),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 18,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        vm.passwordVisible1
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                        color: const Color(0xFFF0CD97),
+                                        size: 22,
+                                      ),
+                                      onPressed: vm.togglePasswordVisibility1,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -160,7 +226,11 @@ class ResetPasswordWidget extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Password must contain:',
-                                    style: SaloonyTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1B2B3E),
+                                    ),
                                   ),
                                   const SizedBox(height: 12),
                                   _buildRequirement(
@@ -199,21 +269,82 @@ class ResetPasswordWidget extends StatelessWidget {
                               children: [
                                 Text(
                                   'Confirm Password',
-                                  style: SaloonyTextStyles.labelLarge,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1B2B3E),
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
-                                SaloonyInputField(
+                                TextFormField(
                                   controller: vm.confirmPasswordController,
-                                  label: '',
-                                  readOnly: vm.isLoading,
+                                  enabled: !vm.isLoading,
                                   obscureText: !vm.passwordVisible2,
                                   onChanged: (_) => vm.validatePassword(),
-                                  hintText: 'Confirm your password',
-                                  prefixIcon: Icons.lock_outline_rounded,
-                                  onSuffixIconTap: vm.togglePasswordVisibility2,
-                                  suffixIcon: vm.passwordVisible2 ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                  decoration: InputDecoration(
+                                    hintText: 'Confirm your password',
+                                    hintStyle: GoogleFonts.poppins(
+                                      color: Colors.grey[400],
+                                      fontSize: 15,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.lock_outline_rounded,
+                                      color: Color(0xFFF0CD97),
+                                      size: 22,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF1B2B3E),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFE74C3C),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFFE74C3C),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    disabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[200]!),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 18,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        vm.passwordVisible2
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                        color: const Color(0xFFF0CD97),
+                                        size: 22,
+                                      ),
+                                      onPressed: vm.togglePasswordVisibility2,
+                                    ),
+                                  ),
                                 ),
-                                if (vm.confirmPasswordController.text.isNotEmpty && !vm.passwordsMatch)
+                                if (vm.confirmPasswordController.text.isNotEmpty && 
+                                    !vm.passwordsMatch)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 8, left: 4),
                                     child: Row(
@@ -226,7 +357,10 @@ class ResetPasswordWidget extends StatelessWidget {
                                         const SizedBox(width: 6),
                                         Text(
                                           'Passwords do not match',
-                                          style: SaloonyTextStyles.caption.copyWith(color: const Color(0xFFE74C3C)),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            color: const Color(0xFFE74C3C),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -237,10 +371,57 @@ class ResetPasswordWidget extends StatelessWidget {
                             const SizedBox(height: 32),
 
                             // Change Password button
-                            SaloonyPrimaryButton(
-                              label: 'Change Password',
-                              isLoading: vm.isLoading,
-                              onPressed: (vm.isLoading || !vm.isPasswordValid) ? () {} : () => vm.changePassword(context, email, code),
+                            Container(
+                              height: 56,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: (vm.isLoading || !vm.isPasswordValid)
+                                      ? [Colors.grey[300]!, Colors.grey[400]!]
+                                      : [const Color(0xFF1B2B3E), const Color(0xFF2D4356)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: (vm.isLoading || !vm.isPasswordValid)
+                                    ? []
+                                    : [
+                                        BoxShadow(
+                                          color: const Color(0xFF1B2B3E).withOpacity(0.3),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: (vm.isLoading || !vm.isPasswordValid)
+                                    ? null
+                                    : () => vm.changePassword(context, email, code),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: vm.isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : Text(
+                                        'Change Password',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                              ),
                             ),
 
                             const SizedBox(height: 24),
@@ -249,24 +430,28 @@ class ResetPasswordWidget extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: SaloonyColors.goldLight.withOpacity(0.8),
+                                color: const Color(0xFFF0CD97).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: SaloonyColors.gold.withOpacity(0.3),
+                                  color: const Color(0xFFF0CD97).withOpacity(0.3),
                                 ),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
                                     Icons.security_rounded,
-                                    color: SaloonyColors.gold,
+                                    color: const Color(0xFFF0CD97),
                                     size: 20,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
                                       'Your password is encrypted and secure',
-                                      style: SaloonyTextStyles.caption.copyWith(fontWeight: FontWeight.w500, color: SaloonyColors.textPrimary),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: const Color(0xFF1B2B3E),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -309,8 +494,9 @@ class ResetPasswordWidget extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: SaloonyTextStyles.bodySmall.copyWith(
-              color: isMet ? const Color(0xFF27AE60) : SaloonyColors.textSecondary,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: isMet ? const Color(0xFF27AE60) : Colors.grey[600],
               fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:SaloonySpecialist/core/models/Appointment.dart';
+import 'package:saloony/core/models/Appointment.dart';
 
 
 class AppointmentCardWidget extends StatelessWidget {

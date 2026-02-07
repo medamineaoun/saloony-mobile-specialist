@@ -55,6 +55,7 @@ class User {
 
   String get fullName => '$userFirstName $userLastName'.trim();
 
+  /// Update user with new data
   void updateFromJson(Map<String, dynamic> json) {
     userEmail = json['userEmail'] as String? ?? userEmail;
     userFirstName = json['userFirstName'] as String? ?? userFirstName;
@@ -67,6 +68,7 @@ class User {
     userEtat = json['userEtat'] as bool? ?? userEtat;
   }
 
+  /// Create a copy of the user with optional field updates
   User copyWith({
     String? userId,
     String? userEmail,

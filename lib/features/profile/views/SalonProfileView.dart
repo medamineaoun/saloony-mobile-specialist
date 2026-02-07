@@ -1,25 +1,19 @@
-import 'package:SaloonySpecialist/core/constants/SaloonyTextStyles.dart';
-import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
-import '../../../core/constants/SaloonyColors.dart' hide SaloonyColors;
-
 import 'package:flutter/material.dart';
-import 'package:SaloonySpecialist/core/Config/ProviderSetup.dart' as AppConfig;
-import 'package:SaloonySpecialist/core/constants/app_routes.dart';
-import 'package:SaloonySpecialist/features/Menu/views/SideMenuDialog.dart';
-import 'package:SaloonySpecialist/core/services/AuthService.dart';
-import 'package:SaloonySpecialist/core/services/SalonService.dart';
-import 'package:SaloonySpecialist/core/services/UserService.dart';
-import 'package:SaloonySpecialist/core/services/ToastService.dart';
-import 'package:SaloonySpecialist/features/Salon/views/AppThemeScreen.dart';
-import 'package:SaloonySpecialist/features/Salon/views/AppointmentsScreen.dart' hide SaloonyColors;
-import 'package:SaloonySpecialist/features/Salon/views/ClientsScreen.dart' hide SaloonyColors;
-import 'package:SaloonySpecialist/features/Salon/views/EditSalonScreen.dart';
-import 'package:SaloonySpecialist/features/Salon/views/ServicesManagementScreen.dart' hide SaloonyColors;
-import 'package:SaloonySpecialist/features/Salon/views/TeamMembersScreen.dart' hide SaloonyColors;
-import 'package:SaloonySpecialist/features/profile/views/ChangePhoneWidget.dart';
-import 'package:SaloonySpecialist/features/profile/views/LanguageScreen.dart';
-import 'package:SaloonySpecialist/features/profile/views/LogoutButton.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart' as AppConfig;
+import 'package:saloony/core/constants/app_routes.dart';
+import 'package:saloony/features/Menu/views/SideMenuDialog.dart';
+import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/core/services/SalonService.dart';
+import 'package:saloony/features/Salon/AppThemeScreen.dart';
+import 'package:saloony/features/Salon/AppointmentsScreen.dart';
+import 'package:saloony/features/Salon/ClientsScreen.dart';
+import 'package:saloony/features/Salon/EditSalonScreen.dart';
+import 'package:saloony/features/Salon/ServicesManagementScreen.dart';
+import 'package:saloony/features/Salon/TeamMembersScreen.dart';
+import 'package:saloony/features/profile/views/LanguageScreen.dart';
+import 'package:saloony/features/profile/views/LogoutButton.dart';
+import 'package:saloony/core/Config/ProviderSetup.dart';
 
 bool notificationsEnabled = true;
 
@@ -33,35 +27,16 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   final AuthService _authService = AuthService();
   final SalonService _salonService = SalonService();
-  final UserService _userService = UserService();
   
   bool _isLoading = true;
   Map<String, dynamic>? _userSalon;
   Map<String, dynamic>? _currentUser;
   String _userRole = 'CUSTOMER';
-  bool _isSalonOwner = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-  }
-
-  void _openWhatsApp() async {
-    const phoneNumber = "+21626320130";
-    const message = "Hello, I need support please.";
-    final url = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}");
-
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Cannot open WhatsApp.", style: SaloonyTextStyles.bodyMedium.copyWith(color: Colors.white)),
-          backgroundColor: SaloonyColors.error,
-        ),
-      );
-    }
   }
 
   Future<void> _loadUserData() async {
@@ -73,10 +48,6 @@ class _ProfileViewState extends State<ProfileView> {
       if (userResult['success'] == true && userResult['user'] != null) {
         _currentUser = userResult['user'];
         _userRole = _currentUser!['appRole'] ?? 'CUSTOMER';
-        _isSalonOwner = _currentUser!['isSalonOwner'] == true;
-        
-        debugPrint('👤 User role: $_userRole');
-        debugPrint('👑 Is salon owner: $_isSalonOwner');
         
         if (_userRole == 'SPECIALIST') {
           final userId = _currentUser!['userId'];
@@ -84,8 +55,6 @@ class _ProfileViewState extends State<ProfileView> {
           
           if (salonResult['success'] == true && salonResult['salon'] != null) {
             _userSalon = salonResult['salon'];
-            final salonOwnerId = _userSalon!['salonOwnerId'];
-            _isSalonOwner = (salonOwnerId != null && salonOwnerId == userId);
           }
         }
       }
@@ -106,148 +75,55 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  void _showDeactivateDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: SaloonyColors.background,
-          title: Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: SaloonyColors.warning, size: 28),
-              const SizedBox(width: 12),
-              Text('Deactivate Account', style: SaloonyTextStyles.heading3),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Are you sure you want to deactivate your account?',
-                style: SaloonyTextStyles.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: SaloonyColors.errorLight,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: SaloonyColors.error.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('This action will:', style: SaloonyTextStyles.labelLarge.copyWith(color: SaloonyColors.errorDark)),
-                    const SizedBox(height: 8),
-                    _buildWarningItem('• Deactivate your account'),
-                    _buildWarningItem('• Remove access to your profile'),
-                    _buildWarningItem('• Require reactivation to use again'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: Text('Cancel', style: SaloonyTextStyles.buttonMedium.copyWith(color: SaloonyColors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () => _confirmDeactivation(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SaloonyColors.error,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: Text('Deactivate', style: SaloonyTextStyles.buttonMedium.copyWith(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
+  // Navigation directe vers les différentes sections du salon
+  void _navigateToAppointments() {
+    // Navigator.pushNamed(context, AppRoutes.appointments);
+    debugPrint('Navigate to Appointments');
   }
 
-  Future<void> _confirmDeactivation() async {
-    Navigator.of(context).pop();
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          margin: const EdgeInsets.symmetric(horizontal: 40),
-          decoration: BoxDecoration(
-            color: SaloonyColors.background,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(color: SaloonyColors.primary),
-              const SizedBox(height: 20),
-              Text('Deactivating account...', style: SaloonyTextStyles.bodyMedium),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    try {
-      final result = await _userService.deactivateAccount();
-      
-      if (mounted) Navigator.of(context).pop();
-      
-      if (result['success'] == true) {
-        ToastService.showSuccess(context, 'Account deactivated successfully');
-        await Future.delayed(const Duration(seconds: 1));
-        
-        if (mounted) {
-          await _authService.signOut();
-          Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.signIn, (route) => false);
-        }
-      } else {
-        ToastService.showError(context, result['message'] ?? 'Failed to deactivate account');
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context).pop();
-        ToastService.showError(context, 'Error deactivating account: $e');
-      }
-    }
+  void _navigateToEditSalon() {
+    // Navigator.pushNamed(context, AppRoutes.editSalon);
+    debugPrint('Navigate to Edit Salon');
   }
 
-  Widget _buildWarningItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(text, style: SaloonyTextStyles.bodySmall.copyWith(color: SaloonyColors.errorDark)),
-    );
+  void _navigateToServices() {
+    // Navigator.pushNamed(context, AppRoutes.services);
+    debugPrint('Navigate to Services');
+  }
+
+  void _navigateToClients() {
+    // Navigator.pushNamed(context, AppRoutes.clients);
+    debugPrint('Navigate to Clients');
+  }
+
+  void _navigateToTeam() {
+     Navigator.pushNamed(context, AppRoutes.TeamMembersScreen);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: SaloonyColors.backgroundSecondary,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: SaloonyColors.background,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: SaloonyColors.primary),
+          icon: const Icon(Icons.menu_rounded, color: Color(0xFF1B2B3E)),
           onPressed: () => _showSideMenu(context),
         ),
-        title: Text('Profile', style: SaloonyTextStyles.heading3),
+        title: Text(
+          'Profile',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1B2B3E),
+          ),
+        ),
         actions: [
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: SaloonyColors.primary),
+                icon: const Icon(Icons.notifications_outlined, color: Color(0xFF1B2B3E)),
                 onPressed: () {},
               ),
               Positioned(
@@ -257,7 +133,7 @@ class _ProfileViewState extends State<ProfileView> {
                   width: 8,
                   height: 8,
                   decoration: const BoxDecoration(
-                    color: SaloonyColors.error,
+                    color: Colors.red,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -265,111 +141,123 @@ class _ProfileViewState extends State<ProfileView> {
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert, color: SaloonyColors.primary),
+            icon: const Icon(Icons.more_vert, color: Color(0xFF1B2B3E)),
             onPressed: () {},
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: SaloonyColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF1B2B3E),
+              ),
+            )
           : SafeArea(
               child: RefreshIndicator(
                 onRefresh: _loadUserData,
-                color: SaloonyColors.primary,
+                color: const Color(0xFF1B2B3E),
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 20),
+                      
                       if (_userRole == 'SPECIALIST')
-                        _userSalon != null ? _buildSalonCard() : _buildCreateSalonCard(),
-                      if (_userRole == 'SPECIALIST') const SizedBox(height: 24),
+                        _userSalon != null
+                            ? _buildSalonCard()
+                            : _buildCreateSalonCard(),
+                      
+                      if (_userRole == 'SPECIALIST')
+                        const SizedBox(height: 24),
+                      
                       _buildSection(
                         title: 'Application',
                         items: [
                           _MenuItem(
                             icon: Icons.person_outline_rounded,
                             title: 'Edit Profile',
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.editProfile),
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.editProfile);
+                            },
                           ),
                           _MenuItem(
                             icon: Icons.lock_outline_rounded,
                             title: 'Change Password',
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.ResetPasswordP),
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.ResetPasswordP);
+                            },
                           ),
                           _MenuItem(
                             icon: Icons.email_outlined,
                             title: 'Change Email',
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.ChangeEmail),
-                          ),
-                          _MenuItem(
-                            icon: Icons.phone_android_outlined,
-                            title: 'Change Phone',
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePhoneWidget())),
-                          ),
-                          _MenuItem(
-                            icon: Icons.cancel_presentation_outlined,
-                            title: 'Deactivate Account',
-                            onTap: _showDeactivateDialog,
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.ChangeEmail);
+                            },
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      if (_userRole == 'SPECIALIST' && _userSalon != null && _isSalonOwner)
+                      
+                      // Section Salon Settings affichée directement
+                      if (_userRole == 'SPECIALIST' && _userSalon != null)
                         _buildSalonSettingsSection(),
-                      if (_userRole == 'SPECIALIST' && _userSalon != null && _isSalonOwner)
+                      
+                      if (_userRole == 'SPECIALIST' && _userSalon != null)
                         const SizedBox(height: 24),
+                      
                       _buildSection(
                         title: 'About',
                         items: [
                           _MenuItem(
                             icon: Icons.description_outlined,
                             title: 'Terms of Use',
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.HelpCenterScreen),
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.HelpCenterScreen);
+                            },
                           ),
                           _MenuItem(
                             icon: Icons.privacy_tip_outlined,
                             title: 'Privacy Policy',
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.PrivacyPolicy),
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.PrivacyPolicy);
+                            },
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
+                      
                       _buildSection(
-                        title: 'Help & Support',
+                        title: 'Other',
                         items: [
-                          _MenuItem(
-                            icon: Icons.help_outline_rounded,
-                            title: 'Help center',
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.HelpCenterScreen),
-                          ),
-                          _MenuItem(
-                            icon: Icons.headset_mic_outlined,
-                            title: 'Customer Support',
-                            onTap: _openWhatsApp,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSection(
-                        title: 'Preferences',
-                        items: [
-                          _MenuItem(
-                            icon: Icons.palette_outlined,
-                            title: 'App Theme',
-                            trailing: 'Light',
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AppThemeScreen())),
-                          ),
+                         _MenuItem(
+  icon: Icons.dark_mode_outlined,
+  title: 'App Theme',
+  trailing: 'Light',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AppThemeScreen()),
+    );
+  },
+),
+
                           _MenuItem(
                             icon: Icons.language_outlined,
                             title: 'Language',
                             trailing: 'English',
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LanguageScreen())),
+                             onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LanguageScreen()),
+    );
+  },
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
+                      
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: LogoutButtonWidget(),
@@ -383,75 +271,102 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  // Section Salon Settings affichée directement
   Widget _buildSalonSettingsSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: SaloonyColors.background,
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: SaloonyColors.primary.withOpacity(0.06),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: SaloonyColors.secondaryLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.settings_outlined, color: SaloonyColors.primary, size: 20),
+                const Icon(
+                  Icons.settings_outlined,
+                  color: Color(0xFF1B2B3E),
+                  size: 20,
                 ),
-                const SizedBox(width: 12),
-                Text('Salon Settings', style: SaloonyTextStyles.heading4),
+                const SizedBox(width: 8),
+                Text(
+                  'Salon Settings',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1B2B3E),
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ],
             ),
           ),
-          _buildSalonSettingsMenuItem(
+             _buildSalonSettingsMenuItem(
             icon: Icons.edit_outlined,
             title: 'Edit Salon',
-            onTap: () async {
-              final updated = await Navigator.push<Map<String, dynamic>>(
-                context,
-                MaterialPageRoute(builder: (context) => EditSalonScreen(salonData: _userSalon!)),
-              );
-              if (updated != null && mounted) {
-                setState(() {
-                  _userSalon = Map<String, dynamic>.from(updated);
-                });
-              }
-            },
+    onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditSalonScreen(salonData: _userSalon!)
+
+    ),
+  );
+},
+
           ),
           _buildSalonSettingsMenuItem(
             icon: Icons.calendar_today_outlined,
             title: 'Appointments',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AppointmentsScreen())),
+                                                                 onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AppointmentsScreen()),
+    );
+  },
           ),
+       
           _buildSalonSettingsMenuItem(
-            icon: Icons.content_cut_outlined,
+             icon: Icons.cut,
             title: 'Services',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => TreatmentsManagementScreen())),
+                                                      onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ServicesManagementScreen()),
+    );
+  },
           ),
           _buildSalonSettingsMenuItem(
-            icon: Icons.people_outline_rounded,
+            icon: Icons.people_outlined,
             title: 'Clients',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientsScreen())),
+                                             onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ClientsScreen()),
+    );
+  },
           ),
+          
           _buildSalonSettingsMenuItem(
             icon: Icons.group_outlined,
             title: 'Team',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => TeamMembersScreen())),
-            isLast: true,
+                                  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TeamMembersScreen()),
+    );
+  },
           ),
         ],
       ),
@@ -462,43 +377,64 @@ class _ProfileViewState extends State<ProfileView> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    bool isLast = false,
   }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
           onTap: onTap,
-          borderRadius: isLast ? const BorderRadius.vertical(bottom: Radius.circular(24)) : BorderRadius.zero,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: SaloonyColors.backgroundTertiary,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF1B2B3E).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, size: 20, color: SaloonyColors.primary),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: const Color(0xFF1B2B3E),
+                  ),
                 ),
                 const SizedBox(width: 16),
-                Expanded(child: Text(title, style: SaloonyTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500))),
-                Icon(Icons.chevron_right_rounded, color: SaloonyColors.textTertiary, size: 22),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF1B2B3E),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey,
+                  size: 20,
+                ),
               ],
             ),
           ),
         ),
-        if (!isLast)
-          Padding(
-            padding: const EdgeInsets.only(left: 70),
-            child: Divider(height: 1, thickness: 1, color: SaloonyColors.borderLight),
+        Padding(
+          padding: const EdgeInsets.only(left: 66),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Colors.grey[200],
           ),
+        ),
       ],
     );
   }
 
   String _getSalonImageUrl(dynamic photoData) {
-    if (photoData == null) return '';
+    if (photoData == null) {
+      return '';
+    }
 
     if (photoData is List) {
       if (photoData.isEmpty) return '';
@@ -556,6 +492,8 @@ class _ProfileViewState extends State<ProfileView> {
   String _getSalonAddress(Map<String, dynamic>? salonData) {
     if (salonData == null) return '';
     
+    debugPrint('📦 Salon data received: $salonData');
+    
     final address = salonData['address'] ?? 
                    salonData['fullAddress'] ?? 
                    salonData['location'] ?? 
@@ -578,38 +516,48 @@ class _ProfileViewState extends State<ProfileView> {
       }
     }
     
+    final latitude = salonData['salonLatitude'];
+    final longitude = salonData['salonLongitude'];
+    
+    if (latitude != null && longitude != null) {
+      try {
+        final lat = latitude is num ? latitude : double.parse(latitude.toString());
+        final lng = longitude is num ? longitude : double.parse(longitude.toString());
+        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+      } catch (e) {
+        debugPrint('❌ Coordinate conversion error: $e');
+      }
+    }
+    
     return 'Address not available';
   }
 
   Widget _buildSalonCard() {
     final salonImageUrl = _getSalonImageUrl(_userSalon?['salonPhotosPaths']);
     final salonAddress = _getSalonAddress(_userSalon);
-    final String? salonStatus = _userSalon?['salonStatus']?.toString().toUpperCase();
-    final Color verifiedIconColor = (salonStatus == 'ACTIVE')
-      ? SaloonyColors.success
-      : (salonStatus == 'PENDING')
-        ? SaloonyColors.gold
-        : (salonStatus == 'BLOCKED')
-          ? SaloonyColors.error
-          : SaloonyColors.gold;
+    
+    debugPrint('🖼️ Final image URL: $salonImageUrl');
+    debugPrint('📍 Final address: $salonAddress');
+    debugPrint('📦 Complete salon data: $_userSalon');
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: SaloonyColors.background,
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: SaloonyColors.primary.withOpacity(0.08),
-            blurRadius: 24,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Stack(
               children: [
                 if (salonImageUrl.isNotEmpty)
@@ -619,18 +567,23 @@ class _ProfileViewState extends State<ProfileView> {
                     child: Image.network(
                       salonImageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(),
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('❌ Image loading error: $error');
+                        debugPrint('❌ Attempted URL: $salonImageUrl');
+                        return _buildPlaceholderImage();
+                      },
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
                         return Container(
                           height: 200,
-                          color: SaloonyColors.backgroundTertiary,
+                          color: Colors.grey[200],
                           child: Center(
                             child: CircularProgressIndicator(
                               value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
                                   : null,
-                              color: SaloonyColors.primary,
+                              color: const Color(0xFF1B2B3E),
                             ),
                           ),
                         );
@@ -640,45 +593,39 @@ class _ProfileViewState extends State<ProfileView> {
                 else
                   _buildPlaceholderImage(),
                 
-                if (_isSalonOwner)
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: InkWell(
-                          onTap: () async {
-                            final updated = await Navigator.push<Map<String, dynamic>>(
-                              context,
-                              MaterialPageRoute(builder: (context) => EditSalonScreen(salonData: _userSalon!)),
-                            );
-                            if (updated != null && mounted) {
-                              setState(() {
-                                _userSalon = Map<String, dynamic>.from(updated);
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: SaloonyColors.background,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 12,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(Icons.edit_outlined, size: 20, color: SaloonyColors.primary),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: InkWell(
+                    onTap: _navigateToEditSalon,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
                           ),
-                        ),
+                        ],
                       ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: Color(0xFF1B2B3E),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -686,40 +633,24 @@ class _ProfileViewState extends State<ProfileView> {
                     Expanded(
                       child: Text(
                         _userSalon?['salonName'] ?? 'Salon name not available',
-                        style: SaloonyTextStyles.heading2,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1B2B3E),
+                        ),
                       ),
                     ),
-                    // Status badge
-                    if (salonStatus != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: (salonStatus == 'ACTIVE')
-                                ? SaloonyColors.successLight
-                                : (salonStatus == 'PENDING')
-                                    ? SaloonyColors.warningLight
-                                    : SaloonyColors.tertiaryLight,
-                            borderRadius: BorderRadius.circular(16),
-                           
-                          ),
-                       
-                        ),
-                      ),
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (salonStatus == 'ACTIVE')
-                            ? SaloonyColors.success.withOpacity(0.12)
-                            : SaloonyColors.secondaryLight,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8F9FA),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: (salonStatus == 'ACTIVE') ? SaloonyColors.success : Colors.transparent,
-                          width: 1.2,
-                        ),
                       ),
-                      child: Icon(Icons.verified, size: 20, color: verifiedIconColor),
+                      child: const Icon(
+                        Icons.verified,
+                        size: 20,
+                        color: Color(0xFFF0CD97),
+                      ),
                     ),
                   ],
                 ),
@@ -731,7 +662,11 @@ class _ProfileViewState extends State<ProfileView> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
                       _userSalon!['salonDescription'].toString(),
-                      style: SaloonyTextStyles.bodySmall,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: const Color(0xFF1B2B3E).withOpacity(0.7),
+                        height: 1.5,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -740,10 +675,22 @@ class _ProfileViewState extends State<ProfileView> {
                 if (salonAddress.isNotEmpty && salonAddress != 'Address not available')
                   _buildInfoRow(Icons.location_on_outlined, salonAddress),
                 
+                if (_userSalon?['salonLatitude'] != null && _userSalon?['salonLongitude'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildInfoRow(
+                      Icons.map_outlined,
+                      '${_userSalon!['salonLatitude'].toString()}, ${_userSalon!['salonLongitude'].toString()}',
+                    ),
+                  ),
+                
                 if (_userSalon?['salonCategory'] != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: _buildInfoRow(Icons.category_outlined, _userSalon!['salonCategory'].toString()),
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildInfoRow(
+                      Icons.category_outlined,
+                      _userSalon!['salonCategory'].toString(),
+                    ),
                   ),
               ],
             ),
@@ -756,22 +703,19 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _buildPlaceholderImage() {
     return Container(
       height: 200,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            SaloonyColors.backgroundTertiary,
-            SaloonyColors.backgroundSecondary,
-          ],
-        ),
-      ),
-      child: Column(
+      color: Colors.grey[300],
+      child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.store_outlined, size: 60, color: SaloonyColors.textTertiary),
-          const SizedBox(height: 8),
-          Text('No image', style: SaloonyTextStyles.caption),
+          Icon(Icons.store, size: 60, color: Colors.grey),
+          SizedBox(height: 8),
+          Text(
+            'No image',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -785,58 +729,80 @@ class _ProfileViewState extends State<ProfileView> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            SaloonyColors.primary,
-            SaloonyColors.primaryDark,
+            const Color(0xFF1B2B3E),
+            const Color(0xFF1B2B3E).withOpacity(0.8),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: SaloonyColors.primary.withOpacity(0.3),
-            blurRadius: 24,
+            color: const Color(0xFF1B2B3E).withOpacity(0.3),
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.store_outlined, size: 50, color: SaloonyColors.gold),
+              child: const Icon(
+                Icons.store_outlined,
+                size: 50,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
               'Create Your Salon',
-              style: SaloonyTextStyles.heading2.copyWith(color: Colors.white),
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               'Start managing your professional salon and appointments',
               textAlign: TextAlign.center,
-              style: SaloonyTextStyles.bodyMedium.copyWith(color: Colors.white.withOpacity(0.9)),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+                height: 1.5,
+              ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.createsalon),
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.createsalon);
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: SaloonyColors.gold,
-                foregroundColor: SaloonyColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                minimumSize: const Size(double.infinity, 56),
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF1B2B3E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                minimumSize: const Size(double.infinity, 50),
                 elevation: 0,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.add_circle_outline),
-                  const SizedBox(width: 12),
-                  Text('Create My Salon', style: SaloonyTextStyles.buttonLarge),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Create My Salon',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -849,10 +815,20 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: SaloonyColors.textSecondary),
+        Icon(
+          icon,
+          size: 18,
+          color: const Color(0xFF1B2B3E).withOpacity(0.6),
+        ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(text, style: SaloonyTextStyles.bodySmall),
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: const Color(0xFF1B2B3E).withOpacity(0.8),
+            ),
+          ),
         ),
       ],
     );
@@ -865,61 +841,101 @@ class _ProfileViewState extends State<ProfileView> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: SaloonyColors.background,
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: SaloonyColors.primary.withOpacity(0.06),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Text(title, style: SaloonyTextStyles.labelLarge.copyWith(color: SaloonyColors.textSecondary)),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1B2B3E),
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
           ...List.generate(items.length, (index) {
             final item = items[index];
             final isLast = index == items.length - 1;
             return Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 InkWell(
                   onTap: item.onTap,
-                  borderRadius: isLast ? const BorderRadius.vertical(bottom: Radius.circular(24)) : BorderRadius.zero,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: isLast ? const Radius.circular(20) : Radius.zero,
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: SaloonyColors.backgroundTertiary,
-                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFF1B2B3E).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(item.icon, size: 20, color: SaloonyColors.primary),
+                          child: Icon(
+                            item.icon,
+                            size: 20,
+                            color: const Color(0xFF1B2B3E),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Text(item.title, style: SaloonyTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
+                          child: Text(
+                            item.title,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF1B2B3E),
+                            ),
+                          ),
                         ),
                         if (item.trailing != null)
                           Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Text(item.trailing!, style: SaloonyTextStyles.bodySmall),
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Text(
+                              item.trailing!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ),
-                        Icon(Icons.chevron_right_rounded, color: SaloonyColors.textTertiary, size: 22),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
                 ),
                 if (!isLast)
                   Padding(
-                    padding: const EdgeInsets.only(left: 70),
-                    child: Divider(height: 1, thickness: 1, color: SaloonyColors.borderLight),
+                    padding: const EdgeInsets.only(left: 66),
+                    child: Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Colors.grey[200],
+                    ),
                   ),
               ],
             );

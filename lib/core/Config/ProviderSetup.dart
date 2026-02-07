@@ -1,10 +1,10 @@
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
-import 'package:SaloonySpecialist/features/auth/viewmodels/ForgotPasswordViewModel.dart';
-import 'package:SaloonySpecialist/features/auth/viewmodels/ResetPasswordViewModel.dart';
-import 'package:SaloonySpecialist/features/auth/viewmodels/SignInViewModel.dart';
-import 'package:SaloonySpecialist/features/auth/viewmodels/sign_up_viewmodel.dart';
-import 'package:SaloonySpecialist/features/Salon/view_models/SalonCreationViewModel.dart';
+import 'package:saloony/features/auth/viewmodels/ForgotPasswordViewModel.dart';
+import 'package:saloony/features/auth/viewmodels/ResetPasswordViewModel.dart';
+import 'package:saloony/features/auth/viewmodels/SignInViewModel.dart';
+import 'package:saloony/features/auth/viewmodels/sign_up_viewmodel.dart';
+import 'package:saloony/features/Salon/SalonCreationViewModel.dart';
 
 class ProviderSetup {
   static List<SingleChildWidget> providers = [

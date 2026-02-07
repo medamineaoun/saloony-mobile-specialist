@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
-import 'package:SaloonySpecialist/core/services/AuthService.dart';
-import 'package:SaloonySpecialist/core/services/ToastService.dart';
-import 'package:SaloonySpecialist/features/profile/views/VerifyResetCodeView.dart';
+import 'package:saloony/core/constants/SaloonyColors.dart';
+import 'package:saloony/core/services/AuthService.dart';
+import 'package:saloony/features/profile/views/VerifyResetCodeView.dart';
 
 class ResetPasswordView extends StatefulWidget {
   const ResetPasswordView({Key? key}) : super(key: key);
@@ -21,7 +20,6 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   @override
   void initState() {
     super.initState();
-    ToastService.init(context); // initialisation du ToastService
     _loadCurrentUserEmail();
   }
 
@@ -30,7 +28,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
     try {
       final result = await _authService.getCurrentUser();
-
+      
       if (result['success'] == true && result['user'] != null) {
         setState(() {
           _userEmail = result['user']['userEmail'] ?? '';
@@ -39,14 +37,14 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
       } else {
         if (mounted) {
           setState(() => _isLoadingEmail = false);
-          ToastService.showError(context, 'Unable to fetch email');
+          _showSnackBar('Impossible de récupérer l\'email', isError: true);
           Navigator.pop(context);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingEmail = false);
-        ToastService.showError(context, 'Connection error');
+        _showSnackBar('Erreur de connexion', isError: true);
         Navigator.pop(context);
       }
     }
@@ -54,7 +52,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
   Future<void> _requestPasswordReset() async {
     if (_userEmail.isEmpty) {
-      ToastService.showError(context, 'Email not available');
+      _showSnackBar('Email non disponible', isError: true);
       return;
     }
 
@@ -62,12 +60,11 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
     try {
       final result = await _authService.requestPasswordReset(_userEmail);
-
+      
       if (mounted) {
         setState(() => _isLoading = false);
-
+        
         if (result['success'] == true) {
-          ToastService.showSuccess(context, 'Code sent successfully!');
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -75,18 +72,38 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
             ),
           );
         } else {
-          ToastService.showError(
-            context,
-            result['message'] ?? 'Error sending the code',
+          _showSnackBar(
+            result['message'] ?? 'Erreur lors de l\'envoi du code',
+            isError: true,
           );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ToastService.showError(context, 'Connection error');
+        _showSnackBar('Erreur de connexion', isError: true);
       }
     }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: isError ? SaloonyColors.error : SaloonyColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   @override
@@ -113,7 +130,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Reset Password',
+          'Réinitialiser le mot de passe',
           style: GoogleFonts.poppins(
             color: SaloonyColors.primary,
             fontSize: 18,
@@ -132,6 +149,8 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
+                  
+                  // Logo avec design moderne
                   Center(
                     child: Container(
                       width: 120,
@@ -161,9 +180,12 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                       ),
                     ),
                   ),
+                  
                   const SizedBox(height: 32),
+                  
+                  // Titre
                   Text(
-                    'Change your password',
+                    'Mot de passe oublié ?',
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -172,12 +194,28 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  
                   const SizedBox(height: 12),
+                  
+                  // Description
+                  Text(
+                    'Pas de souci ! Entrez votre adresse email et nous vous enverrons un code de vérification pour réinitialiser votre mot de passe.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      color: SaloonyColors.textSecondary,
+                      height: 1.6,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 48),
+                  
+                  // Email Display (Non-editable)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Email Address',
+                        'Adresse e-mail',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -187,11 +225,17 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.03),
@@ -244,7 +288,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'This email cannot be changed',
+                              'Cette adresse ne peut pas être modifiée',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 color: SaloonyColors.textSecondary.withOpacity(0.7),
@@ -256,12 +300,18 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                       ),
                     ],
                   ),
+                  
                   const SizedBox(height: 40),
+                  
+                  // Submit Button avec gradient
                   Container(
                     height: 56,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [SaloonyColors.secondary, SaloonyColors.gold],
+                        colors: [
+                          SaloonyColors.secondary,
+                          SaloonyColors.gold,
+                        ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
@@ -299,7 +349,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'Send Code',
+                                  'Envoyer le code',
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -317,6 +367,42 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                             ),
                     ),
                   ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Info supplémentaire
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: SaloonyColors.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: SaloonyColors.primary.withOpacity(0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.security_rounded,
+                          size: 20,
+                          color: SaloonyColors.primary.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Le code de vérification sera valide pendant 15 minutes',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: SaloonyColors.primary.withOpacity(0.8),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

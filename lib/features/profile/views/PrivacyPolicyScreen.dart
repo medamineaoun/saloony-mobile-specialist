@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:SaloonySpecialist/core/constants/SaloonyColors.dart';
+import 'package:saloony/core/constants/SaloonyColors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
